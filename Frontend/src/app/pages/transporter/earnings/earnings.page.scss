@@ -1,0 +1,380 @@
+.earnings-container {
+  padding: 16px;
+}
+
+/* Summary Card */
+.summary-card {
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  
+  ion-card-content {
+    padding: 20px;
+  }
+  
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .stat-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    
+    ion-icon {
+      font-size: 32px;
+    }
+    
+    div {
+      strong {
+        display: block;
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      
+      small {
+        font-size: 11px;
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+/* Quick Stats */
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    
+    &.weekly {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    &.monthly {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      
+      ion-icon {
+        font-size: 28px;
+      }
+    }
+    
+    .stat-info {
+      small {
+        display: block;
+        font-size: 11px;
+        opacity: 0.8;
+        margin-bottom: 4px;
+      }
+      
+      strong {
+        display: block;
+        font-size: 18px;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+/* Chart Card */
+.chart-card {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  
+  h3 {
+    margin: 0 0 16px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+  }
+  
+  .simple-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8px;
+    height: 150px;
+    padding: 10px 0;
+  }
+  
+  .chart-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    
+    .bar {
+      width: 100%;
+      background: linear-gradient(180deg, var(--ion-color-success) 0%, var(--ion-color-success-shade) 100%);
+      border-radius: 8px 8px 0 0;
+      position: relative;
+      min-height: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      
+      .value {
+        font-size: 9px;
+        font-weight: 600;
+        color: white;
+        margin-top: 4px;
+      }
+    }
+    
+    small {
+      font-size: 9px;
+      color: var(--ion-color-medium);
+      text-align: center;
+    }
+  }
+}
+
+/* History Card */
+.history-card {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--ion-color-light);
+    
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+  }
+  
+  .earnings-list {
+    padding: 0;
+  }
+  
+  .earning-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--ion-color-light);
+    cursor: pointer;
+    transition: background 0.3s;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &:active {
+      background: var(--ion-color-light);
+    }
+    
+    .earning-date {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      
+      ion-icon {
+        font-size: 24px;
+      }
+      
+      div {
+        strong {
+          display: block;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ion-color-dark);
+          margin-bottom: 2px;
+        }
+        
+        small {
+          font-size: 12px;
+          color: var(--ion-color-medium);
+        }
+      }
+    }
+    
+    .earning-breakdown {
+      background: var(--ion-color-light);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      
+      .breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        margin-bottom: 6px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        span:first-child {
+          color: var(--ion-color-medium);
+        }
+        
+        span:last-child {
+          font-weight: 600;
+          color: var(--ion-color-dark);
+          
+          &.surcharge {
+            color: var(--ion-color-success);
+          }
+          
+          &.bonus {
+            color: var(--ion-color-warning);
+          }
+        }
+      }
+    }
+    
+    .earning-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 2px solid var(--ion-color-light);
+      
+      strong {
+        font-size: 18px;
+        color: var(--ion-color-primary);
+      }
+      
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+/* Payout Card */
+.payout-card {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #E6F3FF 0%, #F0E6FF 100%);
+  border-radius: 16px;
+  
+  .payout-content {
+    .payout-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      
+      ion-icon {
+        font-size: 48px;
+        margin-top: 4px;
+      }
+      
+      div {
+        flex: 1;
+        
+        h4 {
+          margin: 0 0 8px 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ion-color-dark);
+        }
+        
+        .payout-amount {
+          margin: 0 0 4px 0;
+          font-size: 28px;
+          font-weight: 700;
+          color: var(--ion-color-success);
+        }
+        
+        small {
+          font-size: 12px;
+          color: var(--ion-color-medium);
+        }
+      }
+    }
+    
+    ion-button {
+      --border-radius: 12px;
+      height: 48px;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Info Card */
+.info-card {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  
+  .info-content {
+    display: flex;
+    gap: 16px;
+    
+    ion-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    
+    div {
+      h4 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ion-color-dark);
+      }
+      
+      ul {
+        margin: 0;
+        padding-left: 20px;
+        
+        li {
+          font-size: 13px;
+          color: var(--ion-color-medium);
+          margin-bottom: 6px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+}

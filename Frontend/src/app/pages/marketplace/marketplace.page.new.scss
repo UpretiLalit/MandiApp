@@ -1,0 +1,52 @@
+/**
+ * Marketplace Page - Theme-based Implementation
+ * Minimal component-specific styles - use utilities from theme
+ */
+
+// ==================== LAYOUT ====================
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+// ==================== PRODUCT CARD ====================
+.product-card {
+  // Base styles from .card utility class
+  @extend .card;
+  
+  .product-image-container {
+    position: relative;
+    height: 160px;
+    margin: calc(var(--space-md) * -1);
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overflow: hidden;
+    
+    .category-badge {
+      position: absolute;
+      top: var(--space-sm);
+      right: var(--space-sm);
+      z-index: 2;
+    }
+  }
+}
+
+// ==================== FILTERS ====================
+.filters {
+  @extend .flex;
+  @extend .flex-gap-md;
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+}
+
+// ==================== THAT'S IT! ====================
+// Everything else uses utility classes:
+// - .flex, .flex-between, .flex-center
+// - .text-lg, .text-bold, .text-secondary
+// - .badge-success, .badge-warning
+// - .product-emoji-lg
+// - .price-ticker-up, .price-ticker-down
+// - .p-md, .m-sm, etc.

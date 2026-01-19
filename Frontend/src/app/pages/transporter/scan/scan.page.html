@@ -1,0 +1,111 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Scan QR Code</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="scan-container">
+    
+    <!-- Scan Type Selector -->
+    <ion-card class="type-selector-card">
+      <ion-card-content>
+        <ion-segment [(ngModel)]="scanType" color="primary">
+          <ion-segment-button value="pickup">
+            <ion-label>
+              <ion-icon name="cube-outline"></ion-icon>
+              <span>Pickup</span>
+            </ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="delivery">
+            <ion-label>
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span>Delivery</span>
+            </ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Scan Instructions -->
+    <ion-card class="instructions-card">
+      <ion-card-content>
+        <div class="instructions">
+          <ion-icon 
+            [name]="scanType == 'pickup' ? 'cube-outline' : 'checkmark-done-outline'" 
+            [color]="scanType == 'pickup' ? 'warning' : 'success'"
+            class="instruction-icon">
+          </ion-icon>
+          
+          <h2 *ngIf="scanType == 'pickup'">Scan Vendor QR</h2>
+          <h2 *ngIf="scanType == 'delivery'">Scan Buyer QR</h2>
+          
+          <p *ngIf="scanType == 'pickup'">
+            Scan the QR code provided by the vendor to confirm pickup
+          </p>
+          <p *ngIf="scanType == 'delivery'">
+            Scan the buyer's QR code to complete delivery and release payment
+          </p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- QR Scanner Frame -->
+    <ion-card class="scanner-card">
+      <div class="scanner-frame">
+        <div class="scan-area">
+          <div class="corner top-left"></div>
+          <div class="corner top-right"></div>
+          <div class="corner bottom-left"></div>
+          <div class="corner bottom-right"></div>
+          
+          <ion-icon name="qr-code-outline" class="qr-icon"></ion-icon>
+          
+          <div class="scan-line"></div>
+        </div>
+      </div>
+      
+      <div class="scanner-info">
+        <p>Position QR code within frame</p>
+      </div>
+    </ion-card>
+
+    <!-- Last Scanned -->
+    <ion-card *ngIf="lastScannedQR" class="last-scan-card">
+      <ion-card-content>
+        <div class="last-scan">
+          <ion-icon name="checkmark-circle" color="success"></ion-icon>
+          <div class="scan-details">
+            <small>Last Scanned</small>
+            <strong>{{lastScannedQR}}</strong>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <ion-button 
+        expand="block" 
+        size="large"
+        [color]="scanType == 'pickup' ? 'warning' : 'success'"
+        (click)="scanQRCode()">
+        <ion-icon name="scan-outline" slot="start"></ion-icon>
+        Scan QR Code
+      </ion-button>
+      
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        color="medium"
+        (click)="manualEntry()">
+        <ion-icon name="create-outline" slot="start"></ion-icon>
+        Manual Entry
+      </ion-button>
+    </div>
+
+  </div>
+</ion-content>

@@ -1,0 +1,198 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>My Orders</ion-title>
+  </ion-toolbar>
+  
+  <!-- Status Filter -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="selectedStatus" (ionChange)="filterByStatus(($event.detail.value || 'All').toString())" scrollable>
+      <ion-segment-button *ngFor="let filter of statusFilters" [value]="filter.value">
+        <ion-label>{{filter.label}}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="orders-container">
+    
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading orders...</p>
+    </div>
+
+    <!-- Empty State -->
+    <ion-card *ngIf="!loading && filteredOrders.length == 0" class="empty-state">
+      <ion-card-content>
+        <ion-icon name="receipt-outline" color="medium"></ion-icon>
+        <h3>No Orders</h3>
+        <p>You haven't placed any orders yet</p>
+        <ion-button expand="block" routerLink="/marketplace">
+          Browse Marketplace
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Order Cards -->
+    <ion-card *ngFor="let order of filteredOrders" class="order-card">
+      
+      <!-- Order Header -->
+      <div class="order-header" [class]="'status-' + order.status.toLowerCase()">
+        <div class="header-left">
+          <h3>{{order.orderNumber}}</h3>
+          <small>{{order.orderDate}}</small>
+        </div>
+        <ion-badge [color]="getStatusColor(order.status)">
+          <ion-icon [name]="getStatusIcon(order.status)"></ion-icon>
+          {{order.status}}
+        </ion-badge>
+      </div>
+
+      <ion-card-content>
+        
+        <!-- Vendor Info -->
+        <div class="vendor-section">
+          <div class="vendor-info">
+            <ion-icon name="storefront" color="primary"></ion-icon>
+            <div>
+              <strong>{{order.vendorName}}</strong>
+              <p>{{order.vendorContact}}</p>
+            </div>
+          </div>
+          <ion-button 
+            size="small" 
+            fill="outline"
+            (click)="callVendor(order.vendorContact)">
+            <ion-icon name="call-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Delivery Address -->
+        <div class="info-row">
+          <ion-icon name="location-outline" color="medium"></ion-icon>
+          <div>
+            <small>Delivery Address</small>
+            <p>{{order.deliveryAddress}}</p>
+          </div>
+        </div>
+
+        <!-- Estimated Delivery -->
+        <div class="info-row">
+          <ion-icon name="time-outline" color="medium"></ion-icon>
+          <div>
+            <small>Estimated Delivery</small>
+            <p>{{order.estimatedDelivery}}</p>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="items-section">
+          <div class="section-header">
+            <h4>Order Items</h4>
+            <span>{{order.items.length}} items</span>
+          </div>
+          
+          <div class="item-list">
+            <div *ngFor="let item of order.items" class="order-item">
+              <div class="item-details">
+                <span class="item-name">{{item.productName}}</span>
+                <span class="item-quantity">{{item.quantity}} {{item.unit}}</span>
+              </div>
+              <span class="item-price">₹{{item.total}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Billing Summary -->
+        <div class="billing-summary">
+          <div class="billing-row">
+            <span>Subtotal</span>
+            <span>₹{{order.totalAmount}}</span>
+          </div>
+          <div class="billing-row">
+            <span>GST (5%)</span>
+            <span>₹{{order.gstAmount}}</span>
+          </div>
+          <div class="billing-row total">
+            <strong>Grand Total</strong>
+            <strong>₹{{order.grandTotal}}</strong>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          
+          <!-- In Transit - Track & Confirm Delivery -->
+          <ng-container *ngIf="order.status == 'InTransit'">
+            <ion-button 
+              expand="block" 
+              color="primary"
+              (click)="trackOrder(order)">
+              <ion-icon name="navigate-outline" slot="start"></ion-icon>
+              Track Order
+            </ion-button>
+            
+            <!-- Phase 3: Confirm Delivery Button -->
+            <ion-button 
+              expand="block" 
+              color="success"
+              (click)="confirmDelivery(order)">
+              <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+              Confirm Delivery & Release Escrow
+            </ion-button>
+          </ng-container>
+
+          <!-- Delivered - Invoice and Report -->
+          <ng-container *ngIf="order.status == 'Delivered'">
+            <div class="button-row">
+              <ion-button 
+                expand="block" 
+                fill="outline"
+                (click)="viewInvoice(order)">
+                <ion-icon name="document-text-outline" slot="start"></ion-icon>
+                Invoice
+              </ion-button>
+              <ion-button 
+                expand="block" 
+                color="danger"
+                fill="outline"
+                (click)="reportIssue(order)">
+                <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+                Report Issue
+              </ion-button>
+            </div>
+            <ion-button 
+              expand="block" 
+              fill="clear"
+              (click)="reorder(order)">
+              <ion-icon name="repeat-outline" slot="start"></ion-icon>
+              Reorder
+            </ion-button>
+          </ng-container>
+
+          <!-- Processing/Pending -->
+          <ng-container *ngIf="order.status == 'Pending' || order.status == 'Processing'">
+            <ion-button 
+              expand="block" 
+              fill="outline"
+              color="medium">
+              <ion-icon name="hourglass-outline" slot="start"></ion-icon>
+              Waiting for Vendor
+            </ion-button>
+          </ng-container>
+
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>

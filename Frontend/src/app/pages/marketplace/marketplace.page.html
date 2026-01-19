@@ -1,0 +1,354 @@
+<ion-header class="marketplace-header">
+  <!-- Main Toolbar -->
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="header-title">
+        <span class="header-emoji">🌾</span>
+        <div>
+          <div class="title-main">Mandi Marketplace</div>
+          <div class="title-sub">Fresh from farm to you</div>
+        </div>
+      </div>
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="toggleSearch()">
+        <ion-icon [name]="showSearch ? 'close' : 'search-outline'"></ion-icon>
+      </ion-button>
+      <ion-button (click)="goToCart()">
+        <ion-icon name="cart-outline"></ion-icon>
+        <ion-badge *ngIf="cartCount > 0" color="danger">{{cartCount}}</ion-badge>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Search Bar (Toggle) -->
+  <ion-toolbar *ngIf="showSearch" class="search-toolbar">
+    <ion-searchbar 
+      placeholder="Search vegetables, fruits, grains..." 
+      [(ngModel)]="searchTerm"
+      (ionChange)="onSearchChange($event)"
+      animated="true"
+      showCancelButton="always"
+      (ionCancel)="toggleSearch()">
+    </ion-searchbar>
+  </ion-toolbar>
+  
+  <!-- Category Tabs -->
+  <ion-toolbar class="tabs-toolbar">
+    <div class="category-tabs">
+      <button 
+        class="tab-button"
+        [class.active]="selectedCategory === 'All'"
+        (click)="filterByCategory('All')">
+        <span class="tab-emoji">🛒</span>
+        <span class="tab-label">All</span>
+      </button>
+      
+      <button 
+        class="tab-button"
+        [class.active]="selectedCategory === 'Vegetables'"
+        (click)="filterByCategory('Vegetables')">
+        <span class="tab-emoji">🥬</span>
+        <span class="tab-label">Vegetables</span>
+      </button>
+      
+      <button 
+        class="tab-button"
+        [class.active]="selectedCategory === 'Fruits'"
+        (click)="filterByCategory('Fruits')">
+        <span class="tab-emoji">🍎</span>
+        <span class="tab-label">Fruits</span>
+      </button>
+      
+      <button 
+        class="tab-button"
+        [class.active]="selectedCategory === 'Grains'"
+        (click)="filterByCategory('Grains')">
+        <span class="tab-emoji">🌾</span>
+        <span class="tab-label">Grains</span>
+      </button>
+      
+      <button 
+        class="tab-button filter-button"
+        (click)="toggleFilters()">
+        <ion-icon [name]="showFilters ? 'close' : 'options-outline'"></ion-icon>
+        <span class="tab-label">Filters</span>
+      </button>
+    </div>
+  </ion-toolbar>
+  
+  <!-- Filter Options (Expandable) -->
+  <ion-toolbar *ngIf="showFilters" class="filters-toolbar">
+    <div class="filter-options">
+      <ion-chip 
+        *ngFor="let cat of categories" 
+        [class.chip-active]="selectedCategory === cat"
+        (click)="filterByCategory(cat)">
+        <ion-label>{{cat}}</ion-label>
+      </ion-chip>
+      
+      <ion-select 
+        [(ngModel)]="sortBy" 
+        (ionChange)="changeSortOrder($event)" 
+        placeholder="Sort by"
+        interface="popover"
+        class="sort-select">
+        <ion-select-option value="name">Name (A-Z)</ion-select-option>
+        <ion-select-option value="price-low">Price (Low to High)</ion-select-option>
+        <ion-select-option value="price-high">Price (High to Low)</ion-select-option>
+        <ion-select-option value="rating">Best Rating</ion-select-option>
+      </ion-select>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="marketplace-container">
+    
+    <!-- Empty State -->
+    <div *ngIf="filteredProducts.length == 0" class="empty-state">
+      <ion-icon name="basket-outline" class="empty-icon"></ion-icon>
+      <h2>No products found</h2>
+      <p>Try adjusting your search or category filter</p>
+      <ion-button fill="outline" (click)="selectedCategory = 'All'; applyFilters()">
+        <ion-icon name="refresh" slot="start"></ion-icon>
+        Show All Products
+      </ion-button>
+    </div>
+
+    <!-- Product Cards Grid -->
+    <div class="products-grid">
+      <ion-card *ngFor="let product of filteredProducts" class="product-card accordion-card">
+        
+        <!-- Product Image with High-Quality Emoji Icon - MOVED OUTSIDE ACCORDION -->
+        <div class="product-image-container">
+          <div class="product-image">
+            <!-- High-quality emoji for instant recognition -->
+            <div class="product-img product-emoji-large">
+              {{product.emoji || '🥬'}}
+            </div>
+            <div class="gradient-overlay" [ngClass]="getGradientClass(product.category)"></div>
+          </div>
+          <ion-badge class="category-badge" [color]="product.category === 'Vegetables' ? 'success' : product.category === 'Fruits' ? 'warning' : 'primary'">
+            {{product.category}}
+          </ion-badge>
+          <!-- Grade Badge - Moved to Image Container -->
+          <ion-badge 
+            class="grade-badge-image" 
+            [color]="product.vendors[0].grade === 'A' ? 'success' : product.vendors[0].grade === 'B' ? 'warning' : 'danger'">
+            <ion-icon name="ribbon"></ion-icon>
+            Grade {{product.vendors[0].grade}}
+          </ion-badge>
+        </div>
+        
+        <!-- Accordion Main Row -->
+        <div class="accordion-header" (click)="toggleProductExpansion(product.name)">
+          
+          <!-- Product Info -->
+          <ion-card-content class="accordion-main-content">
+            <div class="product-header">
+              <div class="product-title-row">
+                <span class="product-emoji">{{product.emoji || '🥬'}}</span>
+                <h2 class="product-name">{{product.name}}</h2>
+                <ion-chip class="unit-chip">
+                  <ion-icon name="cube-outline"></ion-icon>
+                  <ion-label>{{product.unit}}</ion-label>
+                  <span class="unit-separator">•</span>
+                  <span class="unit-weight">{{product.unitWeight}}</span>
+                </ion-chip>
+              </div>
+            </div>
+            
+            <!-- Starting Price Display -->
+            <div class="starting-price-section">
+              <div class="starting-price-card">
+                <span class="price-label">Best Price</span>
+                <div class="price-display">
+                  <span class="currency">₹</span>
+                  <span class="amount">{{product.vendors[0].price}}</span>
+                  <span class="per-unit">/{{product.unit}}</span>
+                </div>
+                <span class="vendor-count">{{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}} available</span>
+              </div>
+              </div>
+            
+            <!-- Expand Indicator -->
+            <div class="expand-indicator">
+              <ion-icon 
+                [name]="isProductExpanded(product.name) ? 'chevron-up' : 'chevron-down'" 
+                class="expand-icon">
+              </ion-icon>
+              <span class="expand-text">{{isProductExpanded(product.name) ? 'Hide' : 'Compare'}} Vendors</span>
+            </div>
+          </ion-card-content>
+        </div>
+          
+        <!-- Quick Buy Section with Quantity Stepper -->
+        <div class="quick-buy-section" (click)="$event.stopPropagation()">
+          <!-- Quantity Stepper - Shown only when activated -->
+          <div class="quantity-stepper" *ngIf="isQuantityStepperVisible(product.name)" @slideDown>
+            <button 
+              class="qty-btn"
+              [disabled]="!canDecrement(product)"
+              (click)="decrementQuantity(product, $event)">
+              <ion-icon name="remove"></ion-icon>
+            </button>
+            <div class="qty-display">
+              <span class="qty-value">{{getProductQuantity(product.name)}}</span>
+              <span class="qty-unit">{{product.unit}}</span>
+            </div>
+            <button 
+              class="qty-btn"
+              [disabled]="!canIncrement(product)"
+              (click)="incrementQuantity(product, $event)">
+              <ion-icon name="add"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Quick Buy Button - Changes text based on stepper state -->
+          <ion-button 
+            expand="block"
+            color="success"
+            class="quick-buy-btn"
+            (click)="quickBuyBestPrice(product)">
+            <ion-icon [name]="isQuantityStepperVisible(product.name) ? 'cart' : 'flash'" slot="start"></ion-icon>
+            <div class="quick-buy-content">
+              <span class="quick-buy-label">{{isQuantityStepperVisible(product.name) ? 'Add to Cart' : 'Quick Buy'}}</span>
+              <span class="quick-buy-price">{{product.vendors[0].pricePerUnit}}</span>
+            </div>
+            <ion-icon [name]="isQuantityStepperVisible(product.name) ? 'checkmark' : 'cart'" slot="end"></ion-icon>
+          </ion-button>
+          <p class="quick-buy-hint">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            <span>Best price vendor • Fast checkout</span>
+          </p>
+        </div>
+
+        <!-- Vendor Comparison List - Expandable Accordion Content -->
+        <div class="vendors-comparison accordion-content" *ngIf="isProductExpanded(product.name)">
+          <div class="comparison-header">
+            <ion-icon name="analytics-outline"></ion-icon>
+            <span>All Vendors - Choose by Trust or Price</span>
+          </div>
+          
+          <div class="comparison-info">
+            <div class="info-chips">
+              <ion-chip color="success" class="info-chip">
+                <ion-icon name="checkmark-circle"></ion-icon>
+                <ion-label>Best Value</ion-label>
+              </ion-chip>
+              <ion-chip color="primary" class="info-chip">
+                <ion-icon name="people"></ion-icon>
+                <ion-label>{{product.vendors.length}} Vendors</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+          
+          <div *ngFor="let vendor of product.vendors; let i = index" 
+               class="vendor-item" 
+               [class.best-price]="i === 0"
+               [class.rank-2]="i === 1"
+               [class.rank-3]="i === 2"
+               [class.expanded]="isVendorExpanded(product.name, vendor.vendorId)"
+               (click)="toggleVendorExpansion(product.name, vendor.vendorId, $event)">
+            
+            <!-- Best Value Tag -->
+            <div class="best-tag" *ngIf="i === 0">
+              <ion-icon name="trophy"></ion-icon>
+              <span>Best Value</span>
+            </div>
+            
+            <!-- Rank Badge -->
+            <ion-badge class="rank-badge" *ngIf="i > 0 && i < 3" [color]="i === 1 ? 'warning' : 'medium'">
+              #{{i + 1}}
+            </ion-badge>
+            
+            <div class="vendor-content">
+              <!-- Vendor Details -->
+              <div class="vendor-details">
+                <div class="vendor-name-row">
+                  <ion-icon name="storefront" [color]="i === 0 ? 'success' : 'medium'"></ion-icon>
+                  <h3>{{vendor.vendorName}}</h3>
+                  <ion-badge 
+                    class="trust-badge" 
+                    [color]="vendor.vendorRating >= 4.5 ? 'success' : vendor.vendorRating >= 4.0 ? 'warning' : 'medium'">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    {{vendor.vendorRating >= 4.5 ? 'Trusted' : vendor.vendorRating >= 4.0 ? 'Reliable' : 'New'}}
+                  </ion-badge>
+                </div>
+                
+                <!-- Compact Info (Always Visible) -->
+                <div class="vendor-compact-info">
+                    <ion-badge class="badge-mini" [color]="vendor.grade === 'A' ? 'success' : vendor.grade === 'B' ? 'warning' : 'danger'">
+                      Grade {{vendor.grade}}
+                    </ion-badge>
+                    <ion-icon name="chevron-down-outline" class="expand-icon"></ion-icon>
+                </div>
+                
+                <!-- Full Details (Shown when Expanded) -->
+                <div class="vendor-full-details" *ngIf="isVendorExpanded(product.name, vendor.vendorId)">
+                  <div class="vendor-badges">
+                      <!-- Only show rating badge, remove duplicate grade and stock info -->
+                      <ion-badge class="badge-rating" color="light">
+                        <ion-icon name="star" color="warning"></ion-icon>
+                        {{vendor.vendorRating}} Rating
+                      </ion-badge>
+                  </div>
+                  
+                  <!-- Status Tags -->
+                  <div class="status-tags" *ngIf="getStatusTags(vendor).length > 0">
+                    <ion-chip *ngFor="let tag of getStatusTags(vendor)" [color]="getStatusColor(tag)" class="status-chip">
+                      <ion-icon [name]="tag === 'Fresh Arrival' ? 'leaf-outline' : tag === 'Limited Stock' ? 'alert-circle-outline' : 'layers-outline'"></ion-icon>
+                      <ion-label>{{tag}}</ion-label>
+                    </ion-chip>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Price & Action -->
+              <div class="vendor-action">
+                <div class="vendor-price-container">
+                  <div class="vendor-price-tag" 
+                       [class.price-flash]="isPriceFlashing(product.vendors[0].id, vendor.vendorId)">
+                    <span class="price-text">{{vendor.pricePerUnit}}</span>
+                  </div>
+                  <!-- Price Ticker -->
+                  <div class="price-ticker" *ngIf="getPriceChange(vendor.id, vendor.vendorId, vendor.price).direction !== 'same'">
+                    <ion-icon 
+                      [name]="getPriceChange(vendor.id, vendor.vendorId, vendor.price).direction === 'down' ? 'arrow-down' : 'arrow-up'"
+                      [class.ticker-down]="getPriceChange(vendor.id, vendor.vendorId, vendor.price).direction === 'down'"
+                      [class.ticker-up]="getPriceChange(vendor.id, vendor.vendorId, vendor.price).direction === 'up'">
+                    </ion-icon>
+                    <span [class.ticker-down]="getPriceChange(vendor.id, vendor.vendorId, vendor.price).direction === 'down'"
+                          [class.ticker-up]="getPriceChange(vendor.id, vendor.vendorId, vendor.price).direction === 'up'">
+                      {{getPriceChange(vendor.id, vendor.vendorId, vendor.price).percentage}}%
+                    </span>
+                  </div>
+                </div>
+                <ion-button 
+                    [color]="i === 0 ? 'success' : 'primary'"
+                    size="default"
+                    (click)="quickAdd(vendor, product)"
+                    [disabled]="false">
+                    <ion-icon name="cart" slot="start"></ion-icon>
+                    Add
+                  </ion-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ion-card>
+    </div>
+
+  </div>
+</ion-content>
+
+<!-- Floating Cart Button -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="cartCount > 0">
+  <ion-fab-button color="success" (click)="goToCart()">
+    <ion-icon name="cart"></ion-icon>
+  </ion-fab-button>
+</ion-fab>

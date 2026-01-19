@@ -1,0 +1,177 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/transporter/deliveries"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Proof of Delivery</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="proof-container">
+    
+    <!-- Order Info -->
+    <ion-card class="order-card">
+      <ion-card-content>
+        <div class="order-info">
+          <ion-icon name="receipt-outline" color="primary"></ion-icon>
+          <div>
+            <h3>{{orderNumber}}</h3>
+            <small>Delivery ID: {{deliveryId}}</small>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Photo Section -->
+    <ion-card class="photo-card">
+      <div class="card-header">
+        <h3>
+          <ion-icon name="camera-outline"></ion-icon>
+          Delivery Photos
+        </h3>
+        <ion-badge color="warning">Required</ion-badge>
+      </div>
+      
+      <!-- Pickup Photo -->
+      <div class="photo-section">
+        <h4>1. Pickup Photo</h4>
+        <p>Take a photo of items at pickup location</p>
+        
+        <div class="photo-container" *ngIf="!proofData.pickupPhoto">
+          <ion-button expand="block" fill="outline" (click)="takePickupPhoto()">
+            <ion-icon name="camera-outline" slot="start"></ion-icon>
+            Take Pickup Photo
+          </ion-button>
+        </div>
+        
+        <div class="photo-preview" *ngIf="proofData.pickupPhoto">
+          <img [src]="proofData.pickupPhoto" alt="Pickup photo" />
+          <ion-button fill="clear" color="danger" (click)="removePhoto('pickup')">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+      
+      <!-- Delivery Photo -->
+      <div class="photo-section">
+        <h4>2. Delivery Photo</h4>
+        <p>Take a photo after delivery completion</p>
+        
+        <div class="photo-container" *ngIf="!proofData.deliveryPhoto">
+          <ion-button expand="block" fill="outline" (click)="takeDeliveryPhoto()">
+            <ion-icon name="camera-outline" slot="start"></ion-icon>
+            Take Delivery Photo
+          </ion-button>
+        </div>
+        
+        <div class="photo-preview" *ngIf="proofData.deliveryPhoto">
+          <img [src]="proofData.deliveryPhoto" alt="Delivery photo" />
+          <ion-button fill="clear" color="danger" (click)="removePhoto('delivery')">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </ion-card>
+
+    <!-- Signature Section -->
+    <ion-card class="signature-card">
+      <div class="card-header">
+        <h3>
+          <ion-icon name="create-outline"></ion-icon>
+          Customer Signature
+        </h3>
+        <ion-badge color="warning">Required</ion-badge>
+      </div>
+      
+      <div class="signature-section">
+        <p>Ask customer to sign below</p>
+        
+        <div class="signature-pad">
+          <canvas 
+            #signatureCanvas
+            (mousedown)="startDrawing($event)"
+            (mousemove)="draw($event)"
+            (mouseup)="stopDrawing()"
+            (touchstart)="startDrawing($event)"
+            (touchmove)="draw($event)"
+            (touchend)="stopDrawing()">
+          </canvas>
+          
+          <div class="signature-actions" *ngIf="!proofData.signature">
+            <small>Sign above</small>
+            <ion-button fill="clear" size="small" (click)="clearSignature()">
+              <ion-icon name="refresh-outline" slot="start"></ion-icon>
+              Clear
+            </ion-button>
+          </div>
+          
+          <div class="signature-preview" *ngIf="proofData.signature">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <span>Signature captured</span>
+            <ion-button fill="clear" size="small" color="danger" (click)="clearSignature()">
+              Redo
+            </ion-button>
+          </div>
+        </div>
+        
+        <ion-button expand="block" fill="outline" (click)="initializeSignature()" *ngIf="!proofData.signature">
+          <ion-icon name="create-outline" slot="start"></ion-icon>
+          Activate Signature Pad
+        </ion-button>
+      </div>
+    </ion-card>
+
+    <!-- Notes Section -->
+    <ion-card class="notes-card">
+      <div class="card-header">
+        <h3>
+          <ion-icon name="document-text-outline"></ion-icon>
+          Additional Notes
+        </h3>
+        <ion-badge color="medium">Optional</ion-badge>
+      </div>
+      
+      <div class="notes-section">
+        <ion-textarea
+          [(ngModel)]="proofData.notes"
+          placeholder="Add any notes about the delivery (damage, delays, special instructions, etc.)"
+          rows="4"
+          maxlength="500">
+        </ion-textarea>
+        <small>{{proofData.notes.length}}/500 characters</small>
+      </div>
+    </ion-card>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <ion-button expand="block" color="success" size="large" (click)="submitProof()">
+        <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+        Submit Proof
+      </ion-button>
+      
+      <ion-button expand="block" fill="outline" color="medium" (click)="cancel()">
+        Cancel
+      </ion-button>
+    </div>
+
+    <!-- Guidelines -->
+    <ion-card class="guidelines-card">
+      <ion-card-content>
+        <div class="guidelines">
+          <ion-icon name="information-circle-outline" color="primary"></ion-icon>
+          <div>
+            <h4>Guidelines</h4>
+            <ul>
+              <li>Ensure photos are clear and well-lit</li>
+              <li>Show all items in pickup photo</li>
+              <li>Get customer signature after delivery</li>
+              <li>Add notes for any issues or delays</li>
+            </ul>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>

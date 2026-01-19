@@ -1,0 +1,180 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/marketplace"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Cart <ion-badge *ngIf="totalItems > 0" color="success">{{totalItems}}</ion-badge></ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  
+  <!-- Empty State -->
+  <div *ngIf="!cart?.cartItems || cart!.cartItems.length == 0" class="empty-cart">
+    <ion-icon name="cart-outline" class="empty-icon"></ion-icon>
+    <h3>Your cart is empty</h3>
+    <p>Add products from the marketplace</p>
+    <ion-button routerLink="/marketplace" expand="block">
+      Browse Products
+    </ion-button>
+  </div>
+
+    <!-- Cart Content -->
+    <div *ngIf="cart?.cartItems && cart!.cartItems.length > 0" class="cart-content">
+      
+      <!-- Quick Summary Header -->
+      <div class="summary-banner">
+        <div class="summary-item">
+          <ion-icon name="cube"></ion-icon>
+          <div>
+            <span class="value">{{totalItems}}</span>
+            <span class="label">Items</span>
+          </div>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+          <ion-icon name="storefront"></ion-icon>
+          <div>
+            <span class="value">{{totalVendors}}</span>
+            <span class="label">Vendors</span>
+          </div>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+          <ion-icon name="flash"></ion-icon>
+          <div>
+            <span class="value">1</span>
+            <span class="label">Payment</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cart Items by Vendor -->
+      <div class="items-section">
+        <h3 class="section-title">Your Items</h3>
+        
+        <div *ngFor="let vendorKey of getVendorIds(); let i = index" class="vendor-group">
+          <!-- Vendor Header -->
+          <div class="vendor-header">
+            <div class="vendor-info">
+              <div class="vendor-badge">
+                <ion-icon name="storefront"></ion-icon>
+              </div>
+              <div class="vendor-details">
+                <h4>{{getVendorName(vendorKey)}}</h4>
+                <p>{{getVendorItems(vendorKey).length}} items • ₹{{getVendorSubtotal(vendorKey)}}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vendor Items -->
+          <div class="items-list">
+            <div *ngFor="let item of getVendorItems(vendorKey)" class="cart-item">
+              <div class="item-main">
+                <div class="item-icon">
+                  <span>🥬</span>
+                </div>
+                <div class="item-details">
+                  <h5>{{item.productName}}</h5>
+                  <div class="item-meta">
+                    <span class="price">₹{{item.unitPrice}}/{{item.unit || 'unit'}}</span>
+                    <ion-badge color="success" *ngIf="item.grade" class="grade-badge">{{item.grade}}</ion-badge>
+                  </div>
+                </div>
+              </div>
+
+              <div class="item-controls">
+                <div class="qty-control">
+                  <button class="qty-btn" (click)="updateQuantity(item, -1)">
+                    <ion-icon name="remove"></ion-icon>
+                  </button>
+                  <span class="qty-value">{{item.quantity}}</span>
+                  <button class="qty-btn" (click)="updateQuantity(item, 1)">
+                    <ion-icon name="add"></ion-icon>
+                  </button>
+                </div>
+                <div class="item-total">₹{{item.quantity * item.unitPrice}}</div>
+                <button class="delete-btn" (click)="removeItem(item)">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Breakdown -->
+      <div class="breakdown-section">
+        <h3 class="section-title">Order Summary</h3>
+        
+        <div class="breakdown-card">
+          <div class="breakdown-row">
+            <span>Items Total</span>
+            <span class="value">₹{{produceTotal}}</span>
+          </div>
+          <div class="breakdown-row">
+            <span>
+              Logistics Fee
+              <ion-badge color="warning" class="info-badge">Single Run</ion-badge>
+            </span>
+            <span class="value">₹{{logisticsFee}}</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Service Fee (3%)</span>
+            <span class="value">₹{{serviceFee}}</span>
+          </div>
+          <div class="breakdown-divider"></div>
+          <div class="breakdown-row total">
+            <span>Total Amount</span>
+            <span class="value">₹{{totalLandingCost}}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Delivery Address -->
+      <div class="delivery-section">
+        <h3 class="section-title">
+          <ion-icon name="location"></ion-icon>
+          Delivery Address
+        </h3>
+        
+        <div class="address-input">
+          <ion-textarea
+            [(ngModel)]="deliveryAddress"
+            placeholder="Enter delivery address (Building, Street, Area, City)"
+            rows="3"
+            class="address-textarea">
+          </ion-textarea>
+        </div>
+      </div>
+
+    </div>
+</ion-content>
+
+<!-- Sticky Checkout Footer -->
+<ion-footer *ngIf="cart?.cartItems && cart!.cartItems.length > 0" class="checkout-footer">
+  <div class="footer-content">
+    <div class="footer-summary">
+      <div class="amount-info">
+        <span class="label">Total Amount</span>
+        <span class="amount">₹{{totalLandingCost}}</span>
+      </div>
+      <div class="items-info">
+        {{totalVendors}} vendors • {{totalItems}} items
+      </div>
+    </div>
+    <ion-button 
+      expand="block" 
+      color="success" 
+      size="large"
+      class="checkout-btn"
+      [disabled]="!deliveryAddress"
+      (click)="checkout()">
+      <ion-icon name="lock-closed" slot="start"></ion-icon>
+      <span>Place Order</span>
+      <ion-icon name="arrow-forward" slot="end"></ion-icon>
+    </ion-button>
+  </div>
+</ion-footer>
+

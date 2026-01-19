@@ -1,0 +1,129 @@
+<ion-content class="ion-padding">
+  <div class="login-container">
+    
+    <!-- Logo and Header -->
+    <div class="header-section">
+      <div class="logo">
+        <ion-icon name="storefront" color="primary"></ion-icon>
+      </div>
+      <h1>Mandi App</h1>
+      <p>Fresh produce marketplace</p>
+    </div>
+
+    <!-- Phone Number Step -->
+    <div *ngIf="step == 'phone'" class="form-section">
+      <div class="step-header">
+        <h2>Login</h2>
+        <p>Enter your mobile number to continue</p>
+      </div>
+
+      <form [formGroup]="phoneForm" (ngSubmit)="sendOtp()">
+        <ion-card class="input-card">
+          <ion-card-content>
+            <div class="phone-input-group">
+              <span class="country-code">+91</span>
+              <ion-input
+                formControlName="phone"
+                type="tel"
+                inputmode="numeric"
+                placeholder="Mobile Number"
+                maxlength="10"
+                class="phone-input">
+              </ion-input>
+            </div>
+            
+            <div class="validation-message" *ngIf="phoneForm.get('phone')?.touched && phoneForm.get('phone')?.invalid">
+              <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+              <span>Enter valid 10-digit mobile number</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-button 
+          expand="block" 
+          type="submit"
+          size="large"
+          [disabled]="phoneForm.invalid">
+          <ion-icon name="arrow-forward" slot="end"></ion-icon>
+          Send OTP
+        </ion-button>
+      </form>
+
+      <div class="register-link">
+        <p>New user? <a routerLink="/auth/register">Register here</a></p>
+      </div>
+    </div>
+
+    <!-- OTP Verification Step -->
+    <div *ngIf="step == 'otp'" class="form-section">
+      <div class="step-header">
+        <ion-button fill="clear" (click)="goBack()" class="back-btn">
+          <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+        </ion-button>
+        <h2>Verify OTP</h2>
+        <p>Enter 6-digit code sent to <strong>+91 {{phoneNumber}}</strong></p>
+      </div>
+
+      <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+        <ion-card class="input-card">
+          <ion-card-content>
+            <ion-input
+              formControlName="otp"
+              type="tel"
+              inputmode="numeric"
+              placeholder="Enter OTP"
+              maxlength="6"
+              class="otp-input">
+            </ion-input>
+            
+            <div class="validation-message" *ngIf="otpForm.get('otp')?.touched && otpForm.get('otp')?.invalid">
+              <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+              <span>Enter valid 6-digit OTP</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Countdown and Resend -->
+        <div class="resend-section">
+          <p *ngIf="!canResend">
+            Resend OTP in <strong>{{countdown}}s</strong>
+          </p>
+          <ion-button 
+            *ngIf="canResend"
+            fill="clear"
+            size="small"
+            (click)="resendOtp()">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Resend OTP
+          </ion-button>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          type="submit"
+          size="large"
+          [disabled]="otpForm.invalid">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Verify & Login
+        </ion-button>
+      </form>
+    </div>
+
+    <!-- Trust Indicators -->
+    <div class="trust-section">
+      <div class="trust-item">
+        <ion-icon name="shield-checkmark-outline" color="success"></ion-icon>
+        <small>Secure Login</small>
+      </div>
+      <div class="trust-item">
+        <ion-icon name="lock-closed-outline" color="success"></ion-icon>
+        <small>Privacy Protected</small>
+      </div>
+      <div class="trust-item">
+        <ion-icon name="business-outline" color="success"></ion-icon>
+        <small>Verified Vendors</small>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

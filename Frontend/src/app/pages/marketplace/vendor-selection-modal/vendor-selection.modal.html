@@ -1,0 +1,87 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="close()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="modal-title">
+        <span class="product-emoji-header">{{product.emoji || '🥬'}}</span>
+        <span>{{product.name}}</span>
+      </div>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="modal-content">
+    <div class="product-header">
+      <div class="product-icon">
+        <ion-icon [name]="product.category === 'Vegetables' ? 'leaf-outline' : 
+                          product.category === 'Fruits' ? 'nutrition-outline' : 
+                          product.category === 'Grains' ? 'fast-food-outline' : 'cube-outline'"></ion-icon>
+      </div>
+      <div class="product-details">
+        <h2>{{product.name}}</h2>
+        <div class="unit-info-header">
+          <ion-chip color="primary">
+            <ion-icon name="cube-outline"></ion-icon>
+            <ion-label>{{product.unit}}</ion-label>
+          </ion-chip>
+          <p class="unit-weight">{{product.unitWeight}}</p>
+        </div>
+        <p class="category">
+          <ion-icon name="pricetag-outline"></ion-icon>
+          {{product.category}}
+        </p>
+        <p class="vendors-count">
+          {{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}} available
+        </p>
+      </div>
+    </div>
+
+    <div class="vendors-section">
+      <h3>Select Vendor</h3>
+      
+      <div *ngFor="let vendor of product.vendors; let i = index" 
+           class="vendor-card"
+           [class.best-price]="i === 0"
+           (click)="selectVendor(vendor)"
+           *ngIf="vendor.quantity > 0">
+        
+        <div class="best-badge" *ngIf="i === 0">
+          <ion-icon name="trending-down"></ion-icon>
+          Best Price
+        </div>
+
+        <div class="vendor-info">
+          <div class="vendor-left">
+            <div class="vendor-name">
+              <ion-icon name="storefront"></ion-icon>
+              <span>{{vendor.vendorName}}</span>
+              <ion-badge [color]="vendor.grade === 'A' ? 'success' : 'warning'" class="grade-badge">Grade {{vendor.grade}}</ion-badge>
+            </div>
+            <div class="vendor-rating">
+              <ion-icon name="star" color="warning"></ion-icon>
+              <span>{{vendor.vendorRating}}</span>
+              <span class="rating-label">({{vendor.vendorRating >= 4.5 ? 'Excellent' : vendor.vendorRating >= 4.0 ? 'Good' : 'Average'}})</span>
+            </div>
+          </div>
+
+          <div class="vendor-right">
+            <div class="price">{{vendor.pricePerUnit}}</div>
+            <div class="stock">
+              <ion-icon name="cube" color="success"></ion-icon>
+              <span>{{vendor.quantity}} {{product.unit}}s</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="select-arrow">
+          <ion-icon name="chevron-forward"></ion-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

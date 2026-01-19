@@ -1,0 +1,148 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/auth/login"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Register</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="register-container">
+    
+    <!-- Header -->
+    <div class="header-section">
+      <h1>Create Account</h1>
+      <p>Join Mandi App and start trading</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="register()">
+      
+      <!-- Role Selection -->
+      <div class="section">
+        <h3>Select Your Role</h3>
+        <div class="role-cards">
+          <div 
+            *ngFor="let role of roles" 
+            class="role-card"
+            [class.selected]="registerForm.get('role')?.value == role.value"
+            (click)="selectRole(role.value)">
+            <ion-icon [name]="role.icon"></ion-icon>
+            <h4>{{role.label}}</h4>
+            <p>{{role.description}}</p>
+            <div class="check-icon" *ngIf="registerForm.get('role')?.value == role.value">
+              <ion-icon name="checkmark-circle" color="primary"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Details -->
+      <div class="section">
+        <h3>Personal Details</h3>
+        
+        <ion-card class="input-card">
+          <ion-item lines="none">
+            <ion-label position="floating">Full Name *</ion-label>
+            <ion-input 
+              formControlName="fullName"
+              type="text"
+              placeholder="Enter your full name">
+            </ion-input>
+          </ion-item>
+          <div class="validation-msg" *ngIf="registerForm.get('fullName')?.touched && registerForm.get('fullName')?.invalid">
+            <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+            <span>Name must be at least 3 characters</span>
+          </div>
+        </ion-card>
+
+        <ion-card class="input-card">
+          <ion-item lines="none">
+            <ion-label position="floating">Mobile Number *</ion-label>
+            <ion-input 
+              formControlName="phone"
+              type="tel"
+              inputmode="numeric"
+              maxlength="10"
+              placeholder="10-digit mobile number">
+            </ion-input>
+          </ion-item>
+          <div class="validation-msg" *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid">
+            <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+            <span>Enter valid 10-digit mobile number</span>
+          </div>
+        </ion-card>
+
+        <ion-card class="input-card">
+          <ion-item lines="none">
+            <ion-label position="floating">OTP *</ion-label>
+            <ion-input 
+              formControlName="otp"
+              type="tel"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="6-digit OTP">
+            </ion-input>
+          </ion-item>
+          <div class="validation-msg" *ngIf="registerForm.get('otp')?.touched && registerForm.get('otp')?.invalid">
+            <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+            <span>Enter valid 6-digit OTP</span>
+          </div>
+        </ion-card>
+      </div>
+
+      <!-- Business Details (for Vendors) -->
+      <div class="section" *ngIf="registerForm.get('role')?.value == 'Vendor'">
+        <h3>Business Details</h3>
+        
+        <ion-card class="input-card">
+          <ion-item lines="none">
+            <ion-label position="floating">Company Name *</ion-label>
+            <ion-input 
+              formControlName="companyName"
+              type="text"
+              placeholder="Your business name">
+            </ion-input>
+          </ion-item>
+          <div class="validation-msg" *ngIf="registerForm.get('companyName')?.touched && registerForm.get('companyName')?.invalid">
+            <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+            <span>Company name is required for vendors</span>
+          </div>
+        </ion-card>
+
+        <ion-card class="input-card">
+          <ion-item lines="none">
+            <ion-label position="floating">GST Number *</ion-label>
+            <ion-input 
+              formControlName="gstNumber"
+              type="text"
+              placeholder="15-digit GST number">
+            </ion-input>
+          </ion-item>
+          <div class="validation-msg" *ngIf="registerForm.get('gstNumber')?.touched && registerForm.get('gstNumber')?.invalid">
+            <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+            <span>Enter valid 15-digit GST number</span>
+          </div>
+        </ion-card>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="submit-section">
+        <ion-button 
+          expand="block" 
+          type="submit"
+          size="large"
+          [disabled]="registerForm.invalid">
+          <ion-icon name="person-add-outline" slot="start"></ion-icon>
+          Create Account
+        </ion-button>
+
+        <div class="login-link">
+          <p>Already have an account? <a (click)="goToLogin()">Login here</a></p>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+</ion-content>

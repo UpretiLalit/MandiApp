@@ -1,0 +1,89 @@
+# Backend Services
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: mandi-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    networks:
+      - mandi-network
+
+  # Identity API
+  identity-api:
+    build:
+      context: ./Backend/Services/Identity.API
+      dockerfile: Dockerfile
+    container_name: mandi-identity-api
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=MandiIdentityDB;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+    networks:
+      - mandi-network
+
+  # Marketplace API
+  marketplace-api:
+    build:
+      context: ./Backend/Services/Marketplace.API
+      dockerfile: Dockerfile
+    container_name: mandi-marketplace-api
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=MandiMarketplaceDB;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+    networks:
+      - mandi-network
+
+  # Ordering API
+  ordering-api:
+    build:
+      context: ./Backend/Services/Ordering.API
+      dockerfile: Dockerfile
+    container_name: mandi-ordering-api
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=MandiOrderingDB;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+    networks:
+      - mandi-network
+
+  # Logistics Hub
+  logistics-hub:
+    build:
+      context: ./Backend/Services/Logistics.Hub
+      dockerfile: Dockerfile
+    container_name: mandi-logistics-hub
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=MandiLogisticsDB;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+    networks:
+      - mandi-network
+
+volumes:
+  postgres-data:
+
+networks:
+  mandi-network:
+    driver: bridge

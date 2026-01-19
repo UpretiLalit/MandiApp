@@ -1,0 +1,22 @@
+namespace Marketplace.API.Models;
+
+public class Product
+{
+    public int Id { get; set; }
+    public string VendorId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Unit { get; set; } = string.Empty; // kg, quintal, ton
+    public decimal CurrentPrice { get; set; }
+    public int AvailableQuantity { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? Emoji { get; set; } // 🍅, 🧅, 🥔, etc.
+    public string? Grade { get; set; } // A, B, Premium
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public ICollection<PriceHistory> PriceHistory { get; set; } = new List<PriceHistory>();
+}

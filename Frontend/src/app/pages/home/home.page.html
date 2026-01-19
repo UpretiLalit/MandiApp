@@ -1,0 +1,111 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Mandi App</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">
+        <ion-icon name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="home-container">
+    <!-- Welcome Card -->
+    <ion-card class="welcome-card">
+      <ion-card-header>
+        <ion-card-title>Welcome, {{userName}}</ion-card-title>
+        <ion-card-subtitle>{{userRole}}</ion-card-subtitle>
+      </ion-card-header>
+    </ion-card>
+
+    <!-- Role-based Navigation Cards -->
+    <div class="nav-cards">
+      
+      <!-- Buyer Dashboard -->
+      <ion-card *ngIf="userRole == 'Buyer'" class="nav-card" (click)="router.navigate(['/marketplace'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="cart-outline" class="big-icon" color="primary"></ion-icon>
+          <h2>Daily Price List</h2>
+          <p>Browse today's products</p>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="userRole == 'Buyer'" class="nav-card" (click)="router.navigate(['/cart'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="basket-outline" class="big-icon" color="success"></ion-icon>
+          <h2>My Cart</h2>
+          <p>Review & checkout</p>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="userRole == 'Buyer'" class="nav-card" (click)="router.navigate(['/orders'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="receipt-outline" class="big-icon" color="tertiary"></ion-icon>
+          <h2>My Orders</h2>
+          <p>Track deliveries</p>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Vendor Dashboard -->
+      <ion-card *ngIf="userRole == 'Vendor'" class="nav-card" (click)="router.navigate(['/vendor/products'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="cube-outline" class="big-icon" color="primary"></ion-icon>
+          <h2>My Products</h2>
+          <p>Manage inventory</p>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="userRole == 'Vendor'" class="nav-card" (click)="router.navigate(['/vendor/quick-update'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="pricetag-outline" class="big-icon" color="warning"></ion-icon>
+          <h2>Update Prices</h2>
+          <p>Quick price slider</p>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="userRole == 'Vendor'" class="nav-card" (click)="router.navigate(['/vendor/orders'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="list-outline" class="big-icon" color="success"></ion-icon>
+          <h2>Orders</h2>
+          <p>Manage orders</p>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Transporter Dashboard -->
+      <ion-card *ngIf="userRole == 'Transporter'" class="nav-card" (click)="router.navigate(['/transporter/deliveries'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="car-outline" class="big-icon" color="primary"></ion-icon>
+          <h2>My Deliveries</h2>
+          <p>Active pickups</p>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="userRole == 'Transporter'" class="nav-card" (click)="router.navigate(['/transporter/map'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="map-outline" class="big-icon" color="danger"></ion-icon>
+          <h2>Route Map</h2>
+          <p>Navigate to mandi</p>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="userRole == 'Transporter'" class="nav-card" (click)="router.navigate(['/transporter/scan'])">
+        <ion-card-content class="card-content">
+          <ion-icon name="qr-code-outline" class="big-icon" color="tertiary"></ion-icon>
+          <h2>Scan QR</h2>
+          <p>Confirm pickup/delivery</p>
+        </ion-card-content>
+      </ion-card>
+
+    </div>
+
+    <!-- Profile Card -->
+    <ion-card class="profile-card" (click)="router.navigate(['/profile'])">
+      <ion-card-content>
+        <ion-icon name="person-outline" color="medium"></ion-icon>
+        <span>My Profile</span>
+        <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

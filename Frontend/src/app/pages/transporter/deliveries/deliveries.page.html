@@ -1,0 +1,293 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>My Deliveries</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="router.navigate(['/transporter/scan'])">
+        <ion-icon name="qr-code-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Status Filter -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="selectedStatus" (ionChange)="filterByStatus(($event.detail.value || 'all').toString())" scrollable>
+      <ion-segment-button *ngFor="let filter of statusFilters" [value]="filter.value">
+        <ion-label>
+          <ion-icon [name]="filter.icon"></ion-icon>
+          <span>{{filter.label}}</span>
+        </ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="deliveries-container">
+    
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading deliveries...</p>
+    </div>
+
+    <!-- Empty State -->
+    <ion-card *ngIf="!loading && filteredDeliveries.length == 0" class="empty-state">
+      <ion-card-content>
+        <ion-icon name="cube-outline" color="medium"></ion-icon>
+        <h3>No Deliveries</h3>
+        <p>No deliveries found for the selected filter</p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Delivery Cards -->
+    <ion-card *ngFor="let delivery of filteredDeliveries" class="delivery-card">
+      
+      <!-- Card Header -->
+      <div class="card-header" [class]="'status-' + delivery.status.toLowerCase()">
+        <div class="order-info">
+          <h3>{{delivery.orderNumber}}</h3>
+          <ion-badge [color]="getPriorityColor(delivery.priority)">
+            {{delivery.priority}}
+          </ion-badge>
+        </div>
+        <ion-badge [color]="getStatusColor(delivery.status)" class="status-badge">
+          {{delivery.status}}
+        </ion-badge>
+      </div>
+
+      <ion-card-content>
+        
+        <!-- Pickup Section -->
+        <div class="location-section pickup">
+          <div class="location-icon">
+            <ion-icon name="location" color="success"></ion-icon>
+          </div>
+          <div class="location-details">
+            <small>Pickup From</small>
+            <p>{{delivery.pickupAddress}}</p>
+            <div class="contact-info">
+              <ion-icon name="call-outline"></ion-icon>
+              <span>{{delivery.pickupContact}}</span>
+              <ion-button 
+                size="small" 
+                fill="clear" 
+                (click)="callContact(delivery.pickupContact)">
+                Call
+              </ion-button>
+            </div>
+            <div *ngIf="delivery.pickupTime" class="time-stamp">
+              <ion-icon name="time-outline" color="success"></ion-icon>
+              <span>Picked up at {{delivery.pickupTime}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Route Line -->
+        <div class="route-line">
+          <div class="dashed-line"></div>
+          <div class="route-info">
+            <ion-icon name="navigate-outline" color="primary"></ion-icon>
+            <span>{{delivery.distance}} • {{delivery.estimatedTime}}</span>
+          </div>
+        </div>
+
+        <!-- Delivery Section -->
+        <div class="location-section delivery">
+          <div class="location-icon">
+            <ion-icon name="flag" color="danger"></ion-icon>
+          </div>
+          <div class="location-details">
+            <small>Deliver To</small>
+            <p>{{delivery.deliveryAddress}}</p>
+            <div class="contact-info">
+              <ion-icon name="call-outline"></ion-icon>
+              <span>{{delivery.deliveryContact}}</span>
+              <ion-button 
+                size="small" 
+                fill="clear" 
+                (click)="callContact(delivery.deliveryContact)">
+                Call
+              </ion-button>
+            </div>
+            <div *ngIf="delivery.deliveryTime" class="time-stamp">
+              <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+              <span>Delivered at {{delivery.deliveryTime}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Count -->
+        <div class="items-info">
+          <ion-icon name="cube-outline" color="medium"></ion-icon>
+          <span>{{delivery.items}} items</span>
+        </div>
+
+        <!-- Load Details -->
+        <div class="load-details">
+          <h4>Load Information</h4>
+          <div class="load-grid">
+            <div class="load-item">
+              <ion-icon name="scale-outline" color="primary"></ion-icon>
+              <div>
+                <small>Weight</small>
+                <strong>{{delivery.totalWeight}} kg</strong>
+              </div>
+            </div>
+            <div class="load-item">
+              <ion-icon name="cube-outline" color="primary"></ion-icon>
+              <div>
+                <small>Volume</small>
+                <strong>{{delivery.totalVolume}} m³</strong>
+              </div>
+            </div>
+            <div class="load-item">
+              <ion-icon name="car-outline" color="success"></ion-icon>
+              <div>
+                <small>Vehicle</small>
+                <strong>{{delivery.vehicleRequired}}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Earnings -->
+        <div class="earnings-info">
+          <h4>Earnings</h4>
+          <div class="earnings-breakdown">
+            <div class="earnings-row">
+              <span>Base Payment</span>
+              <span>₹{{delivery.basePayment}}</span>
+            </div>
+            <div class="earnings-row">
+              <span>Fuel Surcharge</span>
+              <span class="surcharge">+₹{{delivery.fuelSurcharge}}</span>
+            </div>
+            <div class="earnings-row total">
+              <strong>Total Earning</strong>
+              <strong class="amount">₹{{delivery.totalEarning}}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vendors List -->
+        <div class="vendors-list" *ngIf="delivery.vendors && delivery.vendors.length > 0">
+          <h4>Pickup Stops ({{delivery.vendors.length}})</h4>
+          <div class="vendor-item" *ngFor="let vendor of delivery.vendors; let i = index">
+            <div class="stop-number">{{i + 1}}</div>
+            <div class="vendor-details">
+              <strong>{{vendor.name}}</strong>
+              <p>{{vendor.address}}</p>
+              <small>{{vendor.itemCount}} items</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="delivery-actions">
+          
+          <!-- Assigned Status -->
+          <ng-container *ngIf="delivery.status == 'Assigned'">
+            <ion-badge color="warning" class="info-badge">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              All vendors ready
+            </ion-badge>
+            <ion-button 
+              expand="block" 
+              color="success"
+              (click)="acceptDelivery(delivery)">
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              Accept Delivery
+            </ion-button>
+          </ng-container>
+          
+          <!-- Pending Status - Pickup -->
+          <ng-container *ngIf="delivery.status == 'Pending'">
+            <div class="vendor-checklist">
+              <h4>Pickup Checklist:</h4>
+              <div *ngFor="let vendor of delivery.vendors; let i = index" class="vendor-check-item">
+                <ion-icon 
+                  [name]="vendor.isPickedUp ? 'checkmark-circle' : 'ellipse-outline'" 
+                  [color]="vendor.isPickedUp ? 'success' : 'medium'">
+                </ion-icon>
+                <span>{{i + 1}}. {{vendor.name}}</span>
+              </div>
+            </div>
+            <ion-button 
+              expand="block" 
+              color="primary"
+              (click)="scanQR(delivery)">
+              <ion-icon name="qr-code-outline" slot="start"></ion-icon>
+              Scan at Vendor Stop
+            </ion-button>
+            <ion-button 
+              expand="block" 
+              fill="outline"
+              (click)="viewOnMap(delivery)">
+              <ion-icon name="map-outline" slot="start"></ion-icon>
+              View Route ({{delivery.vendors.length}} stops)
+            </ion-button>
+            <ion-button 
+              expand="block" 
+              color="success"
+              [disabled]="!allVendorsPickedUp(delivery)"
+              (click)="confirmLoading(delivery)">
+              <ion-icon name="cube-outline" slot="start"></ion-icon>
+              Confirm All Loaded
+            </ion-button>
+          </ng-container>
+
+          <!-- PickedUp Status Actions -->
+          <ng-container *ngIf="delivery.status == 'PickedUp'">
+            <ion-button 
+              expand="block" 
+              color="primary"
+              (click)="viewOnMap(delivery)">
+              <ion-icon name="navigate-outline" slot="start"></ion-icon>
+              Start Navigation
+            </ion-button>
+          </ng-container>
+
+          <!-- InTransit Status Actions -->
+          <ng-container *ngIf="delivery.status == 'InTransit'">
+            <ion-button 
+              expand="block" 
+              color="primary"
+              (click)="viewOnMap(delivery)">
+              <ion-icon name="navigate-outline" slot="start"></ion-icon>
+              Navigate to Delivery
+            </ion-button>
+          </ng-container>
+
+          <!-- Delivered Status Actions -->
+          <ng-container *ngIf="delivery.status == 'Delivered'">
+            <ion-button 
+              expand="block" 
+              fill="clear"
+              color="medium"
+              disabled>
+              <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+              Completed
+            </ion-button>
+          </ng-container>
+
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>
+
+<!-- Floating Action Button -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab-button color="primary" (click)="router.navigate(['/transporter/map'])">
+    <ion-icon name="map"></ion-icon>
+  </ion-fab-button>
+</ion-fab>

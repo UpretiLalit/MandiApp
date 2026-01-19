@@ -1,0 +1,20 @@
+{
+  "appId": "com.mandiapp.mobile",
+  "appName": "Mandi App",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "Camera": {
+      "permissions": ["camera", "photos"]
+    },
+    "Geolocation": {
+      "permissions": ["location"]
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

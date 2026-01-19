@@ -1,0 +1,61 @@
+/**
+ * Main Theme File
+ * Import this once in global.scss
+ */
+
+// 1. Design Tokens (Variables)
+@import './tokens.scss';
+
+// 2. Utility Classes
+@import './utilities.scss';
+
+// 3. Component Patterns
+@import './components.scss';
+
+// ==================== GLOBAL RESETS ====================
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-primary);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  line-height: var(--leading-normal);
+}
+
+// ==================== IONIC OVERRIDES ====================
+ion-content {
+  --background: var(--bg-secondary);
+}
+
+ion-card {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  margin: var(--space-md);
+}
+
+ion-button {
+  --border-radius: var(--radius-md);
+  text-transform: none;
+  font-weight: var(--font-semibold);
+}
+
+ion-badge {
+  border-radius: var(--radius-full);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+}
+
+// ==================== SMOOTH SCROLLING ====================
+html {
+  scroll-behavior: smooth;
+}
+
+// ==================== FOCUS STYLES ====================
+*:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}

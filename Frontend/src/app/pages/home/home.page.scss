@@ -1,0 +1,67 @@
+.home-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.welcome-card {
+  margin-bottom: 20px;
+  
+  ion-card-title {
+    font-size: 24px;
+    font-weight: bold;
+  }
+}
+
+.nav-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.nav-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  .card-content {
+    text-align: center;
+    padding: 20px;
+    
+    .big-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 8px 0;
+    }
+    
+    p {
+      font-size: 13px;
+      color: var(--ion-color-medium);
+      margin: 0;
+    }
+  }
+}
+
+.profile-card {
+  ion-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    cursor: pointer;
+    
+    span {
+      flex: 1;
+      margin-left: 12px;
+      font-weight: 500;
+    }
+  }
+}

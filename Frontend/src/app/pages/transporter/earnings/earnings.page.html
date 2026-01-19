@@ -1,0 +1,191 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Earnings Tracker</ion-title>
+  </ion-toolbar>
+  
+  <!-- Period Selector -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="selectedPeriod" (ionChange)="changePeriod(selectedPeriod)">
+      <ion-segment-button value="daily">
+        <ion-label>Daily</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="weekly">
+        <ion-label>Weekly</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="monthly">
+        <ion-label>Monthly</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="earnings-container">
+    
+    <!-- Today's Summary -->
+    <ion-card class="summary-card">
+      <ion-card-content>
+        <div class="summary-header">
+          <h2>Today's Summary</h2>
+          <ion-badge color="success">Active</ion-badge>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-box">
+            <ion-icon name="checkmark-done-outline" color="success"></ion-icon>
+            <div>
+              <strong>{{todayStats.deliveriesCompleted}}</strong>
+              <small>Deliveries</small>
+            </div>
+          </div>
+          
+          <div class="stat-box">
+            <ion-icon name="navigate-outline" color="primary"></ion-icon>
+            <div>
+              <strong>{{todayStats.totalDistance}} km</strong>
+              <small>Distance</small>
+            </div>
+          </div>
+          
+          <div class="stat-box">
+            <ion-icon name="cash-outline" color="warning"></ion-icon>
+            <div>
+              <strong>₹{{todayStats.totalEarnings}}</strong>
+              <small>Earnings</small>
+            </div>
+          </div>
+          
+          <div class="stat-box">
+            <ion-icon name="trending-up-outline" color="tertiary"></ion-icon>
+            <div>
+              <strong>₹{{todayStats.avgPerDelivery}}</strong>
+              <small>Avg/Delivery</small>
+            </div>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+      <div class="stat-card weekly">
+        <div class="stat-icon">
+          <ion-icon name="calendar-outline"></ion-icon>
+        </div>
+        <div class="stat-info">
+          <small>This Week</small>
+          <strong>₹{{weeklyTotal}}</strong>
+        </div>
+      </div>
+      
+      <div class="stat-card monthly">
+        <div class="stat-icon">
+          <ion-icon name="calendar-number-outline"></ion-icon>
+        </div>
+        <div class="stat-info">
+          <small>This Month</small>
+          <strong>₹{{monthlyTotal}}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple Chart -->
+    <ion-card class="chart-card">
+      <ion-card-content>
+        <h3>Earnings Trend (Last 7 Days)</h3>
+        <div class="simple-chart">
+          <div *ngFor="let value of chartValues; let i = index" class="chart-bar">
+            <div class="bar" [style.height.%]="(value / 3000) * 100">
+              <span class="value">₹{{value}}</span>
+            </div>
+            <small>{{chartLabels[i]}}</small>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Earnings History -->
+    <ion-card class="history-card">
+      <div class="card-header">
+        <h3>Earnings History</h3>
+        <ion-badge color="medium">{{getEarningsForPeriod().length}} records</ion-badge>
+      </div>
+      
+      <div class="earnings-list">
+        <div *ngFor="let earning of getEarningsForPeriod()" class="earning-item" (click)="viewDetails(earning)">
+          
+          <div class="earning-date">
+            <ion-icon name="calendar-clear-outline" color="primary"></ion-icon>
+            <div>
+              <strong>{{getDateLabel(earning.date)}}</strong>
+              <small>{{earning.deliveries}} deliveries</small>
+            </div>
+          </div>
+          
+          <div class="earning-breakdown">
+            <div class="breakdown-row">
+              <span>Base Payment</span>
+              <span>₹{{earning.baseAmount}}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Fuel Surcharge</span>
+              <span class="surcharge">+₹{{earning.fuelSurcharge}}</span>
+            </div>
+            <div class="breakdown-row" *ngIf="earning.bonus > 0">
+              <span>Bonus</span>
+              <span class="bonus">+₹{{earning.bonus}}</span>
+            </div>
+          </div>
+          
+          <div class="earning-total">
+            <strong>₹{{earning.totalEarnings}}</strong>
+            <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
+          </div>
+          
+        </div>
+      </div>
+    </ion-card>
+
+    <!-- Payout Button -->
+    <ion-card class="payout-card">
+      <ion-card-content>
+        <div class="payout-content">
+          <div class="payout-info">
+            <ion-icon name="wallet-outline" color="success"></ion-icon>
+            <div>
+              <h4>Available for Payout</h4>
+              <p class="payout-amount">₹{{weeklyTotal}}</p>
+              <small>Includes this week's earnings</small>
+            </div>
+          </div>
+          <ion-button expand="block" color="success" (click)="requestPayout()">
+            <ion-icon name="arrow-forward-circle-outline" slot="start"></ion-icon>
+            Request Payout
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Payment Methods Info -->
+    <ion-card class="info-card">
+      <ion-card-content>
+        <div class="info-content">
+          <ion-icon name="information-circle-outline" color="primary"></ion-icon>
+          <div>
+            <h4>Payment Information</h4>
+            <ul>
+              <li>Payouts processed within 24 hours</li>
+              <li>Bank transfer or UPI supported</li>
+              <li>Minimum payout: ₹500</li>
+              <li>Fuel surcharge: 12% of base payment</li>
+            </ul>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>

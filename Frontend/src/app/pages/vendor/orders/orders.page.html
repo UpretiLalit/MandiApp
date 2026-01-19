@@ -1,0 +1,229 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Order Dashboard</ion-title>
+  </ion-toolbar>
+  
+  <!-- Statistics Bar -->
+  <ion-toolbar>
+    <div class="stats-container">
+      <div class="stat-item">
+        <ion-icon name="time-outline" color="warning"></ion-icon>
+        <div>
+          <small>Pending</small>
+          <strong>{{pendingCount}}</strong>
+        </div>
+      </div>
+      <div class="stat-item">
+        <ion-icon name="checkmark-done-outline" color="success"></ion-icon>
+        <div>
+          <small>Today</small>
+          <strong>{{completedToday}}</strong>
+        </div>
+      </div>
+      <div class="stat-item">
+        <ion-icon name="cash-outline" color="primary"></ion-icon>
+        <div>
+          <small>Sales</small>
+          <strong>₹{{todaySales}}</strong>
+        </div>
+      </div>
+    </div>
+  </ion-toolbar>
+  
+  <!-- Tab Selector -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="changeTab(selectedTab)">
+      <ion-segment-button value="pending">
+        <ion-label>Pending Pickups</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="history">
+        <ion-label>History</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="orders-container">
+    
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading orders...</p>
+    </div>
+
+    <!-- Empty State -->
+    <ion-card *ngIf="!loading && filteredOrders.length == 0" class="empty-state">
+      <ion-card-content>
+        <ion-icon name="receipt-outline" color="medium"></ion-icon>
+        <h3>No Orders</h3>
+        <p *ngIf="selectedTab == 'pending'">No pending orders at the moment</p>
+        <p *ngIf="selectedTab == 'history'">No order history available</p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Order Cards -->
+    <ion-card *ngFor="let order of filteredOrders" class="order-card">
+      
+      <!-- Order Header -->
+      <div class="order-header" [class]="'status-' + order.status.toLowerCase()">
+        <div>
+          <h3>{{order.orderNumber}}</h3>
+          <small>{{order.orderDate}}</small>
+        </div>
+        <ion-badge [color]="getStatusColor(order.status)">
+          {{order.status}}
+        </ion-badge>
+      </div>
+
+      <ion-card-content>
+        
+        <!-- Buyer Info -->
+        <div class="buyer-section">
+          <div class="buyer-info">
+            <ion-icon name="person-circle" color="primary"></ion-icon>
+            <div>
+              <strong>{{order.buyerName}}</strong>
+              <p>{{order.buyerContact}}</p>
+            </div>
+          </div>
+          <ion-button 
+            size="small" 
+            fill="outline"
+            (click)="callBuyer(order.buyerContact)">
+            <ion-icon name="call-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Delivery Address -->
+        <div class="info-row">
+          <ion-icon name="location-outline" color="medium"></ion-icon>
+          <p>{{order.deliveryAddress}}</p>
+        </div>
+
+        <!-- Order Items -->
+        <div class="items-section">
+          <h4>Items ({{order.items.length}})</h4>
+          <div class="item-list">
+            <div *ngFor="let item of order.items" class="item-row">
+              <span class="item-name">{{item.productName}}</span>
+              <span class="item-qty">{{item.quantity}} {{item.unit}}</span>
+              <span class="item-price">₹{{item.total}}</span>
+            </div>
+          </div>
+          <div class="total-row">
+            <strong>Total Amount</strong>
+            <strong class="amount">₹{{order.totalAmount}}</strong>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          
+          <!-- Pending Status -->
+          <ng-container *ngIf="order.status == 'Pending'">
+            <ion-button 
+              expand="block" 
+              color="success"
+              (click)="acceptOrder(order)">
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              Accept Order
+            </ion-button>
+          </ng-container>
+
+          <!-- Processing Status -->
+          <ng-container *ngIf="order.status == 'Processing'">
+            <ion-button 
+              expand="block" 
+              color="primary"
+              (click)="markReady(order)">
+              <ion-icon name="cube-outline" slot="start"></ion-icon>
+              Mark as Ready
+            </ion-button>
+          </ng-container>
+
+          <!-- Ready Status - Show QR -->
+          <ng-container *ngIf="order.status == 'Ready'">
+            <div class="qr-preview" (click)="viewQRCode(order)">
+              <qr-code 
+                [qrdata]="order.pickupQRCode || ''" 
+                [width]="100" 
+                [errorCorrectionLevel]="'M'">
+              </qr-code>
+              <div class="qr-overlay">
+                <ion-icon name="expand-outline"></ion-icon>
+                <span>Tap to enlarge</span>
+              </div>
+            </div>
+            <ion-button 
+              expand="block" 
+              fill="outline"
+              (click)="viewQRCode(order)">
+              <ion-icon name="qr-code-outline" slot="start"></ion-icon>
+              View Pickup QR Code
+            </ion-button>
+          </ng-container>
+
+          <!-- Completed Status -->
+          <ng-container *ngIf="order.status == 'Completed'">
+            <div class="completed-info">
+              <ion-icon name="checkmark-done-circle" color="success"></ion-icon>
+              <span>Picked up at {{order.pickupTime}}</span>
+            </div>
+          </ng-container>
+
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+
+  <!-- QR Code Modal -->
+  <div class="modal-overlay" *ngIf="showQRModal" (click)="closeQRModal()">
+    <div class="qr-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Pickup QR Code</h2>
+        <ion-button fill="clear" (click)="closeQRModal()">
+          <ion-icon name="close" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+      
+      <div class="qr-content" *ngIf="selectedOrder">
+        <div class="qr-info">
+          <h3>{{selectedOrder.orderNumber}}</h3>
+          <p>Show this QR code to the transporter for pickup verification</p>
+        </div>
+        
+        <div class="qr-display">
+          <qr-code 
+            [qrdata]="selectedOrder.pickupQRCode || ''" 
+            [width]="280" 
+            [errorCorrectionLevel]="'M'">
+          </qr-code>
+        </div>
+        
+        <div class="qr-code-text">
+          <small>QR Code:</small>
+          <code>{{selectedOrder.pickupQRCode}}</code>
+        </div>
+        
+        <ion-button 
+          expand="block" 
+          color="primary"
+          (click)="downloadQR()">
+          <ion-icon name="download-outline" slot="start"></ion-icon>
+          Download QR Code
+        </ion-button>
+      </div>
+    </div>
+  </div>
+
+</ion-content>

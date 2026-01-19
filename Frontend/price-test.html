@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Ticker Simulator - Mandi App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .product-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #28a745;
+        }
+        .product-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .product-emoji {
+            font-size: 2rem;
+        }
+        .product-info h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        .product-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        .btn-down {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        .btn-down:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        .btn-up {
+            background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+            color: white;
+        }
+        .btn-up:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        .btn-random {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+        .btn-random:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #e9ecef;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .status-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+        .status-success {
+            border-left-color: #28a745;
+            color: #28a745;
+        }
+        .status-error {
+            border-left-color: #dc3545;
+            color: #dc3545;
+        }
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Stock Market Price Ticker Simulator</h1>
+        <p class="subtitle">Simulate real-time price changes to see tickers in action</p>
+        
+        <div class="instructions">
+            <h4>📋 How to Use:</h4>
+            <ol>
+                <li>Make sure your backend is running on <code>http://localhost:5002</code></li>
+                <li>Open the Mandi App marketplace in another tab</li>
+                <li>Click buttons below to simulate price changes</li>
+                <li>Watch green ⬇️ (price drop) or red ⬆️ (price increase) arrows appear!</li>
+            </ol>
+        </div>
+
+        <div id="products"></div>
+
+        <div class="status" id="status">
+            <strong>Status Log:</strong> Waiting for actions...
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5002/api/pricetest';
+        
+        const products = [
+            { id: 1, name: 'Fresh Tomatoes', emoji: '🍅', vendorId: '1', currentPrice: 40 },
+            { id: 2, name: 'Fresh Tomatoes', emoji: '🍅', vendorId: '2', currentPrice: 35 },
+            { id: 3, name: 'Onions', emoji: '🧅', vendorId: '1', currentPrice: 30 },
+            { id: 4, name: 'Onions', emoji: '🧅', vendorId: '2', currentPrice: 28 },
+            { id: 5, name: 'Potatoes', emoji: '🥔', vendorId: '1', currentPrice: 25 },
+            { id: 6, name: 'Potatoes', emoji: '🥔', vendorId: '2', currentPrice: 22 }
+        ];
+
+        function renderProducts() {
+            const container = document.getElementById('products');
+            container.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <div class="product-header">
+                        <span class="product-emoji">${product.emoji}</span>
+                        <div class="product-info">
+                            <h3>${product.name}</h3>
+                            <p>Vendor ${product.vendorId} • Current: ₹${product.currentPrice}/kg</p>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-down" onclick="changePrice(${product.id}, '${product.vendorId}', -5)">
+                            ⬇️ Drop ₹5
+                        </button>
+                        <button class="btn-up" onclick="changePrice(${product.id}, '${product.vendorId}', 5)">
+                            ⬆️ Increase ₹5
+                        </button>
+                        <button class="btn-random" onclick="changePrice(${product.id}, '${product.vendorId}', 'random')">
+                            🎲 Random Change
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function changePrice(productId, vendorId, change) {
+            try {
+                const product = products.find(p => p.id == productId && p.vendorId == vendorId);
+                let newPrice;
+                
+                if (change === 'random') {
+                    const randomChange = Math.floor(Math.random() * 20) - 10; // -10 to +10
+                    newPrice = Math.max(10, product.currentPrice + randomChange);
+                } else {
+                    newPrice = Math.max(10, product.currentPrice + change);
+                }
+
+                const response = await fetch(`${API_URL}/update-price`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        productId: productId.toString(),
+                        vendorId: vendorId,
+                        newPrice: newPrice
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const oldPrice = product.currentPrice;
+                    product.currentPrice = newPrice;
+                    const direction = newPrice > oldPrice ? '⬆️ UP' : '⬇️ DOWN';
+                    const color = newPrice > oldPrice ? 'red' : 'green';
+                    
+                    addStatus(`✅ ${product.name} (Vendor ${vendorId}): ${direction} ₹${oldPrice} → ₹${newPrice}`, 'success');
+                    renderProducts();
+                } else {
+                    addStatus(`❌ Failed to update price: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function addStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            const item = document.createElement('div');
+            item.className = `status-item status-${type}`;
+            item.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            statusDiv.appendChild(item);
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+
+        // Auto-random price changes every 10 seconds (optional)
+        let autoMode = false;
+        
+        function toggleAutoMode() {
+            autoMode = !autoMode;
+            if (autoMode) {
+                addStatus('🤖 Auto mode enabled - random price changes every 10 seconds', 'success');
+                autoInterval = setInterval(() => {
+                    const randomProduct = products[Math.floor(Math.random() * products.length)];
+                    changePrice(randomProduct.id, randomProduct.vendorId, 'random');
+                }, 10000);
+            } else {
+                addStatus('⏸️ Auto mode disabled', 'success');
+                clearInterval(autoInterval);
+            }
+        }
+
+        // Initialize
+        renderProducts();
+        addStatus('🚀 Ready! Click buttons to simulate price changes', 'success');
+    </script>
+</body>
+</html>

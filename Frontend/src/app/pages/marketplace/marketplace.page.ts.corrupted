@@ -1,0 +1,449 @@
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { ToastController, LoadingController } from '@ionic/angular';
+import { ProductService } from '@core/services/product.service';
+import { OrderService } from '@core/services/order.service';
+import { Product } from '@core/models/product.model';
+
+@Component({
+  selector: 'app-marketplace',
+  templateUrl: './marketplace.page.html',
+  styleUrls: ['./marketplace.page.scss'],
+})
+export class MarketplacePage implements OnInit {
+  products: Product[] = [];
+  filteredProducts: Product[] = [];
+  categories: string[] = ['All'];
+  selectedCategory: string = 'All';
+  searchTerm: string = '';
+  cartCount: number = 0;
+  sortBy: 'name' | 'price-low' | 'price-high' | 'rating' = 'name';
+
+  constructor(
+    private productService: ProductService,
+    private orderService: OrderService,
+    private router: Router,
+    private toastController: ToastController,
+    private loadingController: LoadingController
+  ) {}
+
+  ngOnInit() {
+    this.loadProducts();
+    this.loadCartCount();
+  }
+
+  async loadProducts() {
+    const loading = await this.loadingController.create({
+      message: 'Loading products...'
+    });
+    await loading.present();
+
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        this.products = products;
+        this.filteredProducts = products;
+        this.extractCategories();
+        loading.dismiss();
+      },
+      error: (error) => {
+        console.error('Error loading products:', error);
+        loading.dismiss();
+        
+        // Use mock data for development
+        this.products = this.getMockProducts();
+        this.filteredProducts = this.products;
+        this.extractCategories();
+        this.showToast('Using demo data - Backend not connected', 'warning');
+      }
+    });
+  }
+
+  getMockProducts(): Product[] {
+    return [
+      // Vegetables - Multiple vendors
+      {
+        id: 1,
+        name: 'Fresh Tomatoes',
+        category: 'Vegetables',
+        currentPrice: 40,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 500,
+        imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400',
+        description: 'Premium Grade A - Fresh red tomatoes',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 2,
+        name: 'Fresh Tomatoes',
+        category: 'Vegetables',
+        currentPrice: 35,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 300,
+        imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400',
+        description: 'Grade B - Fresh tomatoes, bulk pricing',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 3,
+        name: 'Onions',
+        category: 'Vegetables',
+        currentPrice: 30,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 800,
+        imageUrl: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=400',
+        description: 'Premium Grade A - Fresh onions',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 4,
+        name: 'Onions',
+        category: 'Vegetables',
+        currentPrice: 28,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 600,
+        imageUrl: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=400',
+        description: 'Grade A - Fresh onions',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 5,
+        name: 'Potatoes',
+        category: 'Vegetables',
+        currentPrice: 25,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 1000,
+        imageUrl: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400',
+        description: 'Grade A - Fresh potatoes',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 6,
+        name: 'Carrots',
+        category: 'Vegetables',
+        currentPrice: 35,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 300,
+        imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400',
+        description: 'Premium Grade A - Fresh carrots',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      
+      // Fruits - Multiple vendors and grades
+      {
+        id: 7,
+        name: 'Apples',
+        category: 'Fruits',
+        currentPrice: 120,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 400,
+        imageUrl: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400',
+        description: 'Premium Grade AAA - Kashmir Apples',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 8,
+        name: 'Apples',
+        category: 'Fruits',
+        currentPrice: 90,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 500,
+        imageUrl: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400',
+        description: 'Grade A - Fresh Apples',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 9,
+        name: 'Bananas',
+        category: 'Fruits',
+        currentPrice: 50,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 800,
+        imageUrl: 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400',
+        description: 'Premium Grade A - Fresh yellow bananas',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 10,
+        name: 'Bananas',
+        category: 'Fruits',
+        currentPrice: 45,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 600,
+        imageUrl: 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400',
+        description: 'Grade A - Fresh bananas, bulk pricing',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 11,
+        name: 'Mangoes',
+        category: 'Fruits',
+        currentPrice: 150,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 200,
+        imageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=400',
+        description: 'Premium Grade AAA - Alphonso Mangoes',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 12,
+        name: 'Mangoes',
+        category: 'Fruits',
+        currentPrice: 110,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 250,
+        imageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=400',
+        description: 'Grade A - Fresh Mangoes',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 13,
+        name: 'Oranges',
+        category: 'Fruits',
+        currentPrice: 80,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 600,
+        imageUrl: 'https://images.unsplash.com/photo-1580052614034-c55d20bfee3b?w=400',
+        description: 'Premium Grade A - Fresh juicy oranges',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 14,
+        name: 'Grapes',
+        category: 'Fruits',
+        currentPrice: 100,
+        unit: 'kg',
+        vendorId: '2',
+        vendorName: 'Green Valley Suppliers',
+        vendorRating: 4.2,
+        availableQuantity: 300,
+        imageUrl: 'https://images.unsplash.com/photo-1599819177626-c0d609851644?w=400',
+        description: 'Grade A - Seedless green grapes',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      
+      // Grains
+      {
+        id: 15,
+        name: 'Basmati Rice',
+        category: 'Grains',
+        currentPrice: 80,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 2000,
+        imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400',
+        description: 'Premium Grade AAA - Aged Basmati rice',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 16,
+        name: 'Wheat',
+        category: 'Grains',
+        currentPrice: 35,
+        unit: 'kg',
+        vendorId: '1',
+        vendorName: 'Fresh Farms Co.',
+        vendorRating: 4.5,
+        availableQuantity: 5000,
+        imageUrl: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400',
+        description: 'Premium Grade A - Fresh wheat grains',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  }
+
+  extractCategories() {
+    const cats = new Set(this.products.map(p => p.category));
+    this.categories = ['All', ...Array.from(cats)];
+  }
+
+  filterByCategory(category: string) {
+    this.selectedCategory = category;
+    this.applyFilters();
+  }
+
+  changeSortOrder(event: any) {
+    this.sortBy = event.detail.value;
+    this.applyFilters();
+  }
+
+  onSearchChange(event: any) {
+    this.searchTerm = event.detail.value || '';
+    this.applyFilters();
+  }
+
+  applyFilters() {
+    let filtered = this.products;
+
+    if (this.selectedCategory !== 'All') {
+      filtered = filtered.filter(p => p.category === this.selectedCategory);
+    }
+
+    if (this.searchTerm) {
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    filtered = this.sortProducts(filtered);
+
+    this.filteredProducts = filtered;
+  }
+
+  sortProducts(products: Product[]): Product[] {
+    switch (this.sortBy) {
+      case 'price-low':
+        return [...products].sort((a, b) => a.currentPrice - b.currentPrice);
+      case 'price-high':
+        return [...products].sort((a, b) => b.currentPrice - a.currentPrice);
+      case 'rating':
+        return [...products].sort((a, b) => (b.vendorRating || 0) - (a.vendorRating || 0));
+      default:
+        return [...products].sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }
+
+  async quickAdd(product: Product) {
+    const loading = await this.loadingController.create({
+      message: 'Adding to cart...',
+      duration: 500
+    });
+    await loading.present();
+
+    const cartItem = {
+      productId: product.id,
+      productName: product.name,
+      vendorId: product.vendorId,
+      quantity: 1,
+      unitPrice: product.currentPrice
+    };
+
+    this.orderService.addToCart(cartItem).subscribe({
+      next: () => {
+        loading.dismiss();
+        this.cartCount++;
+        this.showToast(`${product.name} added to cart`, 'success');
+      },
+      error: (error) => {
+        loading.dismiss();
+        console.error('Error adding to cart:', error);
+        this.showToast('Failed to add to cart', 'danger');
+      }
+    });
+  }
+
+  loadCartCount() {
+    this.orderService.getCart().subscribe({
+      next: (cart) => {
+        this.cartCount = cart.cartItems?.length || 0;
+      },
+      error: (error) => console.error('Error loading cart:', error)
+    });
+  }
+
+  goToCart() {
+    this.router.navigate(['/cart']);
+  }
+
+  async showToast(message: string, color: string = 'success') {
+    const toast = await this.toastController.create({
+      message,
+      duration: 2000,
+      color,
+      position: 'bottom'
+    this.filteredProducts = filtered
+  }
+}
+product: Product) {
+    const loading = await this.loadingController.create({
+      message: 'Adding to cart...',
+      duration: 500
+    });
+    await loading.present();
+
+    const cartItem = {
+      productId: product.id,
+      productName: product.name,
+      vendorId: product.vendorId,
+      quantity: 1,
+      unitPrice: product.currentPrice
+    };
+
+    this.orderService.addToCart(cartItem).subscribe({
+      next: () => {
+        loading.dismiss();
+        this.cartCount++;
+        this.showToast(`${product.n

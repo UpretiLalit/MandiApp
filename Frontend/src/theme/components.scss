@@ -1,0 +1,202 @@
+/**
+ * Component Patterns - Complex reusable components
+ */
+
+// ==================== VENDOR CARDS ====================
+.vendor-card {
+  @extend .card;
+  border-left: 4px solid var(--brand-primary);
+  
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+  }
+  
+  &-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+  }
+  
+  &-price {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--brand-primary);
+  }
+}
+
+// ==================== PRICE TICKER ====================
+.price-ticker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  
+  &-up {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    
+    &::before {
+      content: "▲";
+    }
+  }
+  
+  &-down {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+    
+    &::before {
+      content: "▼";
+    }
+  }
+  
+  &-neutral {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--color-medium);
+    
+    &::before {
+      content: "━";
+    }
+  }
+}
+
+// ==================== ACCORDION ====================
+.accordion {
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    
+    &:hover {
+      background: var(--bg-tertiary);
+    }
+  }
+  
+  &-content {
+    padding: 0 var(--space-md) var(--space-md);
+    
+    &.collapsed {
+      display: none;
+    }
+  }
+}
+
+// ==================== EMPTY STATE ====================
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  text-align: center;
+  
+  &-icon {
+    font-size: 64px;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
+  }
+  
+  &-title {
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+  }
+  
+  &-description {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+  }
+}
+
+// ==================== LOADING SKELETON ====================
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-secondary) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+  
+  &-text {
+    height: 16px;
+    margin-bottom: var(--space-sm);
+  }
+  
+  &-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+  }
+  
+  &-card {
+    height: 200px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ==================== CART SUMMARY ====================
+.cart-summary {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-md);
+  
+  &-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-light);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &.total {
+      font-weight: var(--font-bold);
+      font-size: var(--text-lg);
+      color: var(--brand-primary);
+      padding-top: var(--space-md);
+      border-top: 2px solid var(--border-medium);
+    }
+  }
+}
+
+// ==================== ESCROW BADGE ====================
+.escrow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-full);
+  color: var(--color-success);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  
+  ion-icon {
+    font-size: 20px;
+  }
+}

@@ -1,0 +1,153 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/transporter/deliveries"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Delivery Map</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="centerOnCurrentLocation()">
+        <ion-icon name="locate-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="map-container">
+    
+    <!-- Delivery Info Card (Floating) -->
+    <ion-card *ngIf="delivery" class="delivery-info-card">
+      <ion-card-content>
+        <div class="info-header">
+          <div>
+            <h3>{{delivery.orderNumber}}</h3>
+            <ion-badge [color]="delivery.isOptimized ? 'success' : 'warning'">
+              {{delivery.isOptimized ? 'Optimized Route' : 'Route'}}
+            </ion-badge>
+          </div>
+          <ion-button fill="clear" size="small" (click)="optimizeRoute()">
+            <ion-icon name="shuffle-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+        
+        <!-- Route Summary -->
+        <div class="route-summary">
+          <div class="summary-item">
+            <ion-icon name="business-outline" color="primary"></ion-icon>
+            <span>{{delivery.vendorStops.length}} Vendors</span>
+          </div>
+          <div class="summary-item">
+            <ion-icon name="navigate-outline" color="primary"></ion-icon>
+            <span>{{delivery.totalDistance}} km</span>
+          </div>
+          <div class="summary-item">
+            <ion-icon name="time-outline" color="primary"></ion-icon>
+            <span>~{{delivery.estimatedDuration}} mins</span>
+          </div>
+        </div>
+        
+        <!-- Vendor Stops List -->
+        <div class="stops-list">
+          <h4>Pickup Stops</h4>
+          <div *ngFor="let stop of delivery.vendorStops; let i = index" class="stop-item">
+            <div class="stop-number">{{i + 1}}</div>
+            <div class="stop-details">
+              <strong>{{stop.vendorName}}</strong>
+              <p>{{stop.address}}</p>
+              <small>
+                <ion-icon name="cube-outline"></ion-icon>
+                {{stop.itemCount}} items
+                <span *ngIf="stop.distanceFromPrevious > 0">
+                  • {{stop.distanceFromPrevious}} km from previous
+                </span>
+              </small>
+            </div>
+            <ion-button fill="clear" size="small" (click)="navigateToStop(stop)">
+              <ion-icon name="navigate-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+          
+          <!-- Final Delivery -->
+          <div class="stop-item final-stop">
+            <div class="stop-number delivery-icon">
+              <ion-icon name="flag-outline"></ion-icon>
+            </div>
+            <div class="stop-details">
+              <strong>Final Delivery</strong>
+              <p>{{delivery.deliveryAddress}}</p>
+            </div>
+            <ion-button fill="clear" size="small" (click)="openNavigation()">
+              <ion-icon name="navigate-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Map Placeholder -->
+    <div class="map-view">
+      <div class="map-placeholder">
+        <ion-icon name="map-outline"></ion-icon>
+        <p>Map View</p>
+        <small>Google Maps integration would go here</small>
+        
+        <!-- Mock Map Elements -->
+        <div class="mock-route">
+          <div class="marker pickup">
+            <ion-icon name="location"></ion-icon>
+            <span>P</span>
+          </div>
+          <div class="route-line"></div>
+          <div class="marker current" *ngIf="isTracking">
+            <ion-icon name="car"></ion-icon>
+          </div>
+          <div class="marker delivery">
+            <ion-icon name="flag"></ion-icon>
+            <span>D</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracking Controls (Floating Bottom) -->
+    <div class="tracking-controls">
+      
+      <!-- GPS Status -->
+      <ion-chip [color]="isTracking ? 'success' : 'medium'" class="gps-status">
+        <ion-icon [name]="isTracking ? 'navigate-circle' : 'navigate-circle-outline'"></ion-icon>
+        <ion-label>{{isTracking ? 'GPS Active' : 'GPS Inactive'}}</ion-label>
+      </ion-chip>
+
+      <!-- Action Buttons -->
+      <div class="control-buttons">
+        <ion-button 
+          *ngIf="!isTracking"
+          expand="block" 
+          color="primary"
+          (click)="startTracking()">
+          <ion-icon name="play-circle-outline" slot="start"></ion-icon>
+          Start Tracking
+        </ion-button>
+
+        <ion-button 
+          *ngIf="isTracking"
+          expand="block" 
+          color="danger"
+          (click)="stopTracking()">
+          <ion-icon name="stop-circle-outline" slot="start"></ion-icon>
+          Stop Tracking
+        </ion-button>
+
+        <ion-button 
+          *ngIf="delivery?.status == 'InTransit'"
+          expand="block" 
+          color="success"
+          (click)="completeDelivery()">
+          <ion-icon name="qr-code-outline" slot="start"></ion-icon>
+          Complete Delivery
+        </ion-button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

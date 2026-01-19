@@ -1,0 +1,29 @@
+/* Global styles */
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+// ==================== MANDI APP THEME SYSTEM ====================
+// Single import for all theming - tokens, utilities, and components
+@import "./theme/theme.scss";
+
+// ==================== COMPONENT-SPECIFIC OVERRIDES ====================
+// Keep this minimal - use utility classes in HTML instead
+.vendor-selection-modal {
+  --height: 80%;
+  --border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  
+  @media (min-width: 768px) {
+    --width: 600px;
+    --height: auto;
+    --max-height: 80%;
+    --border-radius: var(--radius-xl);
+  }
+}

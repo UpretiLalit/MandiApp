@@ -1,0 +1,126 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Quick Price Update</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="loadProducts()">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="update-container">
+    
+    <!-- Info Card -->
+    <ion-card class="info-card">
+      <ion-card-content>
+        <div class="info-content">
+          <ion-icon name="information-circle-outline" color="primary"></ion-icon>
+          <p>Use sliders to adjust prices. Tap "Update" to save changes instantly.</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Empty State -->
+    <div *ngIf="products.length == 0" class="empty-state">
+      <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
+      <h2>No Products Yet</h2>
+      <p>Add products to start updating prices</p>
+      <ion-button expand="block" routerLink="/vendor/products">
+        Add Products
+      </ion-button>
+    </div>
+
+    <!-- Product Price Cards -->
+    <ion-card *ngFor="let product of products" class="product-card">
+      
+      <!-- Card Header with Toggle -->
+      <ion-card-header>
+        <div class="card-header-content">
+          <div class="product-title">
+            <h2>{{product.name}}</h2>
+            <ion-badge [color]="product.category">{{product.category}}</ion-badge>
+          </div>
+          
+          <!-- Active/Inactive Toggle -->
+          <ion-toggle 
+            [(ngModel)]="product.isActive" 
+            (ionChange)="toggleStock(product)"
+            [color]="product.isActive ? 'success' : 'medium'">
+          </ion-toggle>
+        </div>
+        
+        <p class="stock-info">
+          <ion-icon name="cube-outline"></ion-icon>
+          Stock: {{product.availableQuantity}} {{product.unit}}
+        </p>
+      </ion-card-header>
+
+      <ion-card-content>
+        
+        <!-- Current Price Display -->
+        <div class="price-display">
+          <div class="current-price">
+            <small>Current</small>
+            <h3>₹{{product.currentPrice}}</h3>
+          </div>
+          
+          <ion-icon name="arrow-forward-outline" class="arrow-icon"></ion-icon>
+          
+          <div class="new-price">
+            <small>New</small>
+            <h3 [class.price-up]="getPriceChange(product) > 0" 
+                [class.price-down]="getPriceChange(product) < 0">
+              ₹{{updatedPrices.get(product.id) || product.currentPrice}}
+            </h3>
+            <span *ngIf="getPriceChange(product) != 0" 
+                  class="price-change"
+                  [class.positive]="getPriceChange(product) > 0"
+                  [class.negative]="getPriceChange(product) < 0">
+              {{getPriceChange(product) > 0 ? '+' : ''}}{{getPriceChange(product).toFixed(1)}}%
+            </span>
+          </div>
+        </div>
+
+        <!-- Price Slider -->
+        <div class="slider-container">
+          <div class="slider-labels">
+            <span class="min-label">₹{{getMinPrice(product.currentPrice)}}</span>
+            <span class="current-label">Current: ₹{{product.currentPrice}}</span>
+            <span class="max-label">₹{{getMaxPrice(product.currentPrice)}}</span>
+          </div>
+          
+          <ion-range
+            [min]="getMinPrice(product.currentPrice)"
+            [max]="getMaxPrice(product.currentPrice)"
+            [value]="updatedPrices.get(product.id) || product.currentPrice"
+            [pin]="true"
+            [ticks]="false"
+            [snaps]="false"
+            color="primary"
+            (ionChange)="onPriceChange(product, $event)">
+            <ion-icon slot="start" name="remove-circle-outline"></ion-icon>
+            <ion-icon slot="end" name="add-circle-outline"></ion-icon>
+          </ion-range>
+        </div>
+
+        <!-- Update Button -->
+        <ion-button 
+          expand="block" 
+          color="success"
+          size="large"
+          [disabled]="updatedPrices.get(product.id) == product.currentPrice"
+          (click)="updatePrice(product)">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Update Price
+        </ion-button>
+        
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>
