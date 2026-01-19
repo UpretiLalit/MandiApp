@@ -1,0 +1,112 @@
+# Node
+node_modules/
+
+# Angular
+/dist/
+/.angular/cache/
+/.angular/local/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+# Build
+build/
+www/
+
+# IDE
+.idea/
+*.iml
+
+# Misc
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Dotnet
+bin/
+obj/
+*.user
+*.vspscc
+*.vssscc
+*.dbmdl
+*.pdb
+*.cache
+*.log
+*.TestResults/
+TestResults/
+*.ncrunch*
+_ReSharper*/
+*.resharper
+*.DotSettings.user
+
+# Docker
+**/Dockerfile*
+**/docker-compose*
+
+# Database
+*.mdf
+*.ldf
+*.sql
+
+# Others
+*.bak
+*.tmp
+*.temp
+*.pid
+*.seed
+*.tgz
+*.gz
+*.zip
+*.tar
+*.rar
+*.7z
+*.bak
+*.old
+*.orig
+*.rej
+*.swp
+*.swo
+*.swn
+*.tmp
+*.temp
+*.pid
+*.seed
+*.tgz
+*.gz
+*.zip
+*.tar
+*.rar
+*.7z
+*.bak
+*.old
+*.orig
+*.rej
+*.swp
+*.swo
+*.swn
+
+# Ignore test output
+coverage/
+
+# Ignore local dev scripts
+start-frontend.bat
+start-backend.bat
+start-dev.ps1
+start-simple.ps1
+run-api.ps1
+test-signalr.ps1
