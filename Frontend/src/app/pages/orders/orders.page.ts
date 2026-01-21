@@ -62,71 +62,47 @@ export class OrdersPage implements OnInit {
   loadOrders() {
     this.loading = true;
     
-    // Mock data - replace with actual API call
-    setTimeout(() => {
-      this.orders = [
-        {
-          id: 1,
-          orderNumber: 'ORD-2026-001',
-          orderDate: '2026-01-13 09:30 AM',
-          status: 'InTransit',
-          totalAmount: 2500,
-          gstAmount: 125,
-          grandTotal: 2625,
-          vendorName: 'Fresh Farms Co.',
-          vendorContact: '+91 98765 43210',
-          deliveryAddress: 'Restaurant ABC, S.G. Highway, Ahmedabad',
-          estimatedDelivery: '2026-01-13 11:00 AM',
-          trackingEnabled: true,
-          items: [
-            { productName: 'Tomato', quantity: 10, unit: 'kg', pricePerUnit: 40, total: 400 },
-            { productName: 'Onion', quantity: 15, unit: 'kg', pricePerUnit: 35, total: 525 },
-            { productName: 'Potato', quantity: 20, unit: 'kg', pricePerUnit: 25, total: 500 }
-          ]
+    // Load real orders from backend
+    this.http.get<any[]>(`${environment.orderingApiUrl}/orders`)
+      .subscribe({
+        next: (response: any) => {
+          console.log('Orders loaded from backend:', response);
+          
+          // Transform backend orders to match our interface
+          this.orders = response.map((order: any) => ({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            orderDate: new Date(order.createdAt || Date.now()).toLocaleString(),
+            status: order.status,
+            totalAmount: order.totalAmount || 0,
+            gstAmount: order.totalAmount * 0.05 || 0,
+            grandTotal: order.totalAmount * 1.05 || 0,
+            vendorName: order.vendorName || 'Vendor',
+            vendorContact: '+91 98765 43210',
+            deliveryAddress: order.deliveryAddress || 'Not specified',
+            estimatedDelivery: 'Within 2-4 hours',
+            trackingEnabled: true,
+            items: order.orderItems?.map((item: any) => ({
+              productName: item.productName,
+              quantity: item.quantity,
+              unit: 'kg',
+              pricePerUnit: item.unitPrice,
+              total: item.totalPrice
+            })) || []
+          }));
+          
+          this.filteredOrders = [...this.orders];
+          this.loading = false;
         },
-        {
-          id: 2,
-          orderNumber: 'ORD-2026-002',
-          orderDate: '2026-01-12 02:15 PM',
-          status: 'Delivered',
-          totalAmount: 1800,
-          gstAmount: 90,
-          grandTotal: 1890,
-          vendorName: 'Green Valley Suppliers',
-          vendorContact: '+91 98765 43211',
-          deliveryAddress: 'Restaurant ABC, S.G. Highway, Ahmedabad',
-          estimatedDelivery: '2026-01-12 05:00 PM',
-          trackingEnabled: false,
-          invoiceUrl: 'https://example.com/invoice-002.pdf',
-          items: [
-            { productName: 'Cabbage', quantity: 8, unit: 'kg', pricePerUnit: 30, total: 240 },
-            { productName: 'Carrot', quantity: 12, unit: 'kg', pricePerUnit: 45, total: 540 }
-          ]
-        },
-        {
-          id: 3,
-          orderNumber: 'ORD-2026-003',
-          orderDate: '2026-01-11 10:00 AM',
-          status: 'Delivered',
-          totalAmount: 3200,
-          gstAmount: 160,
-          grandTotal: 3360,
-          vendorName: 'Organic Harvest Ltd.',
-          vendorContact: '+91 98765 43212',
-          deliveryAddress: 'Restaurant ABC, S.G. Highway, Ahmedabad',
-          estimatedDelivery: '2026-01-11 01:00 PM',
-          trackingEnabled: false,
-          invoiceUrl: 'https://example.com/invoice-003.pdf',
-          items: [
-            { productName: 'Cucumber', quantity: 10, unit: 'kg', pricePerUnit: 35, total: 350 },
-            { productName: 'Bell Pepper', quantity: 5, unit: 'kg', pricePerUnit: 80, total: 400 }
-          ]
+        error: (err) => {
+          console.error('Failed to load orders:', err);
+          this.loading = false;
+          
+          // Fallback to empty if API fails
+          this.orders = [];
+          this.filteredOrders = [];
         }
-      ];
-      
-      this.filteredOrders = this.orders;
-      this.loading = false;
-    }, 1000);
+      });
   }
 
   filterByStatus(status: string) {
@@ -317,12 +293,7 @@ export class OrdersPage implements OnInit {
   async confirmDelivery(order: Order) {
     const alert = await this.alertController.create({
       header: '✓ Confirm Delivery',
-      message: `
-        <strong>Order:</strong> ${order.orderNumber}<br>
-        <strong>Vendor:</strong> ${order.vendorName}<br><br>
-        Inspect items for quality before confirming. 
-        Once confirmed, payment will be released from escrow.
-      `,
+      message: `Order: ${order.orderNumber}\n\nVendor: ${order.vendorName}\n\nInspect items for quality before confirming. Once confirmed, payment will be released from escrow.`,
       buttons: [
         {
           text: 'Cancel',
@@ -343,28 +314,19 @@ export class OrdersPage implements OnInit {
   async processDeliveryConfirmation(order: Order) {
     this.loading = true;
     
-    this.http.post(`${environment.apiUrl}/api/orders/${order.id}/confirm-delivery`, {})
+    console.log('Confirming delivery for order:', order.id);
+    console.log('API URL:', `${environment.orderingApiUrl}/orders/${order.id}/confirm-delivery`);
+    
+    this.http.post(`${environment.orderingApiUrl}/orders/${order.id}/confirm-delivery`, {})
       .subscribe({
         next: async (response: any) => {
           this.loading = false;
+          console.log('Delivery confirmed successfully:', response);
           
           // Show success with payout breakdown
           const successAlert = await this.alertController.create({
             header: '✓ Delivery Confirmed',
-            message: `
-              <div style="text-align: left; padding: 10px;">
-                <p><strong>Escrow Released Successfully</strong></p>
-                <hr>
-                <p>✓ Vendors Paid: ₹${response.payouts.vendors}</p>
-                <p>✓ Transporter Paid: ₹${response.payouts.transporter}</p>
-                <p>✓ Platform Fee: ₹${response.payouts.platform}</p>
-                <hr>
-                <p style="color: #10dc60;">
-                  <ion-icon name="checkmark-circle"></ion-icon>
-                  Delivery QR: ${response.deliveryQRCode}
-                </p>
-              </div>
-            `,
+            message: `Escrow Released Successfully\n\n✓ Vendors Paid: ₹${response.payouts.vendors}\n✓ Transporter Paid: ₹${response.payouts.transporter}\n✓ Platform Fee: ₹${response.payouts.platform}\n\nDelivery QR: ${response.deliveryQRCode}`,
             cssClass: 'success-alert',
             buttons: ['OK']
           });
@@ -375,9 +337,23 @@ export class OrdersPage implements OnInit {
         },
         error: async (err) => {
           this.loading = false;
+          console.error('Delivery confirmation error:', err);
+          console.error('Error details:', JSON.stringify(err, null, 2));
+          
+          let errorMessage = 'Unable to confirm delivery. Please try again.';
+          if (err.error?.message) {
+            errorMessage = err.error.message;
+          } else if (err.status === 401) {
+            errorMessage = 'Unauthorized. Please login again.';
+          } else if (err.status === 400) {
+            errorMessage = err.error?.message || 'Order must be In Transit to confirm delivery.';
+          } else if (err.status === 0) {
+            errorMessage = 'Cannot connect to server. Please check if backend is running.';
+          }
+          
           const errorAlert = await this.alertController.create({
             header: 'Confirmation Failed',
-            message: err.error?.message || 'Unable to confirm delivery. Please try again.',
+            message: errorMessage,
             buttons: ['OK']
           });
           await errorAlert.present();
@@ -392,6 +368,48 @@ export class OrdersPage implements OnInit {
       buttons: ['OK']
     });
     await alert.present();
+  }
+
+  // Demo: Simulate order progression for testing
+  async simulateOrderProgress(order: Order) {
+    const alert = await this.alertController.create({
+      header: '🧪 Demo Mode',
+      message: `Simulate order ${order.orderNumber} progression?\n\nThis will move the order through:\n• VendorsNotified\n• ReadyForPickup\n• PickedUp\n• InTransit\n\nYou can then test delivery confirmation.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Simulate',
+          handler: () => {
+            this.progressOrderToInTransit(order);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async progressOrderToInTransit(order: Order) {
+    this.loading = true;
+    
+    console.log('Progressing order to InTransit:', order.id);
+    
+    // Call backend to actually update order status
+    this.http.put(`${environment.orderingApiUrl}/orders/${order.id}/demo-status`, { status: 'InTransit' })
+      .subscribe({
+        next: (response: any) => {
+          this.loading = false;
+          order.status = 'InTransit';
+          this.showAlert('✓ Demo Complete', `Order ${order.orderNumber} is now In Transit.\n\nYou can now test "Confirm Delivery" button.`);
+        },
+        error: (err) => {
+          this.loading = false;
+          console.error('Failed to update order status:', err);
+          this.showAlert('Error', 'Failed to update order status. Check console for details.');
+        }
+      });
   }
 
   doRefresh(event: any) {

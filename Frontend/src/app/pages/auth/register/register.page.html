@@ -89,6 +89,17 @@
             <span>Enter valid 6-digit OTP</span>
           </div>
         </ion-card>
+
+        <ion-card class="input-card">
+          <ion-item lines="none">
+            <ion-label position="floating">Preferred Language *</ion-label>
+            <ion-select formControlName="language" placeholder="Select Language">
+              <ion-select-option *ngFor="let lang of languages" [value]="lang.code">
+                {{ lang.nativeName }} ({{ lang.name }})
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-card>
       </div>
 
       <!-- Business Details (for Vendors) -->

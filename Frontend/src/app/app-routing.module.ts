@@ -37,6 +37,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/transporter/transporter.module').then(m => m.TransporterPageModule)
   },
   {
+    path: 'admin',
+    loadChildren: () => import('./pages/admin/admin.module').then(m => m.AdminPageModule)
+  },
+  {
     path: 'profile',
     loadChildren: () => import('./pages/profile/profile.module').then(m => m.ProfilePageModule)
   }

@@ -26,23 +26,34 @@ export class HomePage implements OnInit {
   }
 
   navigateBasedOnRole() {
+    console.log('🏠 HOME PAGE navigateBasedOnRole() called for role:', this.userRole);
     switch (this.userRole) {
       case 'Buyer':
+        console.log('🛒 HOME: Redirecting Buyer to /marketplace');
         this.router.navigate(['/marketplace']);
         break;
       case 'Vendor':
-        this.router.navigate(['/vendor']);
+        console.log('🏪 HOME: Redirecting Vendor to /vendor/products');
+        this.router.navigate(['/vendor/products']);
         break;
       case 'Transporter':
-        this.router.navigate(['/transporter']);
+        console.log('🚚 HOME: Redirecting Transporter to /transporter/dashboard');
+        this.router.navigate(['/transporter/dashboard']);
         break;
       default:
+        console.log('❌ HOME: No role, redirecting to login');
         this.router.navigate(['/auth/login']);
     }
   }
 
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/auth/login']);
+  async logout() {
+    await this.authService.logout();
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    // Replace URL to prevent back navigation
+    this.router.navigate(['/auth/login'], { replaceUrl: true });
+    // Force reload to clear any cached state
+    window.location.href = '/auth/login';
   }
 }

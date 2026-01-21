@@ -6,6 +6,7 @@ public class ApplicationUser : IdentityUser
 {
     public string FullName { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty; // Buyer, Vendor, Transporter
+    public string Language { get; set; } = "en"; // Preferred language
     public string? CompanyName { get; set; }
     public string? GstNumber { get; set; }
     public string? Address { get; set; }

@@ -1,0 +1,527 @@
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  
+  ion-spinner {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    font-size: 16px;
+    color: #666;
+  }
+}
+
+.reports-container {
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Metrics Grid
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  .metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .metric-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      ion-icon {
+        font-size: 36px;
+        color: white;
+      }
+    }
+    
+    .metric-info {
+      flex: 1;
+      
+      h3 {
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        color: #333;
+      }
+      
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+      }
+    }
+    
+    &.primary .metric-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    &.success .metric-icon { background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); }
+    &.warning .metric-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    &.tertiary .metric-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  }
+}
+
+// Stat Cards
+.stat-card {
+  margin-bottom: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  ion-card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  ion-card-content {
+    padding-top: 16px;
+  }
+}
+
+// Status Grid
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  
+  .status-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    
+    .status-icon {
+      ion-icon {
+        font-size: 40px;
+      }
+    }
+    
+    .status-info {
+      flex: 1;
+      
+      h4 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+      }
+      
+      p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #666;
+      }
+      
+      ion-progress-bar {
+        height: 6px;
+        border-radius: 3px;
+      }
+    }
+    
+    &.pending .status-icon ion-icon { color: var(--ion-color-warning); }
+    &.completed .status-icon ion-icon { color: var(--ion-color-success); }
+    &.cancelled .status-icon ion-icon { color: var(--ion-color-danger); }
+  }
+}
+
+// User Distribution
+.user-dist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  
+  .dist-item {
+    text-align: center;
+    padding: 24px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    
+    ion-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    
+    h3 {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+      color: #333;
+    }
+    
+    p {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    ion-badge {
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 12px;
+    }
+  }
+}
+
+// Mandi Cards
+.mandi-card {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  .mandi-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f8f9fa;
+      
+      ion-icon {
+        font-size: 32px;
+      }
+      
+      div {
+        h4 {
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 2px 0;
+          color: #333;
+        }
+        
+        p {
+          margin: 0;
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+  }
+}
+
+// Ranking Cards
+.ranking-card {
+  margin-bottom: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  ion-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+  
+  .ranking-list {
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: #e9ecef;
+        transform: translateX(4px);
+      }
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .rank-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        background: #dee2e6;
+        color: #495057;
+        
+        &.gold {
+          background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(255, 210, 0, 0.4);
+        }
+        
+        &.silver {
+          background: linear-gradient(135deg, #bdc3c7 0%, #ecf0f1 100%);
+          color: #2c3e50;
+          box-shadow: 0 4px 12px rgba(189, 195, 199, 0.4);
+        }
+        
+        &.bronze {
+          background: linear-gradient(135deg, #cd7f32 0%, #ff9966 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(205, 127, 50, 0.4);
+        }
+      }
+      
+      .user-info {
+        flex: 1;
+        
+        h4 {
+          margin: 0 0 8px 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+        }
+        
+        .user-metrics {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+          
+          span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #666;
+            
+            ion-icon {
+              font-size: 16px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Simple Chart
+.chart-card {
+  margin-bottom: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  .simple-chart {
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 250px;
+      margin-bottom: 12px;
+      
+      .chart-bar {
+        flex: 1;
+        background: linear-gradient(180deg, var(--ion-color-primary) 0%, var(--ion-color-primary-shade) 100%);
+        border-radius: 4px 4px 0 0;
+        position: relative;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-height: 20px;
+        
+        &:hover {
+          opacity: 0.8;
+          transform: scaleY(1.05);
+        }
+        
+        .bar-value {
+          position: absolute;
+          top: -20px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 10px;
+          font-weight: 600;
+          color: #333;
+          white-space: nowrap;
+        }
+      }
+    }
+    
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px solid #dee2e6;
+      
+      span {
+        font-size: 11px;
+        color: #666;
+      }
+    }
+    
+    &.revenue-chart {
+      .chart-bar.revenue-bar {
+        background: linear-gradient(180deg, var(--ion-color-success) 0%, var(--ion-color-success-shade) 100%);
+      }
+    }
+  }
+}
+
+// Category List
+.category-card {
+  margin-bottom: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  .category-list {
+    .category-item {
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      background: #f8f9fa;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        
+        h4 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+        }
+        
+        .percentage {
+          font-size: 18px;
+          font-weight: 700;
+          color: var(--ion-color-primary);
+        }
+      }
+      
+      .category-details {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        
+        span {
+          font-size: 13px;
+          color: #666;
+        }
+      }
+      
+      ion-progress-bar {
+        height: 8px;
+        border-radius: 4px;
+      }
+    }
+  }
+}
+
+// Revenue Summary
+.revenue-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  .revenue-card {
+    text-align: center;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    
+    ion-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      font-size: 36px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 16px;
+      color: #666;
+      font-weight: 500;
+    }
+    
+    &.total {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      
+      ion-icon, h3, p {
+        color: white;
+      }
+    }
+    
+    &.avg {
+      background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+      
+      ion-icon, h3, p {
+        color: white;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .reports-container {
+    padding: 12px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .status-grid,
+  .user-dist-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .simple-chart .chart-bars {
+    height: 180px;
+  }
+  
+  .ranking-item .user-metrics {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

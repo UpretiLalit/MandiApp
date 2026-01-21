@@ -1,0 +1,180 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Transporter</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="viewEarnings()">
+        <ion-icon name="wallet-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="transporter-dashboard">
+  
+  <!-- Duty Status Toggle - CENTER HERO -->
+  <div class="duty-toggle-section">
+    <div class="status-badge" [class.online]="isOnline" [class.offline]="!isOnline">
+      <span>{{ isOnline ? 'ONLINE' : 'OFFLINE' }}</span>
+    </div>
+    
+    <div class="toggle-container" (click)="toggleDuty()">
+      <div class="toggle-circle" [class.active]="isOnline">
+        <ion-icon [name]="isOnline ? 'checkmark' : 'close'"></ion-icon>
+      </div>
+      <h2>{{ isOnline ? 'GO OFFLINE' : 'GO ONLINE' }}</h2>
+      <p>{{ isOnline ? 'Stop receiving new jobs' : 'Start receiving new jobs' }}</p>
+    </div>
+  </div>
+
+  <!-- Assigned Mandi Card -->
+  <div class="mandi-card">
+    <ion-icon name="location" color="primary"></ion-icon>
+    <div class="mandi-info">
+      <small>Assigned to</small>
+      <strong>{{ assignedMandi }}</strong>
+    </div>
+    <ion-badge color="success">Active</ion-badge>
+  </div>
+
+  <!-- Earnings & Stats -->
+  <div class="stats-grid">
+    <div class="stat-card earnings">
+      <ion-icon name="cash-outline" color="success"></ion-icon>
+      <div class="stat-content">
+        <h3>₹{{ stats.todayEarnings }}</h3>
+        <p>Today's Earnings</p>
+      </div>
+    </div>
+
+    <div class="stat-card trips">
+      <ion-icon name="car-outline" color="primary"></ion-icon>
+      <div class="stat-content">
+        <h3>{{ stats.tripsCompleted }}</h3>
+        <p>Trips Completed</p>
+      </div>
+    </div>
+
+    <div class="stat-card active" *ngIf="stats.activeTrips > 0">
+      <ion-icon name="time-outline" color="warning"></ion-icon>
+      <div class="stat-content">
+        <h3>{{ stats.activeTrips }}</h3>
+        <p>Active Trip</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waiting State -->
+  <div class="waiting-state" *ngIf="isOnline && !showJobAlert">
+    <div class="pulse-indicator"></div>
+    <h3>Waiting for Jobs...</h3>
+    <p>We'll notify you when a profitable lead arrives</p>
+  </div>
+
+  <div class="offline-state" *ngIf="!isOnline">
+    <ion-icon name="moon-outline" color="medium"></ion-icon>
+    <h3>You're Offline</h3>
+    <p>Toggle duty to start receiving job offers</p>
+  </div>
+
+</ion-content>
+
+<!-- JOB ALERT OVERLAY -->
+<div class="job-alert-overlay" *ngIf="showJobAlert" @slideIn>
+  <div class="alert-container">
+    
+    <!-- Alert Header -->
+    <div class="alert-header">
+      <div class="alert-icon pulse">
+        <ion-icon name="notifications"></ion-icon>
+      </div>
+      <h2>🚨 NEW JOB ALERT</h2>
+      <p>A new delivery request is waiting</p>
+    </div>
+
+    <!-- Job Details -->
+    <div class="job-details">
+      
+      <!-- Pickup -->
+      <div class="detail-card pickup">
+        <div class="card-icon">
+          <ion-icon name="cube-outline" color="primary"></ion-icon>
+        </div>
+        <div class="card-content">
+          <small>PICKUP</small>
+          <strong>{{ incomingJob?.vendorCount }} Vendors in {{ incomingJob?.pickupLocation }}</strong>
+        </div>
+      </div>
+
+      <!-- Drop -->
+      <div class="detail-card drop">
+        <div class="card-icon">
+          <ion-icon name="location-outline" color="danger"></ion-icon>
+        </div>
+        <div class="card-content">
+          <small>DROP</small>
+          <strong>{{ incomingJob?.dropLocation }}</strong>
+          <p>{{ incomingJob?.distance }} km away</p>
+        </div>
+      </div>
+
+      <!-- Payload -->
+      <div class="detail-card payload">
+        <div class="card-icon">
+          <ion-icon name="basket-outline" color="warning"></ion-icon>
+        </div>
+        <div class="card-content">
+          <small>PAYLOAD</small>
+          <strong>{{ incomingJob?.crateCount }} Crates (~{{ incomingJob?.weight }}kg)</strong>
+        </div>
+      </div>
+
+      <!-- Earning - HIGHLIGHT -->
+      <div class="detail-card earning">
+        <div class="earning-badge">
+          <span class="currency">₹</span>
+          <span class="amount">{{ incomingJob?.earning }}</span>
+        </div>
+        <p>You'll Earn</p>
+      </div>
+
+    </div>
+
+    <!-- Slide to Accept -->
+    <div class="slide-to-accept">
+      <div class="slide-track">
+        <div class="slide-progress" [style.width.%]="acceptSlideProgress"></div>
+        <div class="slide-text" [class.faded]="acceptSlideProgress > 20">
+          <ion-icon name="chevron-forward"></ion-icon>
+          <ion-icon name="chevron-forward"></ion-icon>
+          <ion-icon name="chevron-forward"></ion-icon>
+          <span>Slide to Accept</span>
+        </div>
+      </div>
+      <div 
+        class="slide-thumb"
+        [style.transform]="'translateX(' + (acceptSlideProgress * 2.8) + 'px)'"
+        (touchstart)="onSlideStart($event)"
+        (touchmove)="onSlideMove($event)"
+        (touchend)="onSlideEnd($event)"
+        (touchcancel)="onSlideEnd($event)"
+        (mousedown)="onSlideStart($event)">
+        <ion-icon name="checkmark"></ion-icon>
+      </div>
+    </div>
+
+    <!-- Reject Button -->
+    <ion-button 
+      expand="block" 
+      fill="clear" 
+      color="danger"
+      class="reject-btn"
+      (click)="rejectJob()">
+      <ion-icon name="close-circle" slot="start"></ion-icon>
+      Reject Job
+    </ion-button>
+
+  </div>
+</div>

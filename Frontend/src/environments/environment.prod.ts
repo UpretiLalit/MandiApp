@@ -6,6 +6,8 @@ export const environment = {
   orderingApiUrl: 'https://ordering.mandiapp.com/api',
   logisticsHubUrl: 'https://logistics.mandiapp.com',
   trackingHubUrl: 'https://logistics.mandiapp.com/hubs/tracking',
+  razorpayKeyId: 'rzp_live_xxxxxxxxxxxxxx',
+  useMockPayment: false,
   firebase: {
     apiKey: 'your-firebase-api-key',
     authDomain: 'your-app.firebaseapp.com',

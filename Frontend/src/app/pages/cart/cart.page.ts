@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { OrderService } from '@core/services/order.service';
 import { Cart, CartItem } from '@core/models/order.model';
+import { environment } from '@environments/environment';
 
 @Component({
   selector: 'app-cart',
@@ -216,8 +217,26 @@ export class CartPage implements OnInit {
   }
 
   openRazorpayPayment(paymentOrder: any, orderRequest: any) {
+    // Mock payment mode for development (when no real Razorpay account)
+    if (environment.useMockPayment) {
+      console.log('🧪 MOCK PAYMENT MODE - Simulating successful payment');
+      this.showToast('Demo Mode: Simulating payment...', 'primary');
+      
+      // Simulate payment success after 1.5 seconds
+      setTimeout(() => {
+        const mockPaymentResponse = {
+          razorpay_payment_id: `mock_pay_${Date.now()}`,
+          razorpay_order_id: paymentOrder.razorpayOrderId,
+          razorpay_signature: `mock_sig_${Date.now()}`
+        };
+        this.handlePaymentSuccess(mockPaymentResponse, orderRequest);
+      }, 1500);
+      return;
+    }
+    
+    // Real Razorpay payment flow
     const options = {
-      key: 'rzp_test_YOUR_KEY_ID', // Replace with your Razorpay key
+      key: environment.razorpayKeyId, // Razorpay test key from environment
       amount: Math.round(this.totalLandingCost * 100), // Amount in paise
       currency: 'INR',
       name: 'Mandi App',
@@ -252,6 +271,9 @@ export class CartPage implements OnInit {
   }
 
   async handlePaymentSuccess(paymentResponse: any, orderRequest: any) {
+    console.log('Payment success response:', paymentResponse);
+    console.log('Order request:', orderRequest);
+    
     const loading = await this.loadingController.create({
       message: 'Processing order...'
     });
@@ -270,63 +292,28 @@ export class CartPage implements OnInit {
       next: async (response: any) => {
         loading.dismiss();
         
-        // Show success with parent/child order details
-        const successAlert = await this.alertController.create({
-          header: '✓ Payment Successful',
-          cssClass: 'payment-success-alert',
-          message: `
-            <div style="text-align: center; padding: 16px;">
-              <ion-icon name="checkmark-circle" color="success" style="font-size: 72px; margin-bottom: 16px;"></ion-icon>
-              <h2 style="margin: 0 0 8px; color: #28a745;">₹${this.totalLandingCost} Paid</h2>
-              <p style="color: #666; margin: 0 0 24px;">Transaction ID: ${paymentResponse.razorpay_payment_id.substring(0, 16)}...</p>
-            </div>
-            
-            <div style="text-align: left; background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-              <strong style="display: block; margin-bottom: 8px;">📦 Order Split Complete</strong>
-              <p style="margin: 4px 0; font-size: 14px;">
-                <strong>Parent Order:</strong> ${response.parentOrder.orderNumber}<br>
-                <strong>Status:</strong> <span style="color: #28a745;">Paid</span><br>
-                <strong>Amount:</strong> ₹${response.parentOrder.totalAmount}
-              </p>
-            </div>
-            
-            <div style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-              <strong style="display: block; margin-bottom: 12px;">🏪 Sub-Orders Created (${response.childOrders.length})</strong>
-              ${response.childOrders.map((child: any, index: number) => `
-                <div style="padding: 8px 0; border-bottom: 1px solid #eee;">
-                  <strong>${index + 1}. ${child.vendorName}</strong><br>
-                  <span style="font-size: 13px; color: #666;">
-                    ${child.itemCount} items • ${child.totalQuantity}kg<br>
-                    Status: <span style="color: #ff9800;">Awaiting Packing</span><br>
-                    Order: ${child.orderNumber}
-                  </span>
-                </div>
-              `).join('')}
-            </div>
-            
-            <div style="text-align: left; background: #e8f5e9; padding: 12px; border-radius: 8px;">
-              <strong style="display: block; margin-bottom: 4px;">⏱️ Next Steps</strong>
-              <p style="margin: 0; font-size: 13px; line-height: 1.6;">
-                • Vendors notified to pack items<br>
-                • You'll get real-time updates<br>
-                • Delivery within 2-4 hours
-              </p>
-            </div>
-          `,
-          buttons: [{
-            text: 'Track Orders',
-            cssClass: 'track-order-btn',
-            handler: () => {
-              this.router.navigate(['/orders']);
-            }
-          }]
-        });
-        await successAlert.present();
+        // Show quick success toast and redirect to orders page
+        await this.showToast(`Payment successful! Order ${response.parentOrder.orderNumber} created`, 'success');
+        
+        // Clear cart and redirect to track orders
+        this.cart = null;
+        this.router.navigate(['/orders']);
       },
       error: (error) => {
         loading.dismiss();
         console.error('Order creation failed:', error);
-        this.showToast('Payment received but order creation failed. Contact support.', 'danger');
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        
+        let errorMessage = 'Payment received but order creation failed.';
+        if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else if (error.status === 0) {
+          errorMessage = 'Cannot connect to server. Please check if backend is running.';
+        }
+        
+        this.showToast(errorMessage, 'danger');
       }
     });
   }

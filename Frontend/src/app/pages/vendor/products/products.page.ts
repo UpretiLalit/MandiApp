@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertController, LoadingController, ModalController, ToastController } from '@ionic/angular';
+import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { ProductService } from '@core/services/product.service';
 import { Product } from '@core/models/product.model';
+import { LanguageService } from '@core/services/language.service';
 
 @Component({
   selector: 'app-products',
@@ -20,8 +21,93 @@ export class ProductsPage implements OnInit {
   showAddForm: boolean = false;
   addProductForm!: FormGroup;
   editingProduct: Product | null = null;
+  detectedEmoji: string = '';
+  currentLanguage: string = 'en';
+  priceTiers: Array<{minQty: number, maxQty: number, price: number}> = [];
+  showCustomProductName: boolean = false;
+  
+  // Master product list (from admin)
+  masterProductList: string[] = [
+    'Tomatoes', 'टमाटर',
+    'Onions', 'प्याज',
+    'Potatoes', 'आलू',
+    'Carrots', 'गाजर',
+    'Spinach', 'पालक',
+    'Cabbage', 'पत्तागोभी',
+    'Cauliflower', 'फूलगोभी',
+    'Apples', 'सेब',
+    'Bananas', 'केला',
+    'Mangoes', 'आम',
+    'Oranges', 'संतरा',
+    'Grapes', 'अंगूर',
+    'Rice', 'चावल',
+    'Wheat', 'गेहूं',
+    'Corn', 'मक्का',
+    'Milk', 'दूध',
+    'Paneer', 'पनीर',
+    'Turmeric', 'हल्दी',
+    'Chili', 'मिर्च',
+    'Pepper', 'काली मिर्च'
+  ];
 
   categories = ['Vegetables', 'Fruits', 'Grains', 'Dairy', 'Spices', 'Other'];
+  
+  // Product name translations
+  productTranslations: {[key: string]: {[lang: string]: string}} = {
+    'Tomatoes': { hi: 'टमाटर', en: 'Tomatoes' },
+    'Tomato': { hi: 'टमाटर', en: 'Tomato' },
+    'Onions': { hi: 'प्याज', en: 'Onions' },
+    'Onion': { hi: 'प्याज', en: 'Onion' },
+    'Potatoes': { hi: 'आलू', en: 'Potatoes' },
+    'Potato': { hi: 'आलू', en: 'Potato' },
+    'Carrots': { hi: 'गाजर', en: 'Carrots' },
+    'Carrot': { hi: 'गाजर', en: 'Carrot' },
+    'Spinach': { hi: 'पालक', en: 'Spinach' },
+    'Cabbage': { hi: 'पत्तागोभी', en: 'Cabbage' },
+    'Cauliflower': { hi: 'फूलगोभी', en: 'Cauliflower' },
+    'Apples': { hi: 'सेब', en: 'Apples' },
+    'Apple': { hi: 'सेब', en: 'Apple' },
+    'Bananas': { hi: 'केला', en: 'Bananas' },
+    'Banana': { hi: 'केला', en: 'Banana' },
+    'Mangoes': { hi: 'आम', en: 'Mangoes' },
+    'Mango': { hi: 'आम', en: 'Mango' },
+    'Oranges': { hi: 'संतरा', en: 'Oranges' },
+    'Orange': { hi: 'संतरा', en: 'Orange' },
+    'Grapes': { hi: 'अंगूर', en: 'Grapes' },
+    'Grape': { hi: 'अंगूर', en: 'Grape' },
+    'Rice': { hi: 'चावल', en: 'Rice' },
+    'Wheat': { hi: 'गेहूं', en: 'Wheat' },
+    'Corn': { hi: 'मक्का', en: 'Corn' },
+    'Milk': { hi: 'दूध', en: 'Milk' },
+    'Paneer': { hi: 'पनीर', en: 'Paneer' },
+    'Turmeric': { hi: 'हल्दी', en: 'Turmeric' },
+    'Chili': { hi: 'मिर्च', en: 'Chili' },
+    'Pepper': { hi: 'काली मिर्च', en: 'Pepper' }
+  };
+  
+  // Emoji mapping for products
+  emojiMap: {[key: string]: string} = {
+    'Tomatoes': '🍅', 'Tomato': '🍅', 'टमाटर': '🍅',
+    'Onions': '🧅', 'Onion': '🧅', 'प्याज': '🧅',
+    'Potatoes': '🥔', 'Potato': '🥔', 'आलू': '🥔',
+    'Carrots': '🥕', 'Carrot': '🥕', 'गाजर': '🥕',
+    'Spinach': '🥬', 'पालक': '🥬',
+    'Cabbage': '🥬', 'पत्तागोभी': '🥬',
+    'Cauliflower': '🥦', 'फूलगोभी': '🥦',
+    'Apples': '🍎', 'Apple': '🍎', 'सेब': '🍎',
+    'Bananas': '🍌', 'Banana': '🍌', 'केला': '🍌',
+    'Mangoes': '🥭', 'Mango': '🥭', 'आम': '🥭',
+    'Oranges': '🍊', 'Orange': '🍊', 'संतरा': '🍊',
+    'Grapes': '🍇', 'Grape': '🍇', 'अंगूर': '🍇',
+    'Rice': '🌾', 'चावल': '🌾',
+    'Wheat': '🌾', 'गेहूं': '🌾',
+    'Corn': '🌽', 'मक्का': '🌽',
+    'Milk': '🥛', 'दूध': '🥛',
+    'Paneer': '🧈', 'पनीर': '🧈',
+    'Turmeric': '🌿', 'हल्दी': '🌿',
+    'Chili': '🌶️', 'मिर्च': '🌶️',
+    'Pepper': '🫑', 'काली मिर्च': '🫑'
+  };
 
   constructor(
     private productService: ProductService,
@@ -29,22 +115,31 @@ export class ProductsPage implements OnInit {
     private router: Router,
     private alertController: AlertController,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private languageService: LanguageService
   ) {}
 
   ngOnInit() {
     this.initForm();
     this.loadProducts();
+    
+    // Subscribe to language changes
+    this.languageService.currentLanguage$.subscribe(lang => {
+      this.currentLanguage = lang;
+    });
   }
 
   initForm() {
     this.addProductForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
+      customName: [''],
       category: ['Vegetables', Validators.required],
+      grade: ['', Validators.required], // Grade is REQUIRED
       description: ['', Validators.required],
       unit: ['kg', Validators.required],
       price: ['', [Validators.required, Validators.min(1)]],
       quantity: ['', [Validators.required, Validators.min(0)]],
+      minOrderQty: ['', [Validators.required, Validators.min(1)]], // Minimum order quantity
       imageUrl: ['']
     });
   }
@@ -52,9 +147,9 @@ export class ProductsPage implements OnInit {
   loadProducts() {
     this.loading = true;
     
-    this.productService.getProducts().subscribe({
+    // Load from backend vendor-inventory endpoint for real-time data
+    this.productService.getVendorInventory().subscribe({
       next: (products) => {
-        // Filter to show only vendor's products
         this.products = products;
         this.applyFilters();
         this.loading = false;
@@ -119,9 +214,20 @@ export class ProductsPage implements OnInit {
     }, 500);
   }
 
+  async quickToggleStatus(product: Product) {
+    product.isActive = !product.isActive;
+    this.showToast(
+      `${product.name} is now ${product.isActive ? 'Active' : 'Inactive'}`,
+      'success'
+    );
+  }
+
   openAddForm() {
     this.showAddForm = true;
     this.editingProduct = null;
+    this.detectedEmoji = '';
+    this.priceTiers = [];
+    this.showCustomProductName = false;
     this.addProductForm.reset({
       category: 'Vegetables',
       unit: 'kg'
@@ -131,12 +237,100 @@ export class ProductsPage implements OnInit {
   closeAddForm() {
     this.showAddForm = false;
     this.editingProduct = null;
+    this.detectedEmoji = '';
     this.addProductForm.reset();
+  }
+  
+  onProductNameSelect(event: any) {
+    const selectedValue = event.detail.value;
+    if (selectedValue === '__custom__') {
+      // Show custom product name input
+      this.showCustomProductName = true;
+      this.addProductForm.patchValue({ name: '' });
+      this.addProductForm.get('customName')?.setValidators([Validators.required, Validators.minLength(2)]);
+      this.addProductForm.get('customName')?.updateValueAndValidity();
+    } else {
+      // Use selected product from master list
+      this.showCustomProductName = false;
+      this.addProductForm.get('customName')?.clearValidators();
+      this.addProductForm.get('customName')?.updateValueAndValidity();
+      this.detectEmoji(selectedValue);
+    }
+  }
+  
+  onProductNameChange(event: any) {
+    const name = event.detail.value;
+    if (name) {
+      // Auto-detect emoji from custom product name
+      this.detectEmoji(name);
+    }
+  }
+  
+  cancelCustomProduct() {
+    this.showCustomProductName = false;
+    this.addProductForm.patchValue({ name: '', customName: '' });
+    this.addProductForm.get('customName')?.clearValidators();
+    this.addProductForm.get('customName')?.updateValueAndValidity();
+    this.detectedEmoji = '';
+  }
+  
+  detectEmoji(productName: string) {
+    // Try to find emoji for the product name
+    const trimmedName = productName.trim();
+    
+    // Check direct match
+    if (this.emojiMap[trimmedName]) {
+      this.detectedEmoji = this.emojiMap[trimmedName];
+      return;
+    }
+    
+    // Check partial match (case insensitive)
+    const lowerName = trimmedName.toLowerCase();
+    for (const key in this.emojiMap) {
+      if (key.toLowerCase().includes(lowerName) || lowerName.includes(key.toLowerCase())) {
+        this.detectedEmoji = this.emojiMap[key];
+        return;
+      }
+    }
+    
+    // Default emoji
+    this.detectedEmoji = '🥬';
+  }
+  
+  getTranslatedProductName(englishName: string): string {
+    if (this.currentLanguage === 'en') {
+      return englishName;
+    }
+    return this.productTranslations[englishName]?.[this.currentLanguage] || englishName;
+  }
+  
+  getTranslatedCategory(category: string): string {
+    const categoryMap: {[key: string]: {[lang: string]: string}} = {
+      'Vegetables': { hi: 'सब्जियां', en: 'Vegetables' },
+      'Fruits': { hi: 'फल', en: 'Fruits' },
+      'Grains': { hi: 'अनाज', en: 'Grains' },
+      'Dairy': { hi: 'डेयरी', en: 'Dairy' },
+      'Spices': { hi: 'मसाले', en: 'Spices' },
+      'Other': { hi: 'अन्य', en: 'Other' }
+    };
+    return categoryMap[category]?.[this.currentLanguage] || category;
+  }
+  
+  addPriceTier() {
+    this.priceTiers.push({
+      minQty: 0,
+      maxQty: 0,
+      price: 0
+    });
+  }
+  
+  removePriceTier(index: number) {
+    this.priceTiers.splice(index, 1);
   }
 
   async addProduct() {
     if (this.addProductForm.invalid) {
-      this.showToast('Please fill all required fields', 'warning');
+      this.showToast('Please fill all required fields including grade', 'warning');
       return;
     }
 
@@ -146,20 +340,34 @@ export class ProductsPage implements OnInit {
     await loading.present();
 
     const formValue = this.addProductForm.value;
+    
+    // Use custom name if entered, otherwise use selected name from dropdown
+    let productName = this.showCustomProductName ? formValue.customName : formValue.name;
+    
+    if (!productName) {
+      this.showToast('Please select or enter a product name', 'warning');
+      loading.dismiss();
+      return;
+    }
+    
     const newProduct = {
-      name: formValue.name,
+      name: productName,
       category: formValue.category,
+      grade: formValue.grade, // Include grade
       description: formValue.description,
       unit: formValue.unit,
       price: formValue.price,
       quantity: formValue.quantity,
-      imageUrl: formValue.imageUrl
+      minOrderQty: formValue.minOrderQty, // Minimum order quantity
+      imageUrl: formValue.imageUrl,
+      emoji: this.detectedEmoji || '🥬',
+      priceTiers: this.priceTiers.length > 0 ? this.priceTiers : undefined // Include tiered pricing if added
     };
 
     this.productService.createProduct(newProduct).subscribe({
       next: () => {
         loading.dismiss();
-        this.showToast('Product added successfully', 'success');
+        this.showToast(`Product added successfully with Grade ${formValue.grade}`, 'success');
         this.closeAddForm();
         this.loadProducts();
       },
@@ -172,17 +380,9 @@ export class ProductsPage implements OnInit {
   }
 
   async editProduct(product: Product) {
-    this.editingProduct = product;
-    this.showAddForm = true;
-    
-    this.addProductForm.patchValue({
-      name: product.name,
-      category: product.category,
-      description: product.description,
-      unit: product.unit,
-      price: product.currentPrice,
-      quantity: product.availableQuantity,
-      imageUrl: product.imageUrl
+    // Navigate to quick-update page for fast editing
+    this.router.navigate(['/quick-update'], {
+      queryParams: { productId: product.id }
     });
   }
 

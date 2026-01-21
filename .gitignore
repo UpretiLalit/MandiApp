@@ -54,59 +54,75 @@ _ReSharper*/
 *.resharper
 *.DotSettings.user
 
-# Docker
-**/Dockerfile*
-**/docker-compose*
+# Docker - Keep docker files!
+# **/Dockerfile*
+# **/docker-compose*
 
-# Database
+# Database - Keep migration scripts!
 *.mdf
 *.ldf
-*.sql
+# *.sql - Don't ignore SQL files, we need migration scripts
 
-# Others
+# CRITICAL: Sensitive configuration files
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.template.json
+**/environment.prod.ts
+**/environment.staging.ts
+*.pfx
+*.key
+*.pem
+google-services.json
+GoogleService-Info-plist
+
+# APK/IPA files (too large for git)
+*.apk
+*.aab
+*.ipa
+!releases/*.apk
+!releases/*.aab
+
+# Temporary files
 *.bak
 *.tmp
 *.temp
 *.pid
 *.seed
+
+# Archives
 *.tgz
 *.gz
 *.zip
 *.tar
 *.rar
 *.7z
-*.bak
-*.old
-*.orig
-*.rej
-*.swp
-*.swo
-*.swn
-*.tmp
-*.temp
-*.pid
-*.seed
-*.tgz
-*.gz
-*.zip
-*.tar
-*.rar
-*.7z
-*.bak
-*.old
-*.orig
-*.rej
-*.swp
-*.swo
-*.swn
 
-# Ignore test output
+# Editor swap files
+*.swp
+*.swo
+*.swn
+*.orig
+*.rej
+
+# Test output
 coverage/
+TestResults/
 
-# Ignore local dev scripts
-start-frontend.bat
-start-backend.bat
-start-dev.ps1
-start-simple.ps1
-run-api.ps1
-test-signalr.ps1
+# Keep startup scripts - these are useful!
+# start-frontend.bat
+# start-backend.bat
+# start-dev.ps1
+# start-simple.ps1
+# run-api.ps1
+# test-signalr.ps1
+
+# Capacitor/Ionic
+android/.gradle
+android/build
+android/app/build
+ios/App/build
+ios/Pods/
+
+# Migration runner
+DbMigrationRunner/bin/
+DbMigrationRunner/obj/

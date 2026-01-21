@@ -6,6 +6,8 @@ export const environment = {
   orderingApiUrl: 'http://localhost:5002/api',
   logisticsHubUrl: 'http://localhost:5002',
   trackingHubUrl: 'http://localhost:5002/hubs/tracking',
+  razorpayKeyId: 'rzp_test_Rt4HsYWkXkSWT4', // Demo key - Get real key from https://dashboard.razorpay.com/app/keys
+  useMockPayment: true, // Set to false when using real Razorpay credentials
   firebase: {
     apiKey: 'your-firebase-api-key',
     authDomain: 'your-app.firebaseapp.com',

@@ -22,10 +22,15 @@ public class MarketplaceDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Grade).HasMaxLength(10);
             entity.Property(e => e.Unit).IsRequired().HasMaxLength(20);
             entity.Property(e => e.CurrentPrice).HasPrecision(18, 2);
+            entity.Property(e => e.MinOrderQty).HasDefaultValue(1);
+            entity.Property(e => e.Emoji).HasMaxLength(10);
+            entity.Property(e => e.PriceTiersJson).HasColumnType("text");
             entity.HasIndex(e => e.VendorId);
             entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.Grade);
         });
 
         modelBuilder.Entity<PriceHistory>(entity =>

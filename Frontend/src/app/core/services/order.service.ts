@@ -64,4 +64,29 @@ export class OrderService {
   completePaymentOrder(paymentData: any): Observable<any> {
     return this.http.post<any>(`${environment.orderingApiUrl}/orders/complete-payment`, paymentData);
   }
+
+  // Vendor orders
+  getVendorOrders(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.orderingApiUrl}/orders/vendor-orders`);
+  }
+
+  // Mark order as ready for pickup
+  markOrderReady(orderId: number): Observable<any> {
+    return this.http.post(`${environment.orderingApiUrl}/orders/${orderId}/mark-ready`, {});
+  }
+
+  // Accept vendor order
+  acceptOrder(orderId: number): Observable<any> {
+    return this.http.post(`${environment.orderingApiUrl}/orders/${orderId}/accept`, {});
+  }
+
+  // Transporter: Get available jobs
+  getTransporterJobs(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.orderingApiUrl}/orders/transporter-jobs`);
+  }
+
+  // Transporter: Accept job
+  acceptTransporterJob(orderId: number): Observable<any> {
+    return this.http.post(`${environment.orderingApiUrl}/orders/transporter-jobs/${orderId}/accept`, {});
+  }
 }

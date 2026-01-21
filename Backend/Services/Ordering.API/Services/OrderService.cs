@@ -8,10 +8,12 @@ namespace Ordering.API.Services;
 public class OrderService : IOrderService
 {
     private readonly OrderingDbContext _context;
+    private readonly ICartService _cartService;
 
-    public OrderService(OrderingDbContext context)
+    public OrderService(OrderingDbContext context, ICartService cartService)
     {
         _context = context;
+        _cartService = cartService;
     }
 
     public async Task<Order> CreateOrderAsync(string buyerId, CreateOrderRequest request)
@@ -59,6 +61,9 @@ public class OrderService : IOrderService
         order.Status = OrderStatus.VendorsNotified;
         order.VendorsNotifiedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+
+        // Clear buyer's cart after successful order
+        await _cartService.ClearCartAsync(buyerId);
 
         return order;
     }
@@ -115,6 +120,14 @@ public class OrderService : IOrderService
             .Include(o => o.OrderItems)
             .Include(o => o.Payment)
             .FirstOrDefaultAsync(o => o.Id == orderId);
+    }
+
+    public async Task<IEnumerable<Order>> GetOrdersAsync()
+    {
+        return await _context.Orders
+            .Include(o => o.OrderItems)
+            .Include(o => o.Payment)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Order>> GetBuyerOrdersAsync(string buyerId)
@@ -245,4 +258,130 @@ public class OrderService : IOrderService
         Console.WriteLine($"[PHASE 3] ✓ Delivery confirmed for Order {order.OrderNumber}");
         
         return true;
-    }}
+    }
+    
+    public async Task UpdateOrderAsync(Order order)
+    {
+        _context.Orders.Update(order);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<object>> GetTransporterJobsAsync()
+    {
+        var orders = await _context.Orders
+            .Include(o => o.OrderItems)
+            .Where(o => o.Status == OrderStatus.PaymentReceived && 
+                       o.OrderItems.Any() &&
+                       o.OrderItems.All(i => i.IsReadyForPickup) &&
+                       string.IsNullOrEmpty(o.TransporterId))
+            .ToListAsync();
+
+        return orders.Select(order => {
+            var vendorCount = order.OrderItems.Select(i => i.VendorId).Distinct().Count();
+            var totalWeight = order.OrderItems.Sum(i => i.Quantity);
+            var crateCount = (int)Math.Ceiling(totalWeight / 20.0);
+            
+            return new {
+                id = order.Id,
+                orderNumber = order.OrderNumber,
+                pickupLocation = "Azadpur Mandi",
+                vendorCount,
+                dropLocation = order.DeliveryAddress ?? "Unknown",
+                distance = 4.2,
+                payload = $"{crateCount} Crates",
+                crateCount,
+                weight = (int)totalWeight,
+                earning = order.LogisticsFee,
+                pickupTime = "ASAP",
+                createdAt = order.CreatedAt
+            };
+        }).ToList();
+    }
+
+    public async Task<bool> AcceptTransporterJobAsync(int orderId, string transporterId)
+    {
+        var order = await GetOrderByIdAsync(orderId);
+        if (order == null || !string.IsNullOrEmpty(order.TransporterId))
+            return false;
+
+        order.TransporterId = transporterId;
+        order.Status = OrderStatus.InTransit;
+        order.AssignedAt = DateTime.UtcNow;
+        await UpdateOrderAsync(order);
+
+        return true;
+    }
+
+    public async Task<object> CreatePaymentOrderAsync(CreateOrderRequest request)
+    {
+        var amountInPaise = (int)(request.TotalLandingCost * 100);
+        var razorpayOrderId = $"order_{Guid.NewGuid().ToString("N").Substring(0, 14)}";
+        
+        return new
+        {
+            razorpayOrderId = razorpayOrderId,
+            amount = amountInPaise,
+            currency = "INR",
+            key = "rzp_test_YOUR_KEY_ID"
+        };
+    }
+
+    public async Task<object> CompletePaymentAsync(string buyerId, CompletePaymentRequest request)
+    {
+        var order = await CreateOrderAsync(buyerId, new CreateOrderRequest
+        {
+            Items = request.Items,
+            DeliveryAddress = request.DeliveryAddress,
+            ProduceTotal = request.ProduceTotal,
+            LogisticsFee = request.LogisticsFee,
+            ServiceFee = request.ServiceFee,
+            TotalLandingCost = request.TotalLandingCost,
+            PaymentMethod = request.PaymentMethod,
+            IsEscrow = false
+        });
+
+        order.PaymentId = request.PaymentId;
+        order.RazorpayOrderId = request.RazorpayOrderId;
+        order.Status = OrderStatus.PaymentReceived;
+        await UpdateOrderAsync(order);
+
+        var vendorGroups = request.Items.GroupBy(i => i.VendorId);
+        var childOrders = vendorGroups.Select(vendorGroup => new
+        {
+            vendorId = vendorGroup.Key,
+            vendorName = $"Vendor {vendorGroup.Key}",
+            orderNumber = $"CO-{DateTime.UtcNow:yyyyMMdd}-{vendorGroup.Key.Substring(0, Math.Min(4, vendorGroup.Key.Length))}-{Guid.NewGuid().ToString("N").Substring(0, 4).ToUpper()}",
+            itemCount = vendorGroup.Count(),
+            totalQuantity = vendorGroup.Sum(i => i.Quantity),
+            subtotal = vendorGroup.Sum(i => i.Quantity * i.UnitPrice),
+            status = "AwaitingPacking",
+            items = vendorGroup.Select(i => new
+            {
+                productName = i.ProductName,
+                quantity = i.Quantity,
+                unitPrice = i.UnitPrice
+            }).ToList()
+        }).ToList();
+
+        return new
+        {
+            success = true,
+            message = "Payment successful! Order split completed.",
+            parentOrder = new
+            {
+                id = order.Id,
+                orderNumber = order.OrderNumber,
+                status = "Paid",
+                totalAmount = order.TotalAmount,
+                paymentId = request.PaymentId
+            },
+            childOrders = childOrders,
+            paymentDetails = new
+            {
+                razorpayPaymentId = request.PaymentId,
+                razorpayOrderId = request.RazorpayOrderId,
+                amount = request.TotalLandingCost
+            }
+        };
+    }
+}

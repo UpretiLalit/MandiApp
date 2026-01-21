@@ -1,0 +1,193 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="shield-checkmark" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></ion-icon>
+      KYC Verification
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="loadPendingUsers()">
+        <ion-icon name="refresh" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Admin Navigation Tabs -->
+  <ion-toolbar color="light">
+    <ion-segment [(ngModel)]="selectedNavTab" (ionChange)="navigateToTab($event)" [ngModelOptions]="{standalone: true}">
+      <ion-segment-button value="verification">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <ion-label>KYC</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="users">
+        <ion-icon name="people-outline"></ion-icon>
+        <ion-label>Users</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="hubs">
+        <ion-icon name="business-outline"></ion-icon>
+        <ion-label>Hubs</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="marketplace">
+        <ion-icon name="analytics-outline"></ion-icon>
+        <ion-label>Marketplace</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+  
+  <!-- Tab Navigation -->
+  <ion-toolbar color="light" style="border-top: 1px solid #e0e0e0;">
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="onTabChange($event)" [ngModelOptions]="{standalone: true}">
+      <ion-segment-button value="all">
+        <ion-label>All ({{ getPendingCount('all') }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="vendor">
+        <ion-label>Vendors ({{ getPendingCount('vendor') }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="transporter">
+        <ion-label>Transporters ({{ getPendingCount('transporter') }})</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+
+  <!-- Search Bar -->
+  <ion-toolbar>
+    <ion-searchbar 
+      placeholder="Search by name, phone, email..." 
+      debounce="300"
+      (ionInput)="onSearchChange($event)">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="verification-container">
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredUsers.length === 0">
+      <ion-icon name="checkmark-done-circle" class="empty-icon"></ion-icon>
+      <h2>No Pending Verifications</h2>
+      <p>All {{ selectedTab === 'all' ? 'users' : selectedTab + 's' }} have been verified!</p>
+    </div>
+
+    <!-- User Cards -->
+    <div class="users-grid">
+      <ion-card *ngFor="let user of filteredUsers" class="user-card">
+        
+        <!-- Card Header -->
+        <ion-card-header>
+          <div class="user-header">
+            <div class="user-info">
+              <ion-avatar class="user-avatar">
+                <div class="avatar-placeholder">
+                  <ion-icon [name]="user.role === 'Vendor' ? 'storefront' : 'car'"></ion-icon>
+                </div>
+              </ion-avatar>
+              <div class="user-details">
+                <h2>{{ user.fullName }}</h2>
+                <ion-badge [color]="user.role === 'Vendor' ? 'primary' : 'secondary'">
+                  {{ user.role }}
+                </ion-badge>
+              </div>
+            </div>
+            <div class="user-meta">
+              <ion-chip color="warning" class="pending-chip">
+                <ion-icon name="time-outline"></ion-icon>
+                <ion-label>{{ getTimeSince(user.registeredAt) }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+        </ion-card-header>
+
+        <ion-card-content>
+          
+          <!-- Contact Info -->
+          <div class="contact-section">
+            <div class="contact-item">
+              <ion-icon name="call-outline"></ion-icon>
+              <span>{{ user.phoneNumber }}</span>
+            </div>
+            <div class="contact-item">
+              <ion-icon name="mail-outline"></ion-icon>
+              <span>{{ user.email }}</span>
+            </div>
+          </div>
+
+          <!-- Role-Specific Info -->
+          <div class="role-info" *ngIf="user.role === 'Vendor'">
+            <h4>Business Details</h4>
+            <div class="info-row">
+              <ion-icon name="business-outline"></ion-icon>
+              <span>{{ user.businessName }}</span>
+            </div>
+            <div class="info-row">
+              <ion-icon name="location-outline"></ion-icon>
+              <span>{{ user.mandiLocation }} - Stall {{ user.stallNumber }}</span>
+            </div>
+          </div>
+
+          <div class="role-info" *ngIf="user.role === 'Transporter'">
+            <h4>Vehicle Details</h4>
+            <div class="info-row">
+              <ion-icon name="car-sport-outline"></ion-icon>
+              <span>{{ user.vehicleType }}</span>
+            </div>
+            <div class="info-row">
+              <ion-icon name="key-outline"></ion-icon>
+              <span>{{ user.vehicleNumber }}</span>
+            </div>
+            <div class="info-row">
+              <ion-icon name="cube-outline"></ion-icon>
+              <span>Capacity: {{ user.vehicleCapacity }}</span>
+            </div>
+          </div>
+
+          <!-- Documents Section -->
+          <div class="documents-section">
+            <h4>
+              <ion-icon name="documents-outline"></ion-icon>
+              Submitted Documents ({{ user.documents.length }})
+            </h4>
+            <div class="documents-grid">
+              <div 
+                *ngFor="let doc of user.documents" 
+                class="document-card"
+                (click)="viewDocument(doc)">
+                <div class="document-icon">
+                  <ion-icon [name]="getDocumentIcon(doc.type)"></ion-icon>
+                </div>
+                <div class="document-info">
+                  <p class="document-title">{{ getDocumentTitle(doc.type) }}</p>
+                  <p class="document-number">{{ doc.documentNumber }}</p>
+                </div>
+                <ion-icon name="chevron-forward-outline" class="document-arrow"></ion-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <ion-button 
+              expand="block" 
+              color="success" 
+              (click)="approveUser(user)">
+              <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+              Approve & Send Welcome SMS
+            </ion-button>
+            <ion-button 
+              expand="block" 
+              fill="outline" 
+              color="danger" 
+              (click)="rejectUser(user)">
+              <ion-icon name="close-circle" slot="start"></ion-icon>
+              Reject Application
+            </ion-button>
+          </div>
+
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+  </div>
+</ion-content>

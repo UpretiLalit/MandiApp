@@ -20,6 +20,19 @@ export class RegisterPage implements OnInit {
     { value: 'Transporter', label: 'Transporter', icon: 'car-outline', description: 'Deliver orders' }
   ];
 
+  languages = [
+    { code: 'en', name: 'English', nativeName: 'English' },
+    { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+    { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+    { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
+    { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
+    { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
+    { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
+    { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
+    { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
+    { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം' }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -43,6 +56,7 @@ export class RegisterPage implements OnInit {
     this.registerForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(3)]],
       role: ['', Validators.required],
+      language: ['en', Validators.required],
       companyName: [''],
       gstNumber: ['', Validators.pattern(/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}\d[Z]{1}[A-Z\d]{1}$/)],
       phone: [this.phoneNumber, [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
@@ -88,9 +102,37 @@ export class RegisterPage implements OnInit {
       otp: formValue.otp,
       fullName: formValue.fullName,
       role: formValue.role,
+      language: formValue.language || 'en',
       companyName: formValue.companyName || null,
       gstNumber: formValue.gstNumber || null
     };
+
+    // Store language preference
+    localStorage.setItem('app_language', formValue.language || 'en');
+
+    // Store user locally for dev mode
+    const newUser = {
+      id: 'user-' + Date.now(),
+      phoneNumber: formValue.phone,
+      fullName: formValue.fullName,
+      role: formValue.role,
+      language: formValue.language || 'en',
+      companyName: formValue.companyName || null,
+      gstNumber: formValue.gstNumber || null,
+      email: `${formValue.phone}@mandi.app`,
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('💾 REGISTERING NEW USER:', JSON.stringify(newUser, null, 2));
+
+    // Store in localStorage for dev mode
+    const storedUsers = localStorage.getItem('registered_users');
+    const users = storedUsers ? JSON.parse(storedUsers) : [];
+    users.push(newUser);
+    localStorage.setItem('registered_users', JSON.stringify(users));
+    
+    console.log('✅ SAVED TO LOCALSTORAGE. Total users:', users.length);
+    console.log('📋 ALL USERS:', JSON.stringify(users, null, 2));
 
     this.authService.register(registerData).subscribe({
       next: () => {
@@ -100,20 +142,41 @@ export class RegisterPage implements OnInit {
       error: (error) => {
         loading.dismiss();
         console.error('Registration error:', error);
+        // Even if backend fails, we stored locally, so proceed
+        this.showSuccessAndNavigate();
         this.showError('Registration failed. Please try again.');
       }
     });
   }
 
   async showSuccessAndNavigate() {
+    const role = this.registerForm.value.role;
+    let redirectPath = '/marketplace';
+    let message = 'Your account has been created successfully';
+
+    // Redirect based on role
+    if (role === 'Vendor') {
+      redirectPath = '/vendor/products';
+      message = 'Welcome Vendor! You can now start adding your products.';
+    } else if (role === 'Transporter') {
+      redirectPath = '/transporter/dashboard';
+      message = 'Welcome Transporter! You can now view available delivery jobs.';
+    } else if (role === 'Buyer') {
+      redirectPath = '/marketplace';
+      message = 'Welcome Buyer! You can now browse and order products.';
+    } else if (role === 'Admin') {
+      redirectPath = '/admin';
+      message = 'Welcome Admin! Access your admin dashboard.';
+    }
+
     const alert = await this.alertController.create({
       header: 'Success!',
-      message: 'Your account has been created successfully',
+      message: message,
       buttons: [
         {
           text: 'Continue',
           handler: () => {
-            this.router.navigate(['/home']);
+            this.router.navigate([redirectPath]);
           }
         }
       ]

@@ -46,11 +46,15 @@ public class ProductService : IProductService
             VendorId = vendorId,
             Name = request.Name,
             Category = request.Category,
+            Grade = request.Grade,
             Description = request.Description,
             Unit = request.Unit,
             CurrentPrice = request.Price,
             AvailableQuantity = request.Quantity,
+            MinOrderQty = request.MinOrderQty,
             ImageUrl = request.ImageUrl,
+            Emoji = request.Emoji,
+            PriceTiersJson = request.PriceTiers != null ? System.Text.Json.JsonSerializer.Serialize(request.PriceTiers) : null,
             IsActive = true
         };
 

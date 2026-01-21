@@ -1,0 +1,169 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="returnToMandi()">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ deliveryConfirmed ? 'Delivery Complete' : 'Confirm Delivery' }}</ion-title>
+    <ion-buttons slot="end" *ngIf="!deliveryConfirmed">
+      <ion-button (click)="callBuyer()">
+        <ion-icon name="call" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="confirm-delivery-content">
+  
+  <!-- BEFORE CONFIRMATION -->
+  <div class="confirmation-pending" *ngIf="!deliveryConfirmed">
+    
+    <!-- Order Summary Card -->
+    <div class="order-summary-card">
+      <div class="buyer-header">
+        <ion-icon name="person-circle-outline" class="buyer-icon"></ion-icon>
+        <div>
+          <h2>{{ delivery?.buyerName }}</h2>
+          <p class="order-number">{{ delivery?.orderNumber }}</p>
+        </div>
+      </div>
+
+      <div class="address-row">
+        <ion-icon name="location-outline"></ion-icon>
+        <span>{{ delivery?.deliveryAddress }}</span>
+      </div>
+
+      <div class="items-summary">
+        <div class="summary-label">
+          <ion-icon name="cube-outline"></ion-icon>
+          <span>{{ delivery?.items?.length }} Items to Deliver</span>
+        </div>
+        <div class="items-grid">
+          <div class="item-chip" *ngFor="let item of delivery?.items">
+            <span class="item-name">{{ item.productName }}</span>
+            <span class="item-qty">×{{ item.quantity }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="instructions-card">
+      <div class="instruction-header">
+        <ion-icon name="information-circle" color="primary"></ion-icon>
+        <h3>Final Step: Proof of Delivery</h3>
+      </div>
+      <ol class="instruction-list">
+        <li>Handover all items to the buyer</li>
+        <li>Ask buyer to show their Order QR Code</li>
+        <li>Scan the buyer's QR to confirm delivery</li>
+        <li>Payment will be released to your wallet</li>
+      </ol>
+    </div>
+
+    <!-- Scan Button -->
+    <div class="scan-button-container">
+      <ion-button 
+        expand="block" 
+        size="large"
+        class="scan-buyer-qr-btn"
+        [disabled]="isScanning"
+        (click)="scanBuyerQR()">
+        <ion-icon name="qr-code-outline" slot="start"></ion-icon>
+        <span *ngIf="!isScanning">Scan Buyer's QR Code</span>
+        <span *ngIf="isScanning">
+          <ion-spinner name="crescent"></ion-spinner>
+          Scanning...
+        </span>
+      </ion-button>
+      
+      <p class="scan-hint">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        Secure payment release after QR verification
+      </p>
+    </div>
+
+    <!-- Earning Badge -->
+    <div class="earning-preview">
+      <span class="earning-label">You'll Earn</span>
+      <div class="earning-amount">
+        <span class="currency">₹</span>
+        <span class="amount">{{ delivery?.earning }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER CONFIRMATION - SUCCESS SCREEN -->
+  <div class="confirmation-success" *ngIf="deliveryConfirmed" @slideIn>
+    
+    <!-- Big Green Tick Animation -->
+    <div class="success-animation">
+      <div class="checkmark-circle">
+        <ion-icon name="checkmark" class="checkmark-icon"></ion-icon>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-message">
+      <h1>Delivery Successful!</h1>
+      <p>Payment has been released to your wallet</p>
+    </div>
+
+    <!-- Earning Card -->
+    <div class="earning-card">
+      <div class="earning-badge success">
+        <ion-icon name="wallet-outline" class="wallet-icon"></ion-icon>
+        <div class="earning-details">
+          <span class="earning-label">Added to Wallet</span>
+          <div class="earning-value">
+            <span class="currency">₹</span>
+            <span class="amount">{{ delivery?.earning }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Details -->
+    <div class="completed-order-details">
+      <div class="detail-row">
+        <span class="label">Order Number</span>
+        <span class="value">{{ delivery?.orderNumber }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Buyer</span>
+        <span class="value">{{ delivery?.buyerName }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Items Delivered</span>
+        <span class="value">{{ delivery?.items?.length }} Items</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Completed At</span>
+        <span class="value">{{ 'now' | date:'short' }}</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <ion-button 
+        expand="block" 
+        size="large"
+        color="success"
+        class="return-btn"
+        (click)="returnToMandi()">
+        <ion-icon name="arrow-back-circle-outline" slot="start"></ion-icon>
+        Return to Mandi for Next Job
+      </ion-button>
+
+      <ion-button 
+        expand="block" 
+        fill="outline"
+        (click)="viewEarnings()">
+        <ion-icon name="wallet-outline" slot="start"></ion-icon>
+        View Wallet & Earnings
+      </ion-button>
+    </div>
+  </div>
+
+</ion-content>

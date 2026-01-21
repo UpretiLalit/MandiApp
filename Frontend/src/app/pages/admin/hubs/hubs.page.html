@@ -1,0 +1,364 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="header-title">
+        <ion-icon name="business-outline"></ion-icon>
+        <span>Hub Management</span>
+      </div>
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openCreateForm()">
+        <ion-icon name="add-circle" slot="start"></ion-icon>
+        Create New Hub
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Admin Navigation Tabs -->
+  <ion-toolbar color="light">
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="navigateToTab($event)" [ngModelOptions]="{standalone: true}">
+      <ion-segment-button value="verification">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <ion-label>KYC</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="users">
+        <ion-icon name="people-outline"></ion-icon>
+        <ion-label>Users</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="hubs">
+        <ion-icon name="business-outline"></ion-icon>
+        <ion-label>Hubs</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="marketplace">
+        <ion-icon name="analytics-outline"></ion-icon>
+        <ion-label>Marketplace</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="admin-content">
+  
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading hubs...</p>
+  </div>
+
+  <!-- Hubs List -->
+  <div class="hubs-container" *ngIf="!loading && !showCreateForm">
+    
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <ion-icon name="business"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ hubs.length }}</span>
+          <span class="stat-label">Total Hubs</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="checkmark-circle" color="success"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ getActiveHubsCount() }}</span>
+          <span class="stat-label">Active</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="people"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ getTotalVendors() }}</span>
+          <span class="stat-label">Vendors</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="car"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ getTotalTransporters() }}</span>
+          <span class="stat-label">Transporters</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hubs Grid -->
+    <div class="hubs-grid">
+      <div class="hub-card" *ngFor="let hub of hubs" [class.inactive]="!hub.isActive">
+        
+        <!-- Hub Header -->
+        <div class="hub-header">
+          <div class="hub-title">
+            <h2>{{ hub.name }}</h2>
+            <ion-badge [color]="hub.isActive ? 'success' : 'medium'">
+              {{ hub.isActive ? 'Active' : 'Inactive' }}
+            </ion-badge>
+          </div>
+          <div class="hub-actions">
+            <ion-button fill="clear" size="small" (click)="viewHubDetails(hub)">
+              <ion-icon name="eye-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="editHub(hub)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="deleteHub(hub)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Hub Details -->
+        <div class="hub-details">
+          
+          <!-- Location Info -->
+          <div class="detail-section">
+            <h4>
+              <ion-icon name="location"></ion-icon>
+              Geofencing
+            </h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Coordinates</span>
+                <span class="value">{{ hub.latitude }}, {{ hub.longitude }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Radius</span>
+                <span class="value">{{ hub.radiusKm }} km</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regional Settings -->
+          <div class="detail-section">
+            <h4>
+              <ion-icon name="globe"></ion-icon>
+              Regional Settings
+            </h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Timezone</span>
+                <span class="value">{{ hub.localTimezone }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Currency</span>
+                <span class="value">{{ hub.baseCurrency }} ({{ getCurrencySymbol(hub.baseCurrency) }})</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Languages</span>
+                <span class="value">{{ hub.primaryLanguage }} / {{ hub.secondaryLanguage }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistics -->
+          <div class="detail-section">
+            <h4>
+              <ion-icon name="stats-chart"></ion-icon>
+              Statistics
+            </h4>
+            <div class="stats-row">
+              <div class="mini-stat">
+                <span class="mini-stat-value">{{ hub.vendorCount || 0 }}</span>
+                <span class="mini-stat-label">Vendors</span>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-stat-value">{{ hub.transporterCount || 0 }}</span>
+                <span class="mini-stat-label">Transporters</span>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-stat-value">{{ hub.dailyOrders || 0 }}</span>
+                <span class="mini-stat-label">Daily Orders</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Hub Footer -->
+        <div class="hub-footer">
+          <span class="created-date">
+            <ion-icon name="calendar-outline"></ion-icon>
+            Created: {{ hub.createdAt | date:'MMM d, yyyy' }}
+          </span>
+          <ion-button 
+            size="small"
+            [color]="hub.isActive ? 'warning' : 'success'"
+            (click)="toggleHubStatus(hub)">
+            <ion-icon [name]="hub.isActive ? 'pause-circle-outline' : 'play-circle-outline'" slot="start"></ion-icon>
+            {{ hub.isActive ? 'Deactivate' : 'Activate' }}
+          </ion-button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="hubs.length === 0">
+      <ion-icon name="business-outline"></ion-icon>
+      <h3>No Hubs Created Yet</h3>
+      <p>Create your first hub to start managing your marketplace operations</p>
+      <ion-button (click)="openCreateForm()">
+        <ion-icon name="add-circle" slot="start"></ion-icon>
+        Create First Hub
+      </ion-button>
+    </div>
+
+  </div>
+
+  <!-- Create/Edit Hub Form -->
+  <div class="hub-form-container" *ngIf="showCreateForm">
+    
+    <div class="form-header">
+      <h2>Create New Hub</h2>
+      <ion-button fill="clear" (click)="closeCreateForm()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+
+    <form class="hub-form" (ngSubmit)="createHub()">
+      
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3>Basic Information</h3>
+        
+        <ion-item>
+          <ion-label position="stacked">Hub Name <span class="required">*</span></ion-label>
+          <ion-input 
+            [(ngModel)]="hubForm.name" 
+            name="name"
+            placeholder="e.g., Azadpur Mandi, Mumbai APMC"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <div class="form-row">
+          <ion-item>
+            <ion-label position="stacked">Local Timezone <span class="required">*</span></ion-label>
+            <ion-select [(ngModel)]="hubForm.localTimezone" name="timezone" interface="popover">
+              <ion-select-option *ngFor="let tz of timezones" [value]="tz.value">
+                {{ tz.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Base Currency <span class="required">*</span></ion-label>
+            <ion-select [(ngModel)]="hubForm.baseCurrency" name="currency" interface="popover">
+              <ion-select-option *ngFor="let curr of currencies" [value]="curr.value">
+                {{ curr.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+      </div>
+
+      <!-- Geofencing -->
+      <div class="form-section">
+        <h3>
+          <ion-icon name="location"></ion-icon>
+          Geofencing
+        </h3>
+        
+        <div class="location-capture">
+          <ion-button expand="block" fill="outline" (click)="getCurrentLocation()" type="button">
+            <ion-icon name="navigate" slot="start"></ion-icon>
+            Use Current Location
+          </ion-button>
+        </div>
+
+        <div class="form-row">
+          <ion-item>
+            <ion-label position="stacked">Latitude <span class="required">*</span></ion-label>
+            <ion-input 
+              [(ngModel)]="hubForm.latitude" 
+              name="latitude"
+              type="number"
+              step="0.000001"
+              placeholder="28.704060"
+              required>
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Longitude <span class="required">*</span></ion-label>
+            <ion-input 
+              [(ngModel)]="hubForm.longitude" 
+              name="longitude"
+              type="number"
+              step="0.000001"
+              placeholder="77.102493"
+              required>
+            </ion-input>
+          </ion-item>
+        </div>
+
+        <ion-item>
+          <ion-label position="stacked">
+            Operational Radius (km) <span class="required">*</span>
+          </ion-label>
+          <ion-range 
+            [(ngModel)]="hubForm.radiusKm" 
+            name="radius"
+            min="1" 
+            max="50" 
+            step="1"
+            pin="true"
+            [ticks]="true"
+            [snaps]="true">
+            <ion-label slot="start">1</ion-label>
+            <ion-label slot="end">50</ion-label>
+          </ion-range>
+          <div class="range-value">{{ hubForm.radiusKm }} km</div>
+        </ion-item>
+      </div>
+
+      <!-- Language Policy -->
+      <div class="form-section">
+        <h3>
+          <ion-icon name="language"></ion-icon>
+          Language Policy
+        </h3>
+        
+        <div class="form-row">
+          <ion-item>
+            <ion-label position="stacked">Primary Language <span class="required">*</span></ion-label>
+            <ion-select [(ngModel)]="hubForm.primaryLanguage" name="primaryLang" interface="popover">
+              <ion-select-option *ngFor="let lang of languages" [value]="lang.value">
+                {{ lang.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Secondary Language</ion-label>
+            <ion-select [(ngModel)]="hubForm.secondaryLanguage" name="secondaryLang" interface="popover">
+              <ion-select-option *ngFor="let lang of languages" [value]="lang.value">
+                {{ lang.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <div class="form-note">
+          <ion-icon name="information-circle"></ion-icon>
+          <span>All automated notifications will be sent in both languages</span>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <ion-button expand="block" type="submit" size="large">
+          <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+          Create Hub
+        </ion-button>
+        <ion-button expand="block" fill="outline" (click)="closeCreateForm()" type="button">
+          Cancel
+        </ion-button>
+      </div>
+
+    </form>
+
+  </div>
+
+</ion-content>

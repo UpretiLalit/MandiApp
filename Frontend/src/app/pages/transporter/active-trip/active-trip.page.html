@@ -1,0 +1,167 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/transporter/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Pickup Items</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="viewMap()">
+        <ion-icon name="map-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Progress Bar -->
+  <div class="pickup-progress">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="(scannedCount / (trip?.vendors?.length ?? 1)) * 100"></div>
+    </div>
+    <p class="progress-text">{{ scannedCount }} / {{ trip?.vendors?.length ?? 0 }} Vendors Scanned</p>
+  </div>
+</ion-header>
+
+<ion-content class="active-trip-content">
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <ion-spinner name="circular"></ion-spinner>
+    <p>Loading trip details...</p>
+  </div>
+
+  <!-- Trip Details -->
+  <div *ngIf="!loading && trip" class="trip-container">
+
+    <!-- Trip Info Card -->
+    <div class="trip-info-card">
+      <div class="info-row">
+        <ion-icon name="location" color="primary"></ion-icon>
+        <div class="info-content">
+          <small>PICKUP LOCATION</small>
+          <strong>{{ trip.pickupLocation }}</strong>
+        </div>
+      </div>
+      <div class="info-row">
+        <ion-icon name="navigate" color="danger"></ion-icon>
+        <div class="info-content">
+          <small>DROP LOCATION</small>
+          <strong>{{ trip.dropLocation }}</strong>
+          <p>{{ trip.distance }} km away</p>
+        </div>
+      </div>
+      <div class="earning-badge">
+        <span>You'll earn</span>
+        <strong>₹{{ trip.earning }}</strong>
+      </div>
+    </div>
+
+    <!-- Instruction Banner -->
+    <div class="instruction-banner" *ngIf="!allVendorsScanned">
+      <ion-icon name="information-circle" color="primary"></ion-icon>
+      <div>
+        <strong>Scan QR codes at each vendor stall</strong>
+        <p>Verify pickup by scanning the QR code displayed on vendor's phone</p>
+      </div>
+    </div>
+
+    <!-- All Scanned Banner -->
+    <div class="success-banner" *ngIf="allVendorsScanned">
+      <ion-icon name="checkmark-done-circle" color="success"></ion-icon>
+      <div>
+        <strong>All vendors scanned! ✓</strong>
+        <p>Ready to start delivery to buyer</p>
+      </div>
+    </div>
+
+    <!-- Vendor List with QR Scanner -->
+    <div class="section-header">
+      <h2>Vendor Pickups</h2>
+      <ion-badge color="medium">{{ trip.vendors.length }} stalls</ion-badge>
+    </div>
+
+    <div class="vendor-list">
+      <div 
+        *ngFor="let vendor of trip.vendors; let i = index"
+        class="vendor-card"
+        [class.scanned]="vendor.isScanned">
+        
+        <!-- Vendor Header -->
+        <div class="vendor-header">
+          <div class="stall-number">
+            <ion-icon 
+              [name]="vendor.isScanned ? 'checkmark-circle' : 'location'" 
+              [color]="vendor.isScanned ? 'success' : 'primary'">
+            </ion-icon>
+            <div>
+              <h3>{{ vendor.stallNumber }}</h3>
+              <p>{{ vendor.vendorName }}</p>
+            </div>
+          </div>
+
+          <div class="vendor-actions">
+            <!-- QR Scanner Button -->
+            <ion-button 
+              *ngIf="!vendor.isScanned"
+              fill="solid" 
+              color="primary"
+              size="default"
+              (click)="scanVendorQR(vendor)">
+              <ion-icon name="qr-code-outline" slot="start"></ion-icon>
+              Scan QR
+            </ion-button>
+
+            <!-- Scanned Badge -->
+            <div *ngIf="vendor.isScanned" class="scanned-badge">
+              <ion-icon name="checkmark-circle" color="success"></ion-icon>
+              <span>Scanned</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items List -->
+        <div class="items-list">
+          <div *ngFor="let item of vendor.items" class="item-row">
+            <ion-icon name="cube-outline" color="medium"></ion-icon>
+            <span class="item-name">{{ item.productName }}</span>
+            <span class="item-quantity">{{ item.quantity }} {{ item.unit }}</span>
+          </div>
+        </div>
+
+        <!-- Scanned Timestamp -->
+        <div *ngIf="vendor.isScanned && vendor.scannedAt" class="scanned-time">
+          <ion-icon name="time-outline" color="success"></ion-icon>
+          <small>Scanned at {{ vendor.scannedAt | date:'hh:mm a' }}</small>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</ion-content>
+
+<!-- Footer Actions -->
+<ion-footer *ngIf="!loading && trip">
+  <ion-toolbar>
+    
+    <!-- Not All Scanned -->
+    <div *ngIf="!allVendorsScanned" class="footer-disabled">
+      <ion-button expand="block" disabled size="large">
+        <ion-icon name="lock-closed" slot="start"></ion-icon>
+        Scan All Vendors First ({{ scannedCount }}/{{ trip.vendors.length }})
+      </ion-button>
+    </div>
+
+    <!-- All Scanned - Start Delivery -->
+    <div *ngIf="allVendorsScanned" class="footer-active">
+      <ion-button 
+        expand="block" 
+        color="success" 
+        size="large"
+        (click)="startDelivery()">
+        <ion-icon name="arrow-forward-circle" slot="start"></ion-icon>
+        Start Delivery
+      </ion-button>
+    </div>
+
+  </ion-toolbar>
+</ion-footer>

@@ -1,0 +1,463 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="people" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></ion-icon>
+      User Management
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="loadUsers()">
+        <ion-icon name="refresh" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- User Type Tabs -->
+  <ion-toolbar color="light" style="border-top: 1px solid #e0e0e0;">
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="onTabChange($event)" [ngModelOptions]="{standalone: true}">
+      <ion-segment-button value="all">
+        <ion-label>All ({{ getUserCount('all') }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="buyer">
+        <ion-label>Buyers ({{ getUserCount('buyer') }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="vendor">
+        <ion-label>Vendors ({{ getUserCount('vendor') }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="transporter">
+        <ion-label>Transporters ({{ getUserCount('transporter') }})</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+
+  <!-- Search Bar -->
+  <ion-toolbar>
+    <ion-searchbar 
+      placeholder="Search by name, phone, email..." 
+      debounce="300"
+      (ionInput)="onSearchChange($event)">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>Loading users from server...</p>
+  </div>
+
+  <div class="users-container" *ngIf="!isLoading">
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <ion-icon name="people" color="primary"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ users.length }}</span>
+          <span class="stat-label">Total Users</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="checkmark-circle" color="success"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ getActiveUsers() }}</span>
+          <span class="stat-label">Active</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="pause-circle" color="warning"></ion-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ getSuspendedUsers() }}</span>
+          <span class="stat-label">Suspended</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Button -->
+    <div class="action-header" *ngIf="!showUserForm">
+      <ion-button color="primary" (click)="openUserForm()">
+        <ion-icon name="add-circle" slot="start"></ion-icon>
+        Add New User
+      </ion-button>
+      <ion-button color="success" (click)="exportToExcel()" [disabled]="filteredUsers.length === 0">
+        <ion-icon name="download" slot="start"></ion-icon>
+        Export to Excel
+      </ion-button>
+    </div>
+
+    <!-- User Form -->
+    <ion-card *ngIf="showUserForm" class="form-card">
+      <ion-card-header>
+        <ion-card-title>{{ editingUser ? 'Edit User' : 'Add New User' }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        
+        <!-- Role Selection -->
+        <ion-item>
+          <ion-label position="stacked">User Role *</ion-label>
+          <ion-select [(ngModel)]="userForm.role" interface="popover" [disabled]="editingUser !== null">
+            <ion-select-option value="Buyer">Buyer</ion-select-option>
+            <ion-select-option value="Vendor">Vendor</ion-select-option>
+            <ion-select-option value="Transporter">Transporter</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Mandi Assignment (Cannot be changed after creation) -->
+        <ion-item>
+          <ion-label position="stacked">
+            Assigned Mandi * 
+            <ion-text color="danger" *ngIf="editingUser">
+              <small>(Cannot be changed)</small>
+            </ion-text>
+          </ion-label>
+          <ion-select 
+            [(ngModel)]="userForm.assignedMandiId" 
+            (ionChange)="onMandiSelect()"
+            interface="popover" 
+            [disabled]="editingUser !== null">
+            <ion-select-option *ngFor="let mandi of availableMandis" [value]="mandi.id">
+              {{ mandi.name }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Common Fields -->
+        <ion-item>
+          <ion-label position="stacked">Full Name *</ion-label>
+          <ion-input [(ngModel)]="userForm.fullName" placeholder="Enter full name"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Phone Number *</ion-label>
+          <ion-input [(ngModel)]="userForm.phoneNumber" type="tel" placeholder="+91 98765 43210"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Email</ion-label>
+          <ion-input [(ngModel)]="userForm.email" type="email" placeholder="email@example.com"></ion-input>
+        </ion-item>
+
+        <!-- Address Section (Required for all roles) -->
+        <div class="address-section">
+          <h4>📍 Location & Address</h4>
+          
+          <div class="location-picker">
+            <ion-button expand="block" color="primary" (click)="pickLocation()" [disabled]="isPickingLocation">
+              <ion-icon name="location" slot="start"></ion-icon>
+              {{ userForm.latitude ? 'Update Location' : 'Pick Location on Map' }}
+            </ion-button>
+            <ion-note *ngIf="userForm.latitude !== null && userForm.longitude !== null">
+              Selected: {{ userForm.latitude.toFixed(6) }}, {{ userForm.longitude.toFixed(6) }}
+            </ion-note>
+          </div>
+
+          <ion-item>
+            <ion-label position="stacked">Full Address *</ion-label>
+            <ion-textarea 
+              [(ngModel)]="userForm.address" 
+              rows="2"
+              placeholder="Building no, Street, Area, City, Pincode">
+            </ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Landmark *</ion-label>
+            <ion-input 
+              [(ngModel)]="userForm.landmark" 
+              placeholder="e.g., Near Metro Station">
+            </ion-input>
+          </ion-item>
+
+          <div class="nearby-places-section">
+            <h5>Nearby Places / Tags</h5>
+            <div class="add-nearby-place">
+              <ion-input 
+                [(ngModel)]="newNearbyPlace" 
+                placeholder="Add nearby place"
+                (keyup.enter)="addNearbyPlace()">
+              </ion-input>
+              <ion-button (click)="addNearbyPlace()" size="small">
+                <ion-icon name="add" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+            <div class="nearby-chips" *ngIf="userForm.nearbyPlaces.length > 0">
+              <ion-chip *ngFor="let place of userForm.nearbyPlaces; let i = index" color="tertiary">
+                <ion-icon name="location-outline"></ion-icon>
+                <ion-label>{{ place }}</ion-label>
+                <ion-icon name="close-circle" (click)="removeNearbyPlace(i)"></ion-icon>
+              </ion-chip>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buyer Specific Fields -->
+        <div *ngIf="userForm.role === 'Buyer'" class="role-section">
+          <h4>Business Details</h4>
+          <ion-item>
+            <ion-label position="stacked">Business Name *</ion-label>
+            <ion-input [(ngModel)]="userForm.businessName" placeholder="e.g., Raj Restaurant"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Business Type</ion-label>
+            <ion-select [(ngModel)]="userForm.businessType" interface="popover">
+              <ion-select-option *ngFor="let type of businessTypes" [value]="type">
+                {{ type }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <!-- Vendor Specific Fields -->
+        <div *ngIf="userForm.role === 'Vendor'" class="role-section">
+          <h4>Vendor Details</h4>
+          <ion-item>
+            <ion-label position="stacked">Stall Number *</ion-label>
+            <ion-input [(ngModel)]="userForm.stallNumber" placeholder="e.g., A-42"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Mandi Location *</ion-label>
+            <ion-input [(ngModel)]="userForm.mandiLocation" placeholder="e.g., Azadpur Mandi, Delhi"></ion-input>
+          </ion-item>
+          <div class="categories-section">
+            <h5>Categories</h5>
+            <div class="add-category">
+              <ion-input 
+                [(ngModel)]="newCategory" 
+                placeholder="Add category"
+                (keyup.enter)="addCategory()">
+              </ion-input>
+              <ion-button (click)="addCategory()" size="small">
+                <ion-icon name="add" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+            <div class="category-chips" *ngIf="userForm.categories.length > 0">
+              <ion-chip *ngFor="let cat of userForm.categories; let i = index" color="success">
+                <ion-label>{{ cat }}</ion-label>
+                <ion-icon name="close-circle" (click)="removeCategory(i)"></ion-icon>
+              </ion-chip>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transporter Specific Fields -->
+        <div *ngIf="userForm.role === 'Transporter'" class="role-section">
+          <h4>Vehicle & License Details</h4>
+          <ion-item>
+            <ion-label position="stacked">Vehicle Type</ion-label>
+            <ion-select [(ngModel)]="userForm.vehicleType" interface="popover">
+              <ion-select-option *ngFor="let type of vehicleTypes" [value]="type">
+                {{ type }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Vehicle Number *</ion-label>
+            <ion-input [(ngModel)]="userForm.vehicleNumber" placeholder="e.g., DL-1234-5678"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Vehicle Capacity</ion-label>
+            <ion-input [(ngModel)]="userForm.vehicleCapacity" placeholder="e.g., 500 kg"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Driving License Number *</ion-label>
+            <ion-input [(ngModel)]="userForm.licenseNumber" placeholder="e.g., DL-0120260012345"></ion-input>
+          </ion-item>
+        </div>
+
+        <div class="form-buttons">
+          <ion-button expand="block" (click)="saveUser()">
+            <ion-icon name="checkmark" slot="start"></ion-icon>
+            {{ editingUser ? 'Update' : 'Add' }} User
+          </ion-button>
+          <ion-button expand="block" fill="outline" color="medium" (click)="closeUserForm()">
+            Cancel
+          </ion-button>
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Users Grid -->
+    <div class="sort-controls">
+      <ion-chip (click)="sortBy('fullName')" [color]="sortColumn === 'fullName' ? 'primary' : 'medium'">
+        <ion-label>Name</ion-label>
+        <ion-icon [name]="sortColumn === 'fullName' ? (sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"></ion-icon>
+      </ion-chip>
+      <ion-chip (click)="sortBy('role')" [color]="sortColumn === 'role' ? 'primary' : 'medium'">
+        <ion-label>Role</ion-label>
+        <ion-icon [name]="sortColumn === 'role' ? (sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"></ion-icon>
+      </ion-chip>
+      <ion-chip (click)="sortBy('assignedMandiName')" [color]="sortColumn === 'assignedMandiName' ? 'primary' : 'medium'">
+        <ion-label>Mandi</ion-label>
+        <ion-icon [name]="sortColumn === 'assignedMandiName' ? (sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"></ion-icon>
+      </ion-chip>
+      <ion-chip (click)="sortBy('phoneNumber')" [color]="sortColumn === 'phoneNumber' ? 'primary' : 'medium'">
+        <ion-label>Phone</ion-label>
+        <ion-icon [name]="sortColumn === 'phoneNumber' ? (sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"></ion-icon>
+      </ion-chip>
+    </div>
+    
+    <div class="users-grid">
+      <ion-card *ngFor="let user of filteredUsers" class="user-card" [class.suspended]="user.status === 'suspended'">>
+        
+        <ion-card-header>
+          <div class="user-header">
+            <div class="user-info">
+              <ion-avatar class="user-avatar">
+                <div class="avatar-placeholder" [style.background]="
+                  user.role === 'Buyer' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' :
+                  user.role === 'Vendor' ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' :
+                  'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+                ">
+                  <ion-icon [name]="
+                    user.role === 'Buyer' ? 'cart' :
+                    user.role === 'Vendor' ? 'storefront' :
+                    'car'
+                  "></ion-icon>
+                </div>
+              </ion-avatar>
+              <div class="user-details">
+                <h2>{{ user.fullName }}</h2>
+                <div class="badges">
+                  <ion-badge [color]="getRoleBadgeColor(user.role)">{{ user.role }}</ion-badge>
+                  <ion-badge [color]="getStatusBadgeColor(user.status)">{{ user.status }}</ion-badge>
+                </div>
+              </div>
+            </div>
+            <div class="user-actions">
+              <ion-button fill="clear" size="small" (click)="editUser(user)">
+                <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" size="small" color="danger" (click)="deleteUser(user)">
+                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+        </ion-card-header>
+
+        <ion-card-content>
+          
+          <!-- Contact Info -->
+          <div class="contact-section">
+            <div class="contact-item">
+              <ion-icon name="call-outline"></ion-icon>
+              <span>{{ user.phoneNumber }}</span>
+            </div>
+            <div class="contact-item" *ngIf="user.email">
+              <ion-icon name="mail-outline"></ion-icon>
+              <span>{{ user.email }}</span>
+            </div>
+          </div>
+
+          <!-- Mandi Assignment -->
+          <div class="mandi-section">
+            <div class="mandi-item">
+              <ion-icon name="storefront" color="primary"></ion-icon>
+              <strong>{{ user.assignedMandiName }}</strong>
+            </div>
+            <ion-note>Users can only see prices from their assigned mandi</ion-note>
+          </div>
+
+          <!-- Address Section -->
+          <div class="address-display">
+            <h4>📍 Location</h4>
+            <div class="address-item">
+              <ion-icon name="location-outline"></ion-icon>
+              <span>{{ user.address }}</span>
+            </div>
+            <div class="address-item" *ngIf="user.landmark">
+              <ion-icon name="navigate-outline"></ion-icon>
+              <span>Landmark: {{ user.landmark }}</span>
+            </div>
+            <div class="address-item coordinates">
+              <ion-icon name="map-outline"></ion-icon>
+              <span>{{ user.latitude }}, {{ user.longitude }}</span>
+              <a [href]="'https://www.google.com/maps?q=' + user.latitude + ',' + user.longitude" 
+                 target="_blank" 
+                 class="map-link">
+                View on Map
+              </a>
+            </div>
+            <div class="nearby-tags" *ngIf="user.nearbyPlaces && user.nearbyPlaces.length > 0">
+              <ion-chip *ngFor="let place of user.nearbyPlaces" outline="true" color="tertiary" size="small">
+                <ion-icon name="location-outline"></ion-icon>
+                <ion-label>{{ place }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+
+          <!-- Role Specific Info -->
+          <div class="role-info" *ngIf="user.role === 'Buyer'">
+            <h4>Business Details</h4>
+            <div class="info-row">
+              <ion-icon name="business-outline"></ion-icon>
+              <span>{{ user.businessName }}</span>
+            </div>
+            <div class="info-row" *ngIf="user.businessType">
+              <ion-icon name="pricetag-outline"></ion-icon>
+              <span>{{ user.businessType }}</span>
+            </div>
+          </div>
+
+          <div class="role-info" *ngIf="user.role === 'Vendor'">
+            <h4>Vendor Details</h4>
+            <div class="info-row">
+              <ion-icon name="location-outline"></ion-icon>
+              <span>{{ user.mandiLocation }} - Stall {{ user.stallNumber }}</span>
+            </div>
+            <div class="info-row" *ngIf="user.categories && user.categories.length > 0">
+              <ion-icon name="pricetags-outline"></ion-icon>
+              <div class="categories-inline">
+                <ion-chip *ngFor="let cat of user.categories" outline="true" color="success">
+                  {{ cat }}
+                </ion-chip>
+              </div>
+            </div>
+          </div>
+
+          <div class="role-info" *ngIf="user.role === 'Transporter'">
+            <h4>Vehicle Details</h4>
+            <div class="info-row">
+              <ion-icon name="car-sport-outline"></ion-icon>
+              <span>{{ user.vehicleType }}</span>
+            </div>
+            <div class="info-row">
+              <ion-icon name="key-outline"></ion-icon>
+              <span>{{ user.vehicleNumber }}</span>
+            </div>
+            <div class="info-row" *ngIf="user.vehicleCapacity">
+              <ion-icon name="cube-outline"></ion-icon>
+              <span>Capacity: {{ user.vehicleCapacity }}</span>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="user-footer">
+            <div class="footer-info">
+              <span class="date-text">Joined: {{ user.createdAt | date:'short' }}</span>
+              <span class="date-text" *ngIf="user.lastActive">Active: {{ getTimeSince(user.lastActive) }}</span>
+            </div>
+            <ion-button size="small" 
+                        [color]="user.status === 'active' ? 'warning' : 'success'" 
+                        (click)="toggleUserStatus(user)">
+              <ion-icon [name]="user.status === 'active' ? 'pause' : 'play'" slot="start"></ion-icon>
+              {{ user.status === 'active' ? 'Suspend' : 'Activate' }}
+            </ion-button>
+          </div>
+
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredUsers.length === 0">
+      <ion-icon name="people" class="empty-icon"></ion-icon>
+      <h2>No Users Found</h2>
+      <p>{{ searchQuery ? 'Try adjusting your search' : 'Click "Add New User" to get started' }}</p>
+    </div>
+
+  </div>
+</ion-content>

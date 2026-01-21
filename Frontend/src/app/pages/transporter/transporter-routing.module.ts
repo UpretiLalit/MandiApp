@@ -4,8 +4,24 @@ import { Routes, RouterModule } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'deliveries',
+    redirectTo: 'dashboard',
     pathMatch: 'full'
+  },
+  {
+    path: 'dashboard',
+    loadChildren: () => import('./dashboard/dashboard.module').then(m => m.TransporterDashboardPageModule)
+  },
+  {
+    path: 'active-trip',
+    loadChildren: () => import('./active-trip/active-trip.module').then(m => m.ActiveTripPageModule)
+  },
+  {
+    path: 'delivering',
+    loadChildren: () => import('./delivering/delivering.module').then(m => m.DeliveringPageModule)
+  },
+  {
+    path: 'confirm-delivery',
+    loadChildren: () => import('./confirm-delivery/confirm-delivery.module').then(m => m.ConfirmDeliveryPageModule)
   },
   {
     path: 'deliveries',

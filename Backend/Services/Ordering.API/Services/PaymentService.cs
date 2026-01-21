@@ -17,11 +17,11 @@ public class PaymentService : IPaymentService
         _logger = logger;
     }
 
-    public async Task<string> InitiatePaymentAsync(int orderId, decimal amount)
+    public async Task<PaymentInitiationResult?> InitiatePaymentAsync(int orderId)
     {
         var order = await _context.Orders.FindAsync(orderId);
         if (order == null)
-            throw new Exception("Order not found");
+            return null;
 
         // TODO: Integrate with Razorpay/Stripe API
         var transactionId = $"TXN-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
@@ -30,7 +30,7 @@ public class PaymentService : IPaymentService
         {
             OrderId = orderId,
             TransactionId = transactionId,
-            Amount = amount,
+            Amount = order.TotalAmount,
             Status = PaymentStatus.Pending,
             Method = PaymentMethod.UPI,
             IsEscrow = true
@@ -41,7 +41,12 @@ public class PaymentService : IPaymentService
 
         _logger.LogInformation($"Payment initiated for Order {orderId} with transaction ID {transactionId}");
 
-        return transactionId;
+        return new PaymentInitiationResult 
+        {
+            TransactionId = transactionId,
+            Amount = order.TotalAmount,
+            OrderNumber = order.OrderNumber
+        };
     }
 
     public async Task<bool> CapturePaymentAsync(string transactionId)

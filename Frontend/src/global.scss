@@ -27,3 +27,50 @@
     --border-radius: var(--radius-xl);
   }
 }
+
+// ==================== QR SCANNER STYLES ====================
+body.scanner-active {
+  --background: transparent;
+  --ion-background-color: transparent;
+  background: transparent !important;
+}
+
+// ==================== NOTIFICATION TOASTS ====================
+.notification-toast {
+  --border-radius: 12px;
+  --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  
+  .toast-header {
+    font-weight: 700;
+    font-size: 16px;
+  }
+  
+  .toast-message {
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  
+  .toast-button {
+    font-weight: 600;
+  }
+  
+  &.toast-success {
+    --background: var(--ion-color-success);
+    --color: white;
+  }
+  
+  &.toast-warning {
+    --background: var(--ion-color-warning);
+    --color: #000;
+  }
+  
+  &.toast-danger {
+    --background: var(--ion-color-danger);
+    --color: white;
+  }
+  
+  &.toast-primary {
+    --background: var(--ion-color-primary);
+    --color: white;
+  }
+}

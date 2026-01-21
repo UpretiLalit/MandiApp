@@ -163,33 +163,32 @@
             </div>
             
             <!-- Starting Price Display -->
-            <div class="starting-price-section">
-              <div class="starting-price-card">
-                <span class="price-label">Best Price</span>
-                <div class="price-display">
-                  <span class="currency">₹</span>
-                  <span class="amount">{{product.vendors[0].price}}</span>
-                  <span class="per-unit">/{{product.unit}}</span>
-                </div>
-                <span class="vendor-count">{{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}} available</span>
+            <div class="starting-price-card">
+              <span class="price-label">Best Price</span>
+              <div class="price-display">
+                <span class="currency">₹</span>
+                <span class="amount">{{product.vendors[0].price}}</span>
+                <span class="per-unit">/{{product.unit}}</span>
               </div>
-              </div>
+              <span class="vendor-count">{{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}} available</span>
+            </div>
             
-            <!-- Expand Indicator -->
-            <div class="expand-indicator">
+            <!-- Compare Button: below pricing for uniform design -->
+            <button class="expand-indicator">
               <ion-icon 
                 [name]="isProductExpanded(product.name) ? 'chevron-up' : 'chevron-down'" 
                 class="expand-icon">
               </ion-icon>
-              <span class="expand-text">{{isProductExpanded(product.name) ? 'Hide' : 'Compare'}} Vendors</span>
-            </div>
+              <span class="expand-text">Compare Vendors</span>
+            </button>
+            
           </ion-card-content>
         </div>
           
         <!-- Quick Buy Section with Quantity Stepper -->
         <div class="quick-buy-section" (click)="$event.stopPropagation()">
           <!-- Quantity Stepper - Shown only when activated -->
-          <div class="quantity-stepper" *ngIf="isQuantityStepperVisible(product.name)" @slideDown>
+          <div class="quantity-stepper" *ngIf="isQuantityStepperVisible(product.name)">
             <button 
               class="qty-btn"
               [disabled]="!canDecrement(product)"
@@ -282,8 +281,13 @@
                 
                 <!-- Compact Info (Always Visible) -->
                 <div class="vendor-compact-info">
-                    <ion-badge class="badge-mini" [color]="vendor.grade === 'A' ? 'success' : vendor.grade === 'B' ? 'warning' : 'danger'">
+                    <ion-badge class="badge-mini badge-grade" [color]="vendor.grade === 'A' ? 'success' : vendor.grade === 'B' ? 'warning' : 'danger'">
+                      <ion-icon name="ribbon-outline"></ion-icon>
                       Grade {{vendor.grade}}
+                    </ion-badge>
+                    <ion-badge class="badge-mini badge-rating" color="light">
+                      <ion-icon name="star" color="warning"></ion-icon>
+                      {{vendor.vendorRating}}
                     </ion-badge>
                     <ion-icon name="chevron-down-outline" class="expand-icon"></ion-icon>
                 </div>

@@ -102,6 +102,7 @@ public class AuthController : ControllerBase
             Email = request.Email,
             FullName = request.FullName,
             Role = request.Role,
+            Language = request.Language ?? "en",
             CompanyName = request.CompanyName,
             GstNumber = request.GstNumber,
             Address = request.Address,

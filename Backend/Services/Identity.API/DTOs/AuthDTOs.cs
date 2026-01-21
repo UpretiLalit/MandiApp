@@ -8,6 +8,7 @@ public record RegisterRequest(
     string PhoneNumber,
     string FullName,
     string Role,
+    string Language = "en",
     string? Email = null,
     string? CompanyName = null,
     string? GstNumber = null,

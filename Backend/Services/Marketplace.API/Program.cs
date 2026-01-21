@@ -12,9 +12,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database Configuration - Use SQLite for quick testing
+// Database Configuration - Use Supabase PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("MarketplaceDb") ?? "Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=PYvWmYoMYiO3RiCJ";
 builder.Services.AddDbContext<MarketplaceDbContext>(options =>
-    options.UseSqlite("Data Source=marketplace.db"));
+    options.UseNpgsql(connectionString));
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

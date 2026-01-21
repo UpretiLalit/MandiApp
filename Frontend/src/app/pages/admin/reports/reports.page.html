@@ -1,0 +1,418 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="bar-chart" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></ion-icon>
+      Complete Reports & Analytics
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="loadReportData()">
+        <ion-icon name="refresh" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button (click)="exportFullReport()">
+        <ion-icon name="download" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Date Range Selector -->
+  <ion-toolbar color="light">
+    <ion-segment [(ngModel)]="dateRange" (ionChange)="onDateRangeChange($event)" mode="md">
+      <ion-segment-button value="today">
+        <ion-label>Today</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="week">
+        <ion-label>7 Days</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="month">
+        <ion-label>30 Days</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="year">
+        <ion-label>Year</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+  
+  <!-- Report Tabs -->
+  <ion-toolbar color="light" style="border-top: 1px solid #ddd;">
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="onTabChange($event)" mode="md" scrollable>
+      <ion-segment-button value="overview">
+        <ion-icon name="speedometer"></ion-icon>
+        <ion-label>Overview</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="mandis">
+        <ion-icon name="storefront"></ion-icon>
+        <ion-label>Mandis</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="users">
+        <ion-icon name="people"></ion-icon>
+        <ion-label>Users</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="orders">
+        <ion-icon name="cart"></ion-icon>
+        <ion-label>Orders</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="revenue">
+        <ion-icon name="cash"></ion-icon>
+        <ion-label>Revenue</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>Loading report data...</p>
+  </div>
+
+  <div *ngIf="!isLoading && reportData" class="reports-container">
+    
+    <!-- OVERVIEW TAB -->
+    <div *ngIf="selectedTab === 'overview'" class="tab-content">
+      
+      <!-- Key Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card primary">
+          <div class="metric-icon">
+            <ion-icon name="people"></ion-icon>
+          </div>
+          <div class="metric-info">
+            <h3>{{ formatNumber(reportData.totalUsers) }}</h3>
+            <p>Total Users</p>
+          </div>
+        </div>
+        
+        <div class="metric-card success">
+          <div class="metric-icon">
+            <ion-icon name="cart"></ion-icon>
+          </div>
+          <div class="metric-info">
+            <h3>{{ formatNumber(reportData.totalOrders) }}</h3>
+            <p>Total Orders</p>
+          </div>
+        </div>
+        
+        <div class="metric-card warning">
+          <div class="metric-icon">
+            <ion-icon name="cash"></ion-icon>
+          </div>
+          <div class="metric-info">
+            <h3>{{ formatCurrency(reportData.totalRevenue) }}</h3>
+            <p>Total Revenue</p>
+          </div>
+        </div>
+        
+        <div class="metric-card tertiary">
+          <div class="metric-icon">
+            <ion-icon name="car"></ion-icon>
+          </div>
+          <div class="metric-info">
+            <h3>{{ formatNumber(reportData.activeTransporters) }}</h3>
+            <p>Active Transporters</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Order Status -->
+      <ion-card class="stat-card">
+        <ion-card-header>
+          <ion-card-title>Order Status Distribution</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="status-grid">
+            <div class="status-item pending">
+              <div class="status-icon">
+                <ion-icon name="time"></ion-icon>
+              </div>
+              <div class="status-info">
+                <h4>{{ formatNumber(reportData.pendingOrders) }}</h4>
+                <p>Pending Orders</p>
+                <ion-progress-bar [value]="reportData.pendingOrders / reportData.totalOrders" color="warning"></ion-progress-bar>
+              </div>
+            </div>
+            
+            <div class="status-item completed">
+              <div class="status-icon">
+                <ion-icon name="checkmark-circle"></ion-icon>
+              </div>
+              <div class="status-info">
+                <h4>{{ formatNumber(reportData.completedOrders) }}</h4>
+                <p>Completed Orders</p>
+                <ion-progress-bar [value]="reportData.completedOrders / reportData.totalOrders" color="success"></ion-progress-bar>
+              </div>
+            </div>
+            
+            <div class="status-item cancelled">
+              <div class="status-icon">
+                <ion-icon name="close-circle"></ion-icon>
+              </div>
+              <div class="status-info">
+                <h4>{{ formatNumber(reportData.cancelledOrders) }}</h4>
+                <p>Cancelled Orders</p>
+                <ion-progress-bar [value]="reportData.cancelledOrders / reportData.totalOrders" color="danger"></ion-progress-bar>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+      <!-- User Distribution -->
+      <ion-card class="stat-card">
+        <ion-card-header>
+          <ion-card-title>User Distribution by Role</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="user-dist-grid">
+            <div class="dist-item">
+              <ion-icon name="cart" color="primary"></ion-icon>
+              <h3>{{ formatNumber(reportData.buyerCount) }}</h3>
+              <p>Buyers</p>
+              <ion-badge color="primary">{{ ((reportData.buyerCount / reportData.totalUsers) * 100).toFixed(1) }}%</ion-badge>
+            </div>
+            <div class="dist-item">
+              <ion-icon name="storefront" color="success"></ion-icon>
+              <h3>{{ formatNumber(reportData.vendorCount) }}</h3>
+              <p>Vendors</p>
+              <ion-badge color="success">{{ ((reportData.vendorCount / reportData.totalUsers) * 100).toFixed(1) }}%</ion-badge>
+            </div>
+            <div class="dist-item">
+              <ion-icon name="car" color="tertiary"></ion-icon>
+              <h3>{{ formatNumber(reportData.transporterCount) }}</h3>
+              <p>Transporters</p>
+              <ion-badge color="tertiary">{{ ((reportData.transporterCount / reportData.totalUsers) * 100).toFixed(1) }}%</ion-badge>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+    </div>
+    
+    <!-- MANDIS TAB -->
+    <div *ngIf="selectedTab === 'mandis'" class="tab-content">
+      <ion-card *ngFor="let mandi of reportData.mandiStats" class="mandi-card">
+        <ion-card-header>
+          <ion-card-title>{{ mandi.mandiName }}</ion-card-title>
+          <ion-card-subtitle>{{ mandi.mandiId }}</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="mandi-stats">
+            <div class="stat-item">
+              <ion-icon name="cart" color="primary"></ion-icon>
+              <div>
+                <h4>{{ formatNumber(mandi.totalOrders) }}</h4>
+                <p>Total Orders</p>
+              </div>
+            </div>
+            <div class="stat-item">
+              <ion-icon name="cash" color="success"></ion-icon>
+              <div>
+                <h4>{{ formatCurrency(mandi.revenue) }}</h4>
+                <p>Revenue</p>
+              </div>
+            </div>
+            <div class="stat-item">
+              <ion-icon name="people" color="tertiary"></ion-icon>
+              <div>
+                <h4>{{ formatNumber(mandi.activeUsers) }}</h4>
+                <p>Active Users</p>
+              </div>
+            </div>
+            <div class="stat-item">
+              <ion-icon name="time" color="warning"></ion-icon>
+              <div>
+                <h4>{{ mandi.averageDeliveryTime }} min</h4>
+                <p>Avg Delivery</p>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+    
+    <!-- USERS TAB -->
+    <div *ngIf="selectedTab === 'users'" class="tab-content">
+      
+      <!-- Top Buyers -->
+      <ion-card class="ranking-card">
+        <ion-card-header>
+          <ion-card-title>
+            <ion-icon name="trophy" color="warning"></ion-icon>
+            Top Buyers
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="ranking-list">
+            <div *ngFor="let buyer of reportData.topBuyers; let i = index" class="ranking-item">
+              <div class="rank-badge" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+                {{ i + 1 }}
+              </div>
+              <div class="user-info">
+                <h4>{{ buyer.name }}</h4>
+                <div class="user-metrics">
+                  <span><ion-icon name="cart"></ion-icon> {{ formatNumber(buyer.totalOrders) }} orders</span>
+                  <span><ion-icon name="cash"></ion-icon> {{ formatCurrency(buyer.totalRevenue) }}</span>
+                  <span><ion-icon name="star" color="warning"></ion-icon> {{ buyer.rating }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+      <!-- Top Vendors -->
+      <ion-card class="ranking-card">
+        <ion-card-header>
+          <ion-card-title>
+            <ion-icon name="trophy" color="success"></ion-icon>
+            Top Vendors
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="ranking-list">
+            <div *ngFor="let vendor of reportData.topVendors; let i = index" class="ranking-item">
+              <div class="rank-badge" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+                {{ i + 1 }}
+              </div>
+              <div class="user-info">
+                <h4>{{ vendor.name }}</h4>
+                <div class="user-metrics">
+                  <span><ion-icon name="cart"></ion-icon> {{ formatNumber(vendor.totalOrders) }} orders</span>
+                  <span><ion-icon name="cash"></ion-icon> {{ formatCurrency(vendor.totalRevenue) }}</span>
+                  <span><ion-icon name="star" color="warning"></ion-icon> {{ vendor.rating }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+      <!-- Top Transporters -->
+      <ion-card class="ranking-card">
+        <ion-card-header>
+          <ion-card-title>
+            <ion-icon name="trophy" color="tertiary"></ion-icon>
+            Top Transporters
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="ranking-list">
+            <div *ngFor="let transporter of reportData.topTransporters; let i = index" class="ranking-item">
+              <div class="rank-badge" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+                {{ i + 1 }}
+              </div>
+              <div class="user-info">
+                <h4>{{ transporter.name }}</h4>
+                <div class="user-metrics">
+                  <span><ion-icon name="car"></ion-icon> {{ formatNumber(transporter.totalOrders) }} deliveries</span>
+                  <span><ion-icon name="cash"></ion-icon> {{ formatCurrency(transporter.totalRevenue) }}</span>
+                  <span><ion-icon name="star" color="warning"></ion-icon> {{ transporter.rating }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+    </div>
+    
+    <!-- ORDERS TAB -->
+    <div *ngIf="selectedTab === 'orders'" class="tab-content">
+      
+      <!-- Daily Orders Chart -->
+      <ion-card class="chart-card">
+        <ion-card-header>
+          <ion-card-title>Daily Orders Trend (Last 30 Days)</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="simple-chart">
+            <div class="chart-bars">
+              <div *ngFor="let day of reportData.dailyOrders" class="chart-bar" 
+                   [style.height.%]="(day.value / 140) * 100"
+                   [title]="day.label + ': ' + day.value + ' orders'">
+                <span class="bar-value">{{ day.value }}</span>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <span *ngFor="let day of reportData.dailyOrders; let i = index" 
+                    [style.display]="i % 5 === 0 ? 'block' : 'none'">
+                {{ day.label }}
+              </span>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+      <!-- Category Distribution -->
+      <ion-card class="category-card">
+        <ion-card-header>
+          <ion-card-title>Orders by Category</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="category-list">
+            <div *ngFor="let category of reportData.categoryStats" class="category-item">
+              <div class="category-header">
+                <h4>{{ category.category }}</h4>
+                <span class="percentage">{{ category.percentage }}%</span>
+              </div>
+              <div class="category-details">
+                <span>{{ formatNumber(category.totalOrders) }} orders</span>
+                <span>{{ formatCurrency(category.revenue) }}</span>
+              </div>
+              <ion-progress-bar [value]="category.percentage / 100" [color]="
+                category.percentage > 30 ? 'success' :
+                category.percentage > 15 ? 'primary' :
+                category.percentage > 10 ? 'warning' : 'medium'
+              "></ion-progress-bar>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+    </div>
+    
+    <!-- REVENUE TAB -->
+    <div *ngIf="selectedTab === 'revenue'" class="tab-content">
+      
+      <!-- Revenue Summary -->
+      <div class="revenue-summary">
+        <ion-card class="revenue-card total">
+          <ion-icon name="wallet"></ion-icon>
+          <h3>{{ formatCurrency(reportData.totalRevenue) }}</h3>
+          <p>Total Revenue</p>
+        </ion-card>
+        <ion-card class="revenue-card avg">
+          <ion-icon name="trending-up"></ion-icon>
+          <h3>{{ formatCurrency(Math.floor(reportData.totalRevenue / reportData.totalOrders)) }}</h3>
+          <p>Avg Order Value</p>
+        </ion-card>
+      </div>
+      
+      <!-- Weekly Revenue Chart -->
+      <ion-card class="chart-card">
+        <ion-card-header>
+          <ion-card-title>Weekly Revenue Trend</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="simple-chart revenue-chart">
+            <div class="chart-bars">
+              <div *ngFor="let week of reportData.weeklyRevenue" class="chart-bar revenue-bar" 
+                   [style.height.%]="(week.value / 270000) * 100"
+                   [title]="week.label + ': ₹' + week.value.toLocaleString()">
+                <span class="bar-value">₹{{ (week.value / 1000).toFixed(0) }}K</span>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <span *ngFor="let week of reportData.weeklyRevenue">{{ week.label }}</span>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      
+    </div>
+    
+  </div>
+</ion-content>

@@ -187,6 +187,17 @@
               <ion-icon name="hourglass-outline" slot="start"></ion-icon>
               Waiting for Vendor
             </ion-button>
+            
+            <!-- Demo: Quick Test Buttons -->
+            <ion-button 
+              expand="block" 
+              fill="clear"
+              size="small"
+              color="warning"
+              (click)="simulateOrderProgress(order)">
+              <ion-icon name="flash-outline" slot="start"></ion-icon>
+              🧪 Demo: Move to InTransit
+            </ion-button>
           </ng-container>
 
         </div>

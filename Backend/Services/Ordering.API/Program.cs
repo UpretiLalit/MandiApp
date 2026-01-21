@@ -5,6 +5,12 @@ using System.Text;
 using Ordering.API.Data;
 using Ordering.API.Services;
 using Ordering.API.Hubs;
+using Microsoft.AspNetCore.Identity;
+using Identity.API.Models;
+using Ordering.Infrastructure;
+using Ordering.Application.Behaviors;
+using FluentValidation;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +23,26 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database Configuration - In-Memory for testing
+// Database Configuration - PostgreSQL on Supabase
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<OrderingDbContext>(options =>
-    options.UseInMemoryDatabase("MandiOrderingDB"));
+    options.UseNpgsql(connectionString));
+
+// Identity Configuration
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    // Password settings (for development - adjust for production)
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+    
+    // User settings
+    options.User.RequireUniqueEmail = false; // Phone is primary identifier
+})
+.AddEntityFrameworkStores<OrderingDbContext>()
+.AddDefaultTokenProviders();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -44,6 +67,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IBuyerService, BuyerService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
+builder.Services.AddScoped<ITransporterService, TransporterService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ILogisticsService, LogisticsService>();
+
+// Onion Architecture - Application & Infrastructure Layers
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssembly(typeof(Ordering.Application.DTOs.OrderDto).Assembly);
+});
+builder.Services.AddAutoMapper(typeof(Ordering.Application.Mappers.MappingProfile).Assembly);
+builder.Services.AddValidatorsFromAssembly(typeof(Ordering.Application.Commands.CreateOrder.CreateOrderCommand).Assembly);
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// Register DbContext as generic DbContext for repository
+builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<OrderingDbContext>());
 
 // SignalR for real-time updates
 builder.Services.AddSignalR();
@@ -53,7 +94,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:8100", "http://localhost:4200")
+        policy.WithOrigins("http://localhost:8100", "http://localhost:4200", "http://localhost:4201")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -67,59 +108,63 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
     
-    // Add sample buyers
-    context.Buyers.Add(new Ordering.API.Models.Buyer
+    // Only seed if database is empty
+    if (!context.Buyers.Any())
     {
-        Id = "buyer-001",
-        FullName = "Restaurant ABC",
-        PhoneNumber = "+919876543210",
-        Email = "restaurant@example.com",
-        CompanyName = "ABC Foods Pvt Ltd",
-        BusinessAddress = "S.G. Highway, Ahmedabad",
-        DeliveryAddress = "S.G. Highway, Ahmedabad",
-        IsVerified = true
-    });
-    
-    // Add sample vendors
-    context.Vendors.Add(new Ordering.API.Models.Vendor
-    {
-        Id = "vendor-001",
-        FullName = "Ramesh Kumar",
-        PhoneNumber = "+919876543211",
-        BusinessName = "Fresh Farms Co.",
-        BusinessAddress = "APMC Market, Ahmedabad",
-        Latitude = "23.0225",
-        Longitude = "72.5714",
-        IsVerified = true,
-        IsActive = true
-    });
-    
-    context.Vendors.Add(new Ordering.API.Models.Vendor
-    {
-        Id = "vendor-002",
-        FullName = "Suresh Patel",
-        PhoneNumber = "+919876543212",
-        BusinessName = "Green Valley Suppliers",
-        BusinessAddress = "Sardar Patel Market, Ahmedabad",
-        Latitude = "23.0330",
-        Longitude = "72.5850",
-        IsVerified = true,
-        IsActive = true
-    });
-    
-    // Add sample transporter
-    context.Transporters.Add(new Ordering.API.Models.Transporter
-    {
-        Id = "transporter-001",
-        FullName = "Vijay Singh",
-        PhoneNumber = "+919876543213",
-        VehicleNumber = "GJ01AB1234",
-        VehicleType = Ordering.API.Models.VehicleType.FourWheeler,
-        IsVerified = true,
-        IsAvailable = true
-    });
-    
-    context.SaveChanges();
+        // Add sample buyers
+        context.Buyers.Add(new Ordering.API.Models.Buyer
+        {
+            Id = "buyer-001",
+            FullName = "Restaurant ABC",
+            PhoneNumber = "+919876543210",
+            Email = "restaurant@example.com",
+            CompanyName = "ABC Foods Pvt Ltd",
+            BusinessAddress = "S.G. Highway, Ahmedabad",
+            DeliveryAddress = "S.G. Highway, Ahmedabad",
+            IsVerified = true
+        });
+        
+        // Add sample vendors
+        context.Vendors.Add(new Ordering.API.Models.Vendor
+        {
+            Id = "vendor-001",
+            FullName = "Ramesh Kumar",
+            PhoneNumber = "+919876543211",
+            BusinessName = "Fresh Farms Co.",
+            BusinessAddress = "APMC Market, Ahmedabad",
+            Latitude = "23.0225",
+            Longitude = "72.5714",
+            IsVerified = true,
+            IsActive = true
+        });
+        
+        context.Vendors.Add(new Ordering.API.Models.Vendor
+        {
+            Id = "vendor-002",
+            FullName = "Suresh Patel",
+            PhoneNumber = "+919876543212",
+            BusinessName = "Green Valley Suppliers",
+            BusinessAddress = "Sardar Patel Market, Ahmedabad",
+            Latitude = "23.0330",
+            Longitude = "72.5850",
+            IsVerified = true,
+            IsActive = true
+        });
+        
+        // Add sample transporter
+        context.Transporters.Add(new Ordering.API.Models.Transporter
+        {
+            Id = "transporter-001",
+            FullName = "Vijay Singh",
+            PhoneNumber = "+919876543213",
+            VehicleNumber = "GJ01AB1234",
+            VehicleType = Ordering.API.Models.VehicleType.FourWheeler,
+            IsVerified = true,
+            IsAvailable = true
+        });
+        
+        context.SaveChanges();
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -132,7 +177,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Map SignalR Hub
+// Map SignalR Hubs
 app.MapHub<PriceHub>("/hubs/price");
+app.MapHub<TrackingHub>("/hubs/tracking");
 
 app.Run();
+
+// Make Program accessible for testing
+public partial class Program { }

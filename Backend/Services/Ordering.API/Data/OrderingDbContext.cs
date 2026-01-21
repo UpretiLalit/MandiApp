@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Ordering.API.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Identity.API.Models;
 
 namespace Ordering.API.Data;
 
-public class OrderingDbContext : DbContext
+public class OrderingDbContext : IdentityDbContext<ApplicationUser>
 {
     public OrderingDbContext(DbContextOptions<OrderingDbContext> options) : base(options)
     {

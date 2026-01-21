@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Ordering.API.Data;
 using Ordering.API.Models;
+using Ordering.API.Services;
 
 namespace Ordering.API.Controllers;
 
@@ -11,22 +10,19 @@ namespace Ordering.API.Controllers;
 [Authorize]
 public class TransportersController : ControllerBase
 {
-    private readonly OrderingDbContext _context;
+    private readonly ITransporterService _transporterService;
     private readonly ILogger<TransportersController> _logger;
 
-    public TransportersController(OrderingDbContext context, ILogger<TransportersController> logger)
+    public TransportersController(ITransporterService transporterService, ILogger<TransportersController> logger)
     {
-        _context = context;
+        _transporterService = transporterService;
         _logger = logger;
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTransporter(string id)
     {
-        var transporter = await _context.Transporters
-            .Include(t => t.AssignedOrders)
-            .FirstOrDefaultAsync(t => t.Id == id);
-
+        var transporter = await _transporterService.GetByIdAsync(id);
         if (transporter == null)
             return NotFound(new { message = "Transporter not found" });
 
@@ -36,15 +32,9 @@ public class TransportersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllTransporters([FromQuery] bool availableOnly = false)
     {
-        var query = _context.Transporters.AsQueryable();
-
-        if (availableOnly)
-            query = query.Where(t => t.IsAvailable && t.IsVerified);
-
-        var transporters = await query
-            .OrderByDescending(t => t.Rating)
-            .ThenByDescending(t => t.TotalDeliveries)
-            .ToListAsync();
+        var transporters = availableOnly 
+            ? await _transporterService.GetAvailableAsync()
+            : await _transporterService.GetAllAsync();
 
         return Ok(transporters);
     }
@@ -52,18 +42,9 @@ public class TransportersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateTransporter([FromBody] Transporter transporter)
     {
-        var existingTransporter = await _context.Transporters.FindAsync(transporter.Id);
-        if (existingTransporter != null)
-            return BadRequest(new { message = "Transporter already exists" });
-
-        transporter.CreatedAt = DateTime.UtcNow;
-        transporter.LastActiveAt = DateTime.UtcNow;
-        _context.Transporters.Add(transporter);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation($"Transporter created: {transporter.Id} - {transporter.FullName}");
-
-        return CreatedAtAction(nameof(GetTransporter), new { id = transporter.Id }, transporter);
+        var created = await _transporterService.CreateAsync(transporter);
+        _logger.LogInformation($"Transporter created: {created.Id} - {created.FullName}");
+        return CreatedAtAction(nameof(GetTransporter), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
@@ -72,124 +53,58 @@ public class TransportersController : ControllerBase
         if (id != transporter.Id)
             return BadRequest(new { message = "ID mismatch" });
 
-        var existingTransporter = await _context.Transporters.FindAsync(id);
-        if (existingTransporter == null)
+        var updated = await _transporterService.UpdateAsync(id, transporter);
+        if (updated == null)
             return NotFound(new { message = "Transporter not found" });
 
-        existingTransporter.FullName = transporter.FullName;
-        existingTransporter.Email = transporter.Email;
-        existingTransporter.VehicleNumber = transporter.VehicleNumber;
-        existingTransporter.VehicleType = transporter.VehicleType;
-        existingTransporter.DrivingLicense = transporter.DrivingLicense;
-        existingTransporter.VehicleRC = transporter.VehicleRC;
-        existingTransporter.IsVerified = transporter.IsVerified;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(existingTransporter);
+        return Ok(updated);
     }
 
     [HttpPost("{id}/update-location")]
     public async Task<IActionResult> UpdateLocation(string id, [FromBody] LocationUpdate location)
     {
-        var transporter = await _context.Transporters.FindAsync(id);
-        if (transporter == null)
+        var success = await _transporterService.UpdateLocationAsync(id, 
+            double.Parse(location.Latitude), 
+            double.Parse(location.Longitude));
+
+        if (!success)
             return NotFound();
 
-        transporter.CurrentLatitude = location.Latitude;
-        transporter.CurrentLongitude = location.Longitude;
-        transporter.LastLocationUpdateAt = DateTime.UtcNow;
-        transporter.LastActiveAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
         _logger.LogInformation($"Transporter location updated: {id} - ({location.Latitude}, {location.Longitude})");
-
         return Ok(new { message = "Location updated" });
     }
 
     [HttpPost("{id}/toggle-availability")]
     public async Task<IActionResult> ToggleAvailability(string id)
     {
-        var transporter = await _context.Transporters.FindAsync(id);
-        if (transporter == null)
+        var success = await _transporterService.ToggleAvailabilityAsync(id);
+        if (!success)
             return NotFound();
 
-        transporter.IsAvailable = !transporter.IsAvailable;
-        transporter.LastActiveAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new { 
-            message = $"Availability set to {transporter.IsAvailable}",
-            isAvailable = transporter.IsAvailable 
-        });
+        return Ok(new { message = "Availability toggled" });
     }
 
     [HttpGet("{id}/deliveries")]
     public async Task<IActionResult> GetTransporterDeliveries(string id)
     {
-        var orders = await _context.Orders
-            .Include(o => o.OrderItems)
-            .Include(o => o.Payment)
-            .Where(o => o.TransporterId == id)
-            .OrderByDescending(o => o.CreatedAt)
-            .ToListAsync();
-
-        return Ok(orders);
+        var deliveries = await _transporterService.GetDeliveriesAsync(id);
+        return Ok(deliveries);
     }
 
     [HttpGet("{id}/stats")]
     public async Task<IActionResult> GetTransporterStats(string id)
     {
-        var transporter = await _context.Transporters.FindAsync(id);
-        if (transporter == null)
-            return NotFound();
-
-        var activeDeliveries = await _context.Orders
-            .CountAsync(o => o.TransporterId == id && o.Status == OrderStatus.InTransit);
-
-        var todayDeliveries = await _context.Orders
-            .CountAsync(o => o.TransporterId == id && 
-                           o.Status == OrderStatus.Delivered && 
-                           o.CompletedAt.HasValue && 
-                           o.CompletedAt.Value.Date == DateTime.UtcNow.Date);
-
-        var todayEarnings = await _context.Orders
-            .Where(o => o.TransporterId == id && 
-                       o.Status == OrderStatus.Delivered && 
-                       o.CompletedAt.HasValue && 
-                       o.CompletedAt.Value.Date == DateTime.UtcNow.Date)
-            .SumAsync(o => o.LogisticsFee);
-
-        return Ok(new
-        {
-            transporterId = id,
-            fullName = transporter.FullName,
-            vehicleNumber = transporter.VehicleNumber,
-            vehicleType = transporter.VehicleType.ToString(),
-            totalDeliveries = transporter.TotalDeliveries,
-            totalEarnings = transporter.TotalEarnings,
-            activeDeliveries,
-            todayDeliveries,
-            todayEarnings,
-            rating = transporter.Rating,
-            ratingCount = transporter.RatingCount,
-            isAvailable = transporter.IsAvailable,
-            isVerified = transporter.IsVerified
-        });
+        var stats = await _transporterService.GetStatsAsync(id);
+        return Ok(stats);
     }
 
     [HttpGet("nearby")]
-    public async Task<IActionResult> GetNearbyTransporters([FromQuery] string latitude, [FromQuery] string longitude)
+    public async Task<IActionResult> GetNearbyTransporters(
+        [FromQuery] double latitude, 
+        [FromQuery] double longitude,
+        [FromQuery] double radius = 10)
     {
-        // TODO: Implement actual geolocation query
-        // For now, return all available transporters
-        var transporters = await _context.Transporters
-            .Where(t => t.IsAvailable && t.IsVerified)
-            .OrderByDescending(t => t.Rating)
-            .ToListAsync();
-
+        var transporters = await _transporterService.GetNearbyAsync(latitude, longitude, radius);
         return Ok(transporters);
     }
 }

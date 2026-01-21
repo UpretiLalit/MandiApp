@@ -35,9 +35,16 @@ export class ProfilePage implements OnInit {
         },
         {
           text: 'Logout',
+          role: 'destructive',
           handler: async () => {
-            await this.authService.logout();
-            this.router.navigate(['/auth/login']);
+            const success = await this.authService.logout();
+            if (success) {
+              // Force clear all storage
+              localStorage.clear();
+              sessionStorage.clear();
+              // Force navigation with page reload to clear all state
+              window.location.href = '/auth/login';
+            }
           }
         }
       ]

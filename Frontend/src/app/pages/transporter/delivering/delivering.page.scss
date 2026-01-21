@@ -1,0 +1,295 @@
+.delivery-header {
+  ion-toolbar {
+    --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --color: white;
+  }
+}
+
+.delivery-info-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: white;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon {
+      font-size: 24px;
+      color: #667eea;
+    }
+
+    .info-text {
+      display: flex;
+      flex-direction: column;
+
+      .info-label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .info-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+  }
+
+  .info-divider {
+    width: 1px;
+    height: 30px;
+    background: #e0e0e0;
+  }
+}
+
+.delivery-content {
+  --background: #f5f5f5;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 50vh;
+
+  .map {
+    width: 100%;
+    height: 100%;
+  }
+
+  .proximity-badge {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    z-index: 1000;
+    transition: all 0.3s ease;
+
+    ion-icon {
+      font-size: 20px;
+      color: #666;
+    }
+
+    &.in-range {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      animation: pulse-badge 2s infinite;
+
+      ion-icon {
+        color: white;
+      }
+    }
+  }
+
+  .call-fab {
+    margin-top: 80px;
+    margin-right: 16px;
+
+    ion-fab-button {
+      --background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      --box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+}
+
+.delivery-details-card {
+  background: white;
+  margin: 16px;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .buyer-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .buyer-icon {
+        font-size: 48px;
+        color: #667eea;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .order-number {
+        margin: 4px 0 0 0;
+        font-size: 13px;
+        color: #999;
+      }
+    }
+
+    ion-button {
+      --color: #11998e;
+    }
+  }
+
+  .address-section {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 16px;
+
+    .address-icon {
+      font-size: 24px;
+      color: #EA4335;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .address-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .address-label {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .address-value {
+        font-size: 14px;
+        color: #333;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  .items-summary {
+    .summary-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+
+      ion-icon {
+        font-size: 20px;
+        color: #667eea;
+      }
+
+      span {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 8px;
+
+        .item-name {
+          font-size: 13px;
+          color: #333;
+        }
+
+        .item-qty {
+          font-size: 13px;
+          font-weight: 600;
+          color: #667eea;
+        }
+      }
+    }
+  }
+}
+
+.arrived-button-container {
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+
+  ion-button {
+    --background: #ccc;
+    --background-hover: #bbb;
+    height: 56px;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+
+    &:not([disabled]) {
+      --background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      --background-hover: linear-gradient(135deg, #0e8077 0%, #2fd46a 100%);
+      --box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+    }
+
+    &.pulse-button {
+      animation: pulse-button 2s infinite;
+    }
+
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+
+  .help-text {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin: 8px 0 0 0;
+  }
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 20px rgba(17, 153, 142, 0.6);
+  }
+}
+
+@keyframes pulse-button {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(17, 153, 142, 0.5);
+  }
+}

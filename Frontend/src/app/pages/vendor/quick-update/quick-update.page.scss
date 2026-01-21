@@ -1,193 +1,731 @@
 .update-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 12px;
 }
 
-.info-card {
+// Filter Bar
+.filter-bar {
   margin-bottom: 16px;
+  padding: 0 4px;
   
-  .info-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    
-    ion-icon {
-      font-size: 24px;
-      flex-shrink: 0;
-    }
-    
-    p {
-      margin: 0;
-      font-size: 14px;
-      color: var(--ion-color-medium);
-    }
+  ion-segment {
+    --background: var(--ion-color-light);
+  }
+  
+  ion-segment-button {
+    --indicator-height: 3px;
+    font-size: 14px;
+    text-transform: none;
+    min-height: 40px;
   }
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   
   .empty-icon {
-    font-size: 80px;
+    font-size: 64px;
     color: var(--ion-color-medium);
-    margin-bottom: 16px;
+    opacity: 0.4;
   }
   
   h2 {
+    font-size: 18px;
     color: var(--ion-color-dark);
     margin: 16px 0 8px;
   }
   
   p {
     color: var(--ion-color-medium);
-    margin-bottom: 24px;
-  }
-  
-  ion-button {
-    max-width: 300px;
-    margin: 0 auto;
+    font-size: 14px;
   }
 }
 
-.product-card {
-  margin-bottom: 16px;
-  
-  ion-card-header {
-    padding-bottom: 8px;
-  }
-}
-
-.card-header-content {
+// Product List
+.product-list {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  
-  .product-title {
-    flex: 1;
-    
-    h2 {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 8px 0;
-      color: var(--ion-color-dark);
-    }
-    
-    ion-badge {
-      font-size: 11px;
-    }
-  }
+  flex-direction: column;
+  gap: 12px;
 }
 
-.stock-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 0 0;
-  font-size: 14px;
-  color: var(--ion-color-medium);
+.product-item {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
   
-  ion-icon {
-    font-size: 16px;
-  }
-}
-
-.price-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 20px 0;
-  background: var(--ion-color-light);
-  border-radius: 12px;
-  margin-bottom: 20px;
-  
-  .current-price,
-  .new-price {
-    text-align: center;
-    
-    small {
-      display: block;
-      font-size: 12px;
-      color: var(--ion-color-medium);
-      margin-bottom: 4px;
-    }
-    
-    h3 {
-      font-size: 28px;
-      font-weight: 700;
-      margin: 0;
-      color: var(--ion-color-dark);
-      
-      &.price-up {
-        color: var(--ion-color-success);
-      }
-      
-      &.price-down {
-        color: var(--ion-color-danger);
-      }
-    }
-    
-    .price-change {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 4px;
-      
-      &.positive {
-        color: var(--ion-color-success);
-      }
-      
-      &.negative {
-        color: var(--ion-color-danger);
-      }
-    }
+  &.inactive {
+    opacity: 0.5;
   }
   
-  .arrow-icon {
-    font-size: 24px;
-    color: var(--ion-color-medium);
+  &.changed {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 4px 12px rgba(56, 128, 255, 0.15);
   }
-}
-
-.slider-container {
-  margin-bottom: 20px;
   
-  .slider-labels {
+  // Header
+  .item-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    padding: 0 4px;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ion-color-light);
     
-    span {
-      font-size: 12px;
-      color: var(--ion-color-medium);
+    .emoji {
+      font-size: 42px;
+      line-height: 1;
+      width: 50px;
+      text-align: center;
     }
     
-    .current-label {
-      font-weight: 600;
-      color: var(--ion-color-primary);
+    .info {
+      flex: 1;
+      min-width: 0;
+      
+      h3 {
+        margin: 0 0 6px 0;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--ion-color-dark);
+      }
+      
+      .badges {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        
+        .badge {
+          font-size: 11px;
+          padding: 3px 8px;
+          border-radius: 10px;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          
+          &.grade {
+            &.grade-A {
+              background: #d4edda;
+              color: #155724;
+            }
+            &.grade-B {
+              background: #fff3cd;
+              color: #856404;
+            }
+            &.grade-C {
+              background: #f8d7da;
+              color: #721c24;
+            }
+          }
+          
+          &.stock {
+            background: var(--ion-color-light);
+            color: var(--ion-color-dark);
+            
+            &.low {
+              background: #fff3cd;
+              color: #856404;
+            }
+          }
+        }
+      }
+    }
+    
+    .toggle-compact {
+      --handle-width: 22px;
+      --handle-height: 22px;
+      height: 28px;
     }
   }
   
-  ion-range {
-    --bar-height: 6px;
-    --bar-background: var(--ion-color-light);
-    --bar-background-active: var(--ion-color-primary);
-    --knob-size: 28px;
-    --pin-background: var(--ion-color-primary);
-    --pin-color: white;
-    padding: 8px 0;
+  // Control Rows
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      min-width: 45px;
+    }
+    
+    .input-group {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ion-color-light);
+      border-radius: 12px;
+      padding: 6px;
+      
+      .btn-adjust {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: none;
+        background: white;
+        color: var(--ion-color-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        
+        ion-icon {
+          font-size: 20px;
+        }
+        
+        &:active {
+          transform: scale(0.95);
+          background: var(--ion-color-primary);
+          color: white;
+        }
+        
+        &:hover {
+          background: var(--ion-color-primary-tint);
+          color: white;
+        }
+      }
+      
+      .input-wrapper {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 10px;
+        padding: 0 12px;
+        height: 40px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        
+        .currency {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--ion-color-medium);
+          margin-right: 4px;
+        }
+        
+        .unit {
+          font-size: 12px;
+          color: var(--ion-color-medium);
+          margin-left: 6px;
+          white-space: nowrap;
+        }
+        
+        input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--ion-color-dark);
+          background: transparent;
+          width: 100%;
+          
+          &.changed {
+            color: var(--ion-color-primary);
+          }
+          
+          &::-webkit-inner-spin-button,
+          &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+          }
+        }
+      }
+    }
+    
+    .change {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: var(--ion-color-danger-tint);
+      color: var(--ion-color-danger);
+      min-width: 50px;
+      text-align: center;
+      
+      &.up {
+        background: var(--ion-color-success-tint);
+        color: var(--ion-color-success);
+      }
+    }
+  }
+  
+  // Smart Pricing Toggle
+  .smart-pricing-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: #fff8e1;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    
+    .toggle-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+      
+      ion-icon {
+        font-size: 20px;
+      }
+    }
+  }
+  
+  // Bulk Pricing Controls
+  .bulk-pricing-controls {
+    display: flex;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--ion-color-light);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    
+    .control-mini {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      
+      label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ion-color-medium);
+      }
+      
+      .input-mini {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 8px;
+        padding: 8px 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        
+        .currency {
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ion-color-medium);
+          margin-right: 4px;
+        }
+        
+        input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--ion-color-warning);
+          background: transparent;
+          width: 100%;
+          
+          &::-webkit-inner-spin-button,
+          &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+          }
+        }
+        
+        span {
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ion-color-medium);
+          margin-left: 4px;
+        }
+      }
+    }
+  }
+  
+  // Pricing Tiers
+  .pricing-tiers {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff5cc 100%);
+    border-radius: 12px;
+    border: 2px solid #f4c430;
+
+    .tier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0;
+
+      .tier-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #d4a017;
+      }
+
+      .tier-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .btn-add-tier,
+      .btn-save-tier,
+      .btn-toggle-tier {
+        background: #f4c430;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:active {
+          transform: scale(0.95);
+        }
+
+        ion-icon {
+          font-size: 16px;
+        }
+      }
+
+      .btn-save-tier {
+        background: var(--ion-color-success);
+      }
+
+      .btn-toggle-tier {
+        background: #d4a017;
+        padding: 6px 10px;
+      }
+    }
+
+    .tier-content {
+      margin-top: 12px;
+    }
+
+    .base-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      margin-bottom: 8px;
+
+      .base-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ion-color-medium);
+      }
+
+      .base-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ion-color-primary);
+      }
+    }
+
+    .tier-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .tier-item {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+
+        .tier-inputs {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .tier-input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            label {
+              font-size: 11px;
+              font-weight: 600;
+              color: var(--ion-color-medium);
+              text-transform: uppercase;
+            }
+
+            .qty-input {
+              width: 100%;
+              border: 2px solid var(--ion-color-light);
+              border-radius: 8px;
+              padding: 8px;
+              font-size: 15px;
+              font-weight: 600;
+              color: var(--ion-color-dark);
+              outline: none;
+
+              &:focus {
+                border-color: var(--ion-color-warning);
+              }
+
+              &::-webkit-inner-spin-button,
+              &::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+              }
+            }
+
+            .unit-label {
+              font-size: 12px;
+              color: var(--ion-color-medium);
+              margin-left: 4px;
+            }
+
+            .price-input-wrapper {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              border: 2px solid var(--ion-color-light);
+              border-radius: 8px;
+              padding: 8px;
+              background: white;
+
+              &:focus-within {
+                border-color: var(--ion-color-warning);
+              }
+
+              .currency {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--ion-color-medium);
+              }
+
+              .price-input {
+                flex: 1;
+                border: none;
+                outline: none;
+                font-size: 15px;
+                font-weight: 700;
+                color: var(--ion-color-success);
+                background: transparent;
+
+                &::-webkit-inner-spin-button,
+                &::-webkit-outer-spin-button {
+                  -webkit-appearance: none;
+                  margin: 0;
+                }
+              }
+            }
+          }
+
+          .arrow-icon {
+            font-size: 20px;
+            color: var(--ion-color-medium);
+            margin: 0 4px;
+          }
+        }
+
+        .btn-remove-tier {
+          background: var(--ion-color-danger);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+
+          &:active {
+            transform: scale(0.9);
+            background: var(--ion-color-danger-shade);
+          }
+
+          ion-icon {
+            font-size: 18px;
+          }
+        }
+      }
+    }
+
+    .tier-empty {
+      text-align: center;
+      padding: 20px;
+      color: var(--ion-color-medium);
+
+      ion-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      p {
+        font-size: 13px;
+        margin: 0;
+      }
+    }
+  }
+
+  // Bulk Pricing Preview
+  .bulk-pricing-preview {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 10px;
+    border: 2px solid #81c784;
+
+    .preview-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #388e3c;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .preview-tiers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .preview-tier {
+        background: white;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #388e3c;
+        border: 1px solid #81c784;
+      }
+    }
+  }
+  
+  // Bulk Pricing
+  .bulk-pricing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+    font-size: 11px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    position: relative;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+    
+    .label {
+      font-weight: 700;
+      opacity: 0.9;
+    }
+    
+    .tier {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      font-weight: 600;
+      
+      &.discount {
+        background: rgba(255, 255, 255, 0.25);
+        
+        small {
+          opacity: 0.8;
+          margin-left: 2px;
+        }
+      }
+    }
+    
+    .info-icon {
+      margin-left: auto;
+      font-size: 16px;
+      opacity: 0.8;
+    }
   }
 }
 
-ion-button {
-  margin: 0;
-  font-weight: 600;
-  
-  ion-icon {
-    font-size: 22px;
+// Floating Save Button
+ion-fab {
+  ion-fab-button {
+    --box-shadow: 0 4px 16px rgba(45, 211, 111, 0.4);
+    
+    ion-icon {
+      font-size: 28px;
+    }
+  }
+}
+
+// Badge in header
+ion-toolbar {
+  ion-badge {
+    position: absolute;
+    top: 8px;
+    right: 50px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+// Compact toast
+.toast-compact {
+  --background: var(--ion-color-dark);
+  --color: white;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+// Smooth animations
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+// Mobile optimizations
+@media (max-width: 576px) {
+  .product-item {
+    .control-row {
+      .input-group {
+        .btn-adjust {
+          width: 32px;
+          height: 32px;
+          
+          ion-icon {
+            font-size: 18px;
+          }
+        }
+      }
+      
+      .change {
+        font-size: 10px;
+        padding: 3px 6px;
+        min-width: 42px;
+      }
+    }
+    
+    .bulk-pricing {
+      flex-wrap: wrap;
+      font-size: 10px;
+      
+      .tier {
+        padding: 3px 6px;
+      }
+    }
   }
 }

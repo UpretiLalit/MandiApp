@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertController, ModalController } from '@ionic/angular';
 import { environment } from '@environments/environment';
+import { OrderService } from '@app/core/services/order.service';
 
 interface OrderItem {
   productName: string;
@@ -24,6 +25,7 @@ interface VendorOrder {
   totalAmount: number;
   pickupQRCode?: string;
   pickupTime?: string;
+  completedTime?: string;
 }
 
 @Component({
@@ -34,21 +36,25 @@ interface VendorOrder {
 export class OrdersPage implements OnInit {
   orders: VendorOrder[] = [];
   filteredOrders: VendorOrder[] = [];
-  selectedTab: 'pending' | 'history' = 'pending';
+  selectedTab: 'active' | 'completed' = 'active';
   loading: boolean = false;
   showQRModal: boolean = false;
   selectedOrder: VendorOrder | null = null;
+  notificationCount: number = 2;
 
   // Statistics
   todaySales: number = 0;
   pendingCount: number = 0;
+  readyCount: number = 0;
+  inTransitCount: number = 0;
   completedToday: number = 0;
 
   constructor(
     private router: Router,
     private http: HttpClient,
     private alertController: AlertController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private orderService: OrderService
   ) {}
 
   ngOnInit() {
@@ -58,79 +64,33 @@ export class OrdersPage implements OnInit {
   loadOrders() {
     this.loading = true;
     
-    // Mock data - replace with actual API call
-    setTimeout(() => {
-      this.orders = [
-        {
-          id: 1,
-          orderNumber: 'ORD-2026-001',
-          orderDate: '2026-01-13 09:30 AM',
-          status: 'Pending',
-          buyerName: 'Restaurant ABC',
-          buyerContact: '+91 98765 43210',
-          deliveryAddress: 'S.G. Highway, Ahmedabad',
-          items: [
-            { productName: 'Tomato', quantity: 10, unit: 'kg', price: 40, total: 400 },
-            { productName: 'Onion', quantity: 15, unit: 'kg', price: 35, total: 525 }
-          ],
-          totalAmount: 925,
-          pickupQRCode: 'PICKUP-ORD-2026-001-VND-123'
-        },
-        {
-          id: 2,
-          orderNumber: 'ORD-2026-002',
-          orderDate: '2026-01-13 08:15 AM',
-          status: 'Ready',
-          buyerName: 'Hotel XYZ',
-          buyerContact: '+91 98765 43211',
-          deliveryAddress: 'Satellite Road, Ahmedabad',
-          items: [
-            { productName: 'Potato', quantity: 20, unit: 'kg', price: 25, total: 500 }
-          ],
-          totalAmount: 500,
-          pickupQRCode: 'PICKUP-ORD-2026-002-VND-123'
-        },
-        {
-          id: 3,
-          orderNumber: 'ORD-2026-003',
-          orderDate: '2026-01-12 03:45 PM',
-          status: 'Completed',
-          buyerName: 'Cafe 456',
-          buyerContact: '+91 98765 43212',
-          deliveryAddress: 'Paldi, Ahmedabad',
-          items: [
-            { productName: 'Cabbage', quantity: 8, unit: 'kg', price: 30, total: 240 }
-          ],
-          totalAmount: 240,
-          pickupTime: '2026-01-12 04:30 PM'
-        },
-        {
-          id: 4,
-          orderNumber: 'ORD-2026-004',
-          orderDate: '2026-01-12 10:00 AM',
-          status: 'Completed',
-          buyerName: 'Restaurant DEF',
-          buyerContact: '+91 98765 43213',
-          deliveryAddress: 'Vastrapur, Ahmedabad',
-          items: [
-            { productName: 'Carrot', quantity: 12, unit: 'kg', price: 45, total: 540 }
-          ],
-          totalAmount: 540,
-          pickupTime: '2026-01-12 11:15 AM'
-        }
-      ];
-      
-      this.calculateStatistics();
-      this.applyFilter();
-      this.loading = false;
-    }, 1000);
+    // Load from backend API
+    this.orderService.getVendorOrders().subscribe({
+      next: (orders) => {
+        this.orders = orders;
+        this.calculateStatistics();
+        this.applyFilter();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading vendor orders:', err);
+        this.loading = false;
+        
+        // Fallback to empty array
+        this.orders = [];
+        this.calculateStatistics();
+        this.applyFilter();
+      }
+    });
   }
 
   calculateStatistics() {
-    this.pendingCount = this.orders.filter(o => 
-      o.status === 'Pending' || o.status === 'Processing' || o.status === 'Ready'
-    ).length;
+    // Count by status
+    this.pendingCount = this.orders.filter(o => o.status === 'Pending').length;
+    this.readyCount = this.orders.filter(o => o.status === 'Ready').length;
+    this.inTransitCount = this.orders.filter(o => o.status === 'PickedUp').length;
     
+    // Today's sales
     const today = new Date().toISOString().split('T')[0];
     const todayOrders = this.orders.filter(o => 
       o.orderDate.includes(today) && o.status === 'Completed'
@@ -140,19 +100,19 @@ export class OrdersPage implements OnInit {
     this.todaySales = todayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
   }
 
-  changeTab(tab: 'pending' | 'history') {
+  changeTab(tab: 'active' | 'completed') {
     this.selectedTab = tab;
     this.applyFilter();
   }
 
   applyFilter() {
-    if (this.selectedTab === 'pending') {
+    if (this.selectedTab === 'active') {
       this.filteredOrders = this.orders.filter(o => 
-        o.status === 'Pending' || o.status === 'Processing' || o.status === 'Ready'
+        o.status === 'Pending' || o.status === 'Processing' || o.status === 'Ready' || o.status === 'PickedUp'
       );
     } else {
       this.filteredOrders = this.orders.filter(o => 
-        o.status === 'PickedUp' || o.status === 'Completed' || o.status === 'Cancelled'
+        o.status === 'Completed' || o.status === 'Cancelled'
       );
     }
   }
@@ -169,63 +129,31 @@ export class OrdersPage implements OnInit {
     return colors[status] || 'medium';
   }
 
-  async acceptOrder(order: VendorOrder) {
-    const alert = await this.alertController.create({
-      header: 'Accept Order',
-      message: `Accept order ${order.orderNumber}?`,
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Accept',
-          handler: () => {
-            order.status = 'Processing';
-            this.showAlert('Order Accepted', 'You can now prepare the order');
-          }
-        }
-      ]
+  acceptOrder(order: VendorOrder) {
+    // Frictionless - call backend API directly
+    this.orderService.acceptOrder(order.id).subscribe({
+      next: () => {
+        order.status = 'Processing';
+        this.calculateStatistics();
+        this.applyFilter();
+        
+        const toast = document.createElement('ion-toast');
+        toast.message = `✅ Order ${order.orderNumber} accepted! Start packing items.`;
+        toast.duration = 2000;
+        toast.color = 'success';
+        document.body.appendChild(toast);
+        toast.present();
+      },
+      error: (err) => {
+        console.error('Error accepting order:', err);
+        const toast = document.createElement('ion-toast');
+        toast.message = '❌ Failed to accept order. Please try again.';
+        toast.duration = 2000;
+        toast.color = 'danger';
+        document.body.appendChild(toast);
+        toast.present();
+      }
     });
-    await alert.present();
-  }
-
-  async markReady(order: VendorOrder) {
-    const alert = await this.alertController.create({
-      header: 'Mark as Ready',
-      message: `
-        <strong>Pack items and mark ready?</strong><br><br>
-        ✓ Items will be marked for pickup<br>
-        ✓ QR code will be generated<br>
-        ✓ Waiting for other vendors<br><br>
-        <small>Transporter assigned when all ready</small>
-      `,
-      buttons: [
-        {
-          text: 'No',
-          role: 'cancel'
-        },
-        {
-          text: 'Yes, Ready',
-          handler: async () => {
-            // Call API
-            this.http.post(
-              `${environment.apiUrl}/orders/${order.id}/mark-ready`,
-              {}
-            ).subscribe({
-              next: () => {
-                order.status = 'Ready';
-                order.pickupQRCode = `PICKUP-${order.orderNumber}-VND-${Date.now()}`;
-                this.calculateStatistics();
-                this.showAlert('Ready for Pickup', '✓ Items marked ready<br>✓ QR code generated');
-              },
-              error: (err) => console.error(err)
-            });
-          }
-        }
-      ]
-    });
-    await alert.present();
   }
 
   viewQRCode(order: VendorOrder) {
@@ -267,5 +195,146 @@ export class OrdersPage implements OnInit {
     setTimeout(() => {
       event.target.complete();
     }, 1000);
+  }
+
+  // New methods for timeline and workflow
+  getStatusLabel(status: string): string {
+    const labels: any = {
+      'Pending': 'New Order',
+      'Processing': 'Packing',
+      'Ready': 'Ready',
+      'PickedUp': 'Pickup',
+      'Completed': 'Delivered'
+    };
+    return labels[status] || status;
+  }
+
+  getTotalQuantity(order: VendorOrder): number {
+    return order.items.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  markReadyForPickup(order: VendorOrder) {
+    // Frictionless - call backend API directly
+    this.orderService.markOrderReady(order.id).subscribe({
+      next: () => {
+        order.status = 'Ready';
+        order.pickupQRCode = `QR-${order.orderNumber}-${Date.now()}`;
+        this.calculateStatistics();
+        this.applyFilter();
+        this.notificationCount++;
+        
+        const toast = document.createElement('ion-toast');
+        toast.message = `✅ ${order.orderNumber} marked ready! QR code generated.`;
+        toast.duration = 2000;
+        toast.color = 'success';
+        document.body.appendChild(toast);
+        toast.present();
+      },
+      error: (err) => {
+        console.error('Error marking order ready:', err);
+        const toast = document.createElement('ion-toast');
+        toast.message = '❌ Failed to mark order ready. Please try again.';
+        toast.duration = 2000;
+        toast.color = 'danger';
+        document.body.appendChild(toast);
+        toast.present();
+      }
+    });
+  }
+
+  async generateInvoice(order: VendorOrder) {
+    const toast = document.createElement('ion-toast');
+    toast.message = 'Generating invoice...';
+    toast.duration = 1500;
+    toast.color = 'primary';
+    document.body.appendChild(toast);
+    await toast.present();
+
+    // Simulate invoice generation
+    setTimeout(async () => {      
+      const successToast = document.createElement('ion-toast');
+      successToast.message = `📄 Invoice generated for ${order.orderNumber}`;
+      successToast.duration = 2500;
+      successToast.color = 'success';
+      document.body.appendChild(successToast);
+      successToast.present();
+      
+      // In real app, download PDF or open in viewer
+      console.log('Invoice data:', order);
+    }, 1500);
+  }
+
+  async viewInvoice(order: VendorOrder) {
+    const alert = await this.alertController.create({
+      header: `Invoice - ${order.orderNumber}`,
+      message: `
+        <div style="text-align: left; padding: 10px;">
+          <strong>${order.buyerName}</strong><br>
+          ${order.deliveryAddress}<br><br>
+          <strong>Items:</strong><br>
+          ${order.items.map(item => 
+            `${item.productName}: ${item.quantity} ${item.unit} × ₹${item.price} = ₹${item.total}`
+          ).join('<br>')}<br><br>
+          <strong>Total: ₹${order.totalAmount}</strong><br>
+          <small>Date: ${order.orderDate}</small>
+        </div>
+      `,
+      buttons: [
+        { text: 'Download PDF', handler: () => console.log('Download PDF') },
+        { text: 'Close', role: 'cancel' }
+      ]
+    });
+    await alert.present();
+  }
+
+  async trackDelivery(order: VendorOrder) {
+    const alert = await this.alertController.create({
+      header: '🚚 Track Delivery',
+      message: `
+        <div style="text-align: left;">
+          <strong>${order.orderNumber}</strong><br><br>
+          📍 Status: In Transit<br>
+          🕐 Picked up: ${order.pickupTime || 'N/A'}<br>
+          📍 Destination: ${order.deliveryAddress}<br><br>
+          <small>Estimated delivery: 30-45 minutes</small>
+        </div>
+      `,
+      buttons: ['Close']
+    });
+    await alert.present();
+  }
+
+  async archiveOrder(order: VendorOrder) {
+    const alert = await this.alertController.create({
+      header: 'Archive Order',
+      message: `Archive ${order.orderNumber}? This will move it to history.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Archive',
+          handler: () => {
+            // Remove from list or mark as archived
+            const index = this.orders.indexOf(order);
+            if (index > -1) {
+              this.orders.splice(index, 1);
+              this.calculateStatistics();
+              this.applyFilter();
+              
+              const toast = document.createElement('ion-toast');
+              toast.message = `${order.orderNumber} archived`;
+              toast.duration = 2000;
+              document.body.appendChild(toast);
+              toast.present();
+            }
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  showNotifications() {
+    console.log('Show notifications');
+    // Navigate to notifications page or show modal
   }
 }

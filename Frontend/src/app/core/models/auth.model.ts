@@ -3,7 +3,7 @@ export interface User {
   fullName: string;
   phoneNumber: string;
   email?: string;
-  role: 'Buyer' | 'Vendor' | 'Transporter';
+  role: 'Buyer' | 'Vendor' | 'Transporter' | 'Admin';
   companyName?: string;
 }
 

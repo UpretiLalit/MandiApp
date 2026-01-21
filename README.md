@@ -1,6 +1,46 @@
 # Mandi App - B2B Marketplace Platform
 
+> **🚀 Status:** Production Ready for User Testing  
+> **📦 Database:** Migrated to Supabase PostgreSQL  
+> **🔐 Security:** Row-Level Security Enabled  
+> **📅 Last Updated:** January 21, 2026
+
 A comprehensive B2B marketplace platform for agricultural trading with real-time tracking, built with .NET 8 and Angular/Ionic.
+
+## 🎯 Quick Links
+
+- **[Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md)** - Complete deployment guide
+- **[Database Migration Summary](DATABASE_MIGRATION_SUMMARY.md)** - All 23 tables migrated ✅
+- **[Git Setup Guide](GIT_SETUP_GUIDE.md)** - How to push to repository
+- **[Test User Creation](create-test-users.ps1)** - Generate test accounts
+
+## 🚀 Quick Start
+
+### For First-Time Setup:
+
+```powershell
+# 1. Start all backend services
+cd d:\MandiApp
+.\start-all-services.ps1
+
+# 2. Start frontend (in new terminal)
+cd Frontend
+npm install
+npm start
+# Access at: http://localhost:8100
+
+# 3. Create test users
+.\create-test-users.ps1
+```
+
+### For Git Push:
+
+```powershell
+# Install Git first from: https://git-scm.com/download/win
+# Then run:
+cd d:\MandiApp
+.\git-setup-and-push.ps1
+```
 
 ## Architecture
 

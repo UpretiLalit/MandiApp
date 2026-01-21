@@ -1,0 +1,470 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="analytics" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></ion-icon>
+      Marketplace Governance
+    </ion-title>
+  </ion-toolbar>
+  
+  <!-- Admin Navigation Tabs -->
+  <ion-toolbar color="light">
+    <ion-segment [(ngModel)]="selectedNavTab" (ionChange)="navigateToTab($event)" [ngModelOptions]="{standalone: true}">
+      <ion-segment-button value="verification">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <ion-label>KYC</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="users">
+        <ion-icon name="people-outline"></ion-icon>
+        <ion-label>Users</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="hubs">
+        <ion-icon name="business-outline"></ion-icon>
+        <ion-label>Hubs</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="marketplace">
+        <ion-icon name="analytics-outline"></ion-icon>
+        <ion-label>Marketplace</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+  
+  <!-- Sub Tabs -->
+  <ion-toolbar color="light" style="border-top: 1px solid #e0e0e0;">
+    <ion-segment [(ngModel)]="selectedTab" (ionChange)="onTabChange($event)" [ngModelOptions]="{standalone: true}">
+      <ion-segment-button value="categories">
+        <ion-icon name="grid-outline"></ion-icon>
+        <ion-label>Categories</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="quality">
+        <ion-icon name="ribbon-outline"></ion-icon>
+        <ion-label>Quality Standards</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="pricing">
+        <ion-icon name="trending-up-outline"></ion-icon>
+        <ion-label>Price Monitoring</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="governance-container">
+    
+    <!-- ================= CATEGORIES TAB ================= -->
+    <div *ngIf="selectedTab === 'categories'">
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <ion-icon name="grid"></ion-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ categories.length }}</span>
+            <span class="stat-label">Total Categories</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <ion-icon name="checkmark-circle" color="success"></ion-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ getActiveCategories() }}</span>
+            <span class="stat-label">Active</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <ion-icon name="folder-open"></ion-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ getTotalSubCategories() }}</span>
+            <span class="stat-label">Sub-Categories</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Category Button -->
+      <div class="action-header" *ngIf="!showCategoryForm">
+        <ion-button color="primary" (click)="openCategoryForm()">
+          <ion-icon name="add-circle" slot="start"></ion-icon>
+          Add New Category
+        </ion-button>
+      </div>
+
+      <!-- Category Form -->
+      <ion-card *ngIf="showCategoryForm" class="form-card">
+        <ion-card-header>
+          <ion-card-title>{{ editingCategory ? 'Edit Category' : 'Add New Category' }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-item>
+            <ion-label position="stacked">Category Name *</ion-label>
+            <ion-input [(ngModel)]="categoryForm.name" placeholder="e.g., Vegetables"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Icon</ion-label>
+            <ion-select [(ngModel)]="categoryForm.icon" interface="popover">
+              <ion-select-option *ngFor="let icon of categoryIcons" [value]="icon.value">
+                {{ icon.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <div class="sub-category-section">
+            <h4>Sub-Categories</h4>
+            <div class="add-sub-category">
+              <ion-input 
+                [(ngModel)]="newSubCategory" 
+                placeholder="Enter sub-category name"
+                (keyup.enter)="addSubCategory()">
+              </ion-input>
+              <ion-button (click)="addSubCategory()" size="small">
+                <ion-icon name="add" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+            
+            <div class="sub-category-chips" *ngIf="categoryForm.subCategories.length > 0">
+              <ion-chip *ngFor="let sub of categoryForm.subCategories; let i = index" color="primary">
+                <ion-label>{{ sub }}</ion-label>
+                <ion-icon name="close-circle" (click)="removeSubCategory(i)"></ion-icon>
+              </ion-chip>
+            </div>
+          </div>
+
+          <div class="form-buttons">
+            <ion-button expand="block" (click)="saveCategory()">
+              <ion-icon name="checkmark" slot="start"></ion-icon>
+              {{ editingCategory ? 'Update' : 'Create' }} Category
+            </ion-button>
+            <ion-button expand="block" fill="outline" color="medium" (click)="closeCategoryForm()">
+              Cancel
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Categories Grid -->
+      <div class="categories-grid">
+        <ion-card *ngFor="let category of categories" class="category-card" [class.inactive]="!category.isActive">
+          <ion-card-header>
+            <div class="category-header">
+              <div class="category-title">
+                <ion-icon [name]="category.icon" class="category-icon"></ion-icon>
+                <div>
+                  <h3>{{ category.name }}</h3>
+                  <ion-badge [color]="category.isActive ? 'success' : 'medium'">
+                    {{ category.isActive ? 'Active' : 'Inactive' }}
+                  </ion-badge>
+                </div>
+              </div>
+              <div class="category-actions">
+                <ion-button fill="clear" size="small" (click)="editCategory(category)">
+                  <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" color="danger" (click)="deleteCategory(category)">
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="sub-categories">
+              <h4>Sub-Categories ({{ category.subCategories.length }})</h4>
+              <div class="sub-category-list">
+                <ion-chip *ngFor="let sub of category.subCategories" outline="true" color="primary">
+                  {{ sub.name }}
+                </ion-chip>
+              </div>
+            </div>
+            <div class="category-footer">
+              <span class="date-text">Created: {{ category.createdAt | date:'short' }}</span>
+              <ion-button size="small" [color]="category.isActive ? 'warning' : 'success'" 
+                          (click)="toggleCategoryStatus(category)">
+                <ion-icon [name]="category.isActive ? 'pause' : 'play'" slot="start"></ion-icon>
+                {{ category.isActive ? 'Deactivate' : 'Activate' }}
+              </ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+    </div>
+
+    <!-- ================= QUALITY STANDARDS TAB ================= -->
+    <div *ngIf="selectedTab === 'quality'">
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <ion-icon name="ribbon" color="success"></ion-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ qualityStandards.length }}</span>
+            <span class="stat-label">Quality Grades</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Quality Standard Button -->
+      <div class="action-header" *ngIf="!showQualityForm">
+        <ion-button color="success" (click)="openQualityForm()">
+          <ion-icon name="add-circle" slot="start"></ion-icon>
+          Add Quality Standard
+        </ion-button>
+      </div>
+
+      <!-- Quality Form -->
+      <ion-card *ngIf="showQualityForm" class="form-card">
+        <ion-card-header>
+          <ion-card-title>{{ editingQuality ? 'Edit Quality Standard' : 'Add Quality Standard' }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-item>
+            <ion-label position="stacked">Grade *</ion-label>
+            <ion-select [(ngModel)]="qualityForm.grade" interface="popover">
+              <ion-select-option value="A">Grade A (Premium)</ion-select-option>
+              <ion-select-option value="B">Grade B (Standard)</ion-select-option>
+              <ion-select-option value="C">Grade C (Economy)</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Name *</ion-label>
+            <ion-input [(ngModel)]="qualityForm.name" placeholder="e.g., Premium Grade"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Description *</ion-label>
+            <ion-textarea [(ngModel)]="qualityForm.description" rows="3" 
+                          placeholder="Describe the quality criteria"></ion-textarea>
+          </ion-item>
+
+          <div class="parameters-section">
+            <h4>Quality Parameters</h4>
+            <div class="add-parameter">
+              <ion-input 
+                [(ngModel)]="newParameter.name" 
+                placeholder="Parameter name"
+                class="param-input">
+              </ion-input>
+              <ion-input 
+                [(ngModel)]="newParameter.value" 
+                placeholder="Value"
+                class="param-input">
+              </ion-input>
+              <ion-input 
+                [(ngModel)]="newParameter.unit" 
+                placeholder="Unit (optional)"
+                class="param-input">
+              </ion-input>
+              <ion-button (click)="addParameter()" size="small">
+                <ion-icon name="add" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+
+            <ion-list *ngIf="qualityForm.parameters.length > 0">
+              <ion-item *ngFor="let param of qualityForm.parameters; let i = index">
+                <ion-label>
+                  <h3>{{ param.name }}</h3>
+                  <p>{{ param.value }} {{ param.unit }}</p>
+                </ion-label>
+                <ion-button fill="clear" slot="end" color="danger" (click)="removeParameter(i)">
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </ion-item>
+            </ion-list>
+          </div>
+
+          <div class="form-buttons">
+            <ion-button expand="block" (click)="saveQualityStandard()">
+              <ion-icon name="checkmark" slot="start"></ion-icon>
+              {{ editingQuality ? 'Update' : 'Create' }} Standard
+            </ion-button>
+            <ion-button expand="block" fill="outline" color="medium" (click)="closeQualityForm()">
+              Cancel
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Quality Standards Grid -->
+      <div class="quality-grid">
+        <ion-card *ngFor="let standard of qualityStandards" class="quality-card">
+          <ion-card-header>
+            <div class="quality-header">
+              <ion-badge [color]="getGradeColor(standard.grade)" class="grade-badge">
+                Grade {{ standard.grade }}
+              </ion-badge>
+              <div class="quality-actions">
+                <ion-button fill="clear" size="small" (click)="editQualityStandard(standard)">
+                  <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" color="danger" (click)="deleteQualityStandard(standard)">
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+            <h2>{{ standard.name }}</h2>
+            <p>{{ standard.description }}</p>
+          </ion-card-header>
+          <ion-card-content>
+            <h4>Quality Parameters</h4>
+            <ion-list class="parameters-list">
+              <ion-item *ngFor="let param of standard.parameters" lines="none">
+                <ion-label>
+                  <h3>{{ param.name }}</h3>
+                  <p>{{ param.value }} <span *ngIf="param.unit">{{ param.unit }}</span></p>
+                </ion-label>
+                <ion-icon name="checkmark-circle" slot="end" color="success"></ion-icon>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+    </div>
+
+    <!-- ================= PRICE MONITORING TAB ================= -->
+    <div *ngIf="selectedTab === 'pricing'">
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <ion-icon name="trending-up" color="warning"></ion-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ priceAlerts.length }}</span>
+            <span class="stat-label">Price Alerts</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <ion-icon name="notifications-circle" color="success"></ion-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ getActiveAlerts() }}</span>
+            <span class="stat-label">Active Monitors</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Price Alert Button -->
+      <div class="action-header" *ngIf="!showPriceAlertForm">
+        <ion-button color="warning" (click)="openPriceAlertForm()">
+          <ion-icon name="add-circle" slot="start"></ion-icon>
+          Add Price Alert
+        </ion-button>
+      </div>
+
+      <!-- Price Alert Form -->
+      <ion-card *ngIf="showPriceAlertForm" class="form-card">
+        <ion-card-header>
+          <ion-card-title>{{ editingAlert ? 'Edit Price Alert' : 'Add Price Alert' }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-item>
+            <ion-label position="stacked">Category *</ion-label>
+            <ion-select [(ngModel)]="priceAlertForm.categoryId" interface="popover" placeholder="Select category">
+              <ion-select-option *ngFor="let cat of categories" [value]="cat.id">
+                {{ cat.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Floor Price (₹/kg)</ion-label>
+            <ion-input type="number" [(ngModel)]="priceAlertForm.floorPrice" 
+                       placeholder="Minimum acceptable price"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Ceiling Price (₹/kg)</ion-label>
+            <ion-input type="number" [(ngModel)]="priceAlertForm.ceilingPrice" 
+                       placeholder="Maximum acceptable price"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Spike Threshold (%)</ion-label>
+            <ion-range [(ngModel)]="priceAlertForm.spikeThresholdPercent" 
+                       min="10" max="100" step="5" pin="true" color="warning">
+              <ion-label slot="start">10%</ion-label>
+              <ion-label slot="end">100%</ion-label>
+            </ion-range>
+            <ion-note>Alert if price changes by {{ priceAlertForm.spikeThresholdPercent }}% or more</ion-note>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Time Window (minutes)</ion-label>
+            <ion-select [(ngModel)]="priceAlertForm.timeWindowMinutes" interface="popover">
+              <ion-select-option [value]="30">30 minutes</ion-select-option>
+              <ion-select-option [value]="60">1 hour</ion-select-option>
+              <ion-select-option [value]="120">2 hours</ion-select-option>
+              <ion-select-option [value]="240">4 hours</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <div class="form-buttons">
+            <ion-button expand="block" (click)="savePriceAlert()">
+              <ion-icon name="checkmark" slot="start"></ion-icon>
+              {{ editingAlert ? 'Update' : 'Create' }} Alert
+            </ion-button>
+            <ion-button expand="block" fill="outline" color="medium" (click)="closePriceAlertForm()">
+              Cancel
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Price Alerts Grid -->
+      <div class="alerts-grid">
+        <ion-card *ngFor="let alert of priceAlerts" class="alert-card" [class.inactive]="!alert.isActive">
+          <ion-card-header>
+            <div class="alert-header">
+              <div class="alert-title">
+                <ion-icon name="trending-up" [color]="alert.isActive ? 'warning' : 'medium'"></ion-icon>
+                <div>
+                  <h3>{{ alert.categoryName }}</h3>
+                  <ion-badge [color]="alert.isActive ? 'success' : 'medium'">
+                    {{ alert.isActive ? 'Active' : 'Inactive' }}
+                  </ion-badge>
+                </div>
+              </div>
+              <div class="alert-actions">
+                <ion-button fill="clear" size="small" (click)="editPriceAlert(alert)">
+                  <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" color="danger" (click)="deletePriceAlert(alert)">
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="alert-details">
+              <div class="detail-row" *ngIf="alert.floorPrice">
+                <ion-icon name="arrow-down-circle" color="danger"></ion-icon>
+                <span>Floor Price: ₹{{ alert.floorPrice }}/kg</span>
+              </div>
+              <div class="detail-row" *ngIf="alert.ceilingPrice">
+                <ion-icon name="arrow-up-circle" color="success"></ion-icon>
+                <span>Ceiling Price: ₹{{ alert.ceilingPrice }}/kg</span>
+              </div>
+              <div class="detail-row">
+                <ion-icon name="flash" color="warning"></ion-icon>
+                <span>Spike Alert: {{ alert.spikeThresholdPercent }}% in {{ alert.timeWindowMinutes }} mins</span>
+              </div>
+              <div class="detail-row" *ngIf="alert.lastTriggered">
+                <ion-icon name="time" color="medium"></ion-icon>
+                <span>Last Triggered: {{ alert.lastTriggered | date:'short' }}</span>
+              </div>
+            </div>
+            <div class="alert-footer">
+              <ion-button size="small" [color]="alert.isActive ? 'warning' : 'success'" 
+                          (click)="toggleAlertStatus(alert)">
+                <ion-icon [name]="alert.isActive ? 'pause' : 'play'" slot="start"></ion-icon>
+                {{ alert.isActive ? 'Pause' : 'Activate' }}
+              </ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>

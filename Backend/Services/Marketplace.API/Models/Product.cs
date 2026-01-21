@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Marketplace.API.Models;
 
 public class Product
@@ -10,13 +12,16 @@ public class Product
     public string Unit { get; set; } = string.Empty; // kg, quintal, ton
     public decimal CurrentPrice { get; set; }
     public int AvailableQuantity { get; set; }
+    public int MinOrderQty { get; set; } = 1; // Minimum order quantity
     public string? ImageUrl { get; set; }
     public string? Emoji { get; set; } // 🍅, 🧅, 🥔, etc.
-    public string? Grade { get; set; } // A, B, Premium
+    public string? Grade { get; set; } // A, B, C
+    public string? PriceTiersJson { get; set; } // JSON string for tiered pricing
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public ICollection<PriceHistory> PriceHistory { get; set; } = new List<PriceHistory>();
 }

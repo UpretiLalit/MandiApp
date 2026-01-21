@@ -14,7 +14,13 @@ public class Order
     
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public string? DeliveryAddress { get; set; }
+    public string? PickupAddress { get; set; }
     public string? TransporterId { get; set; }
+    public string? TransporterName { get; set; }
+    public string? BuyerName { get; set; }
+    public string? VendorName { get; set; }
+    public string? MandiId { get; set; }
+    public DateTime? AssignedAt { get; set; }
     
     // Phase 1: Escrow Payment
     public bool IsEscrow { get; set; } = true;

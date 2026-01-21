@@ -75,147 +75,231 @@
     </ion-card>
 
     <!-- Product List -->
-    <ion-card *ngFor="let product of filteredProducts" class="product-card">
-      
-      <div class="product-header">
-        <div class="product-image">
-          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
-          <div *ngIf="!product.imageUrl" class="placeholder">
+    <div class="product-grid">
+      <div *ngFor="let product of filteredProducts" class="product-card" [class.inactive]="!product.isActive">
+        
+        <!-- Product Image/Emoji -->
+        <div class="card-image">
+          <div class="emoji-large" *ngIf="product.emoji">{{product.emoji}}</div>
+          <img *ngIf="!product.emoji && product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+          <div *ngIf="!product.emoji && !product.imageUrl" class="placeholder">
             <ion-icon name="image-outline"></ion-icon>
           </div>
+          <div class="status-badge" [class.active]="product.isActive" (click)="quickToggleStatus(product); $event.stopPropagation()">
+            <ion-icon [name]="product.isActive ? 'checkmark-circle' : 'close-circle'"></ion-icon>
+          </div>
         </div>
-        
-        <div class="product-main">
-          <h3>{{product.name}}</h3>
-          <p class="category">
+
+        <!-- Product Info -->
+        <div class="card-content">
+          <div class="product-header">
+            <h3 class="product-name">{{product.name}}</h3>
+            <span class="grade-badge" [class.grade-a]="product.grade === 'A'" [class.grade-b]="product.grade === 'B'" [class.grade-c]="product.grade === 'C'">
+              Grade {{product.grade || 'B'}}
+            </span>
+          </div>
+          <p class="product-category">
             <ion-icon name="pricetag-outline"></ion-icon>
             {{product.category}}
           </p>
-          <div class="price-quantity">
-            <div class="price">
-              <span class="currency">₹</span>
-              <span class="amount">{{product.currentPrice}}</span>
-              <span class="unit">/{{product.unit}}</span>
+          
+          <div class="product-stats">
+            <div class="stat-item price">
+              <span class="label">Price</span>
+              <span class="value">₹{{product.currentPrice}}</span>
             </div>
-            <div class="quantity">
-              <ion-icon name="cube-outline"></ion-icon>
-              <span>{{product.availableQuantity}} {{product.unit}}</span>
+            <div class="stat-item stock">
+              <span class="label">Stock</span>
+              <span class="value">{{product.availableQuantity}}</span>
             </div>
           </div>
+          
+          <!-- Action Buttons -->
+          <div class="card-actions">
+            <ion-toggle 
+              [checked]="product.isActive"
+              (ionChange)="toggleStock(product, $event)"
+              [color]="product.isActive ? 'success' : 'medium'">
+            </ion-toggle>
+            <button class="btn-delete" (click)="deleteProduct(product); $event.stopPropagation()">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
         </div>
+
       </div>
-
-      <ion-card-content>
-        
-        <!-- Stock Toggle -->
-        <div class="stock-toggle">
-          <div class="toggle-label">
-            <ion-icon [name]="product.isActive ? 'checkmark-circle' : 'close-circle'" 
-                      [color]="product.isActive ? 'success' : 'danger'"></ion-icon>
-            <span [class.active]="product.isActive">
-              {{product.isActive ? 'In Stock' : 'Out of Stock'}}
-            </span>
-          </div>
-          <ion-toggle 
-            [checked]="product.isActive"
-            (ionChange)="toggleStock(product, $event)"
-            [color]="product.isActive ? 'success' : 'medium'">
-          </ion-toggle>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <ion-button 
-            fill="outline" 
-            size="small"
-            (click)="editProduct(product)">
-            <ion-icon name="create-outline" slot="start"></ion-icon>
-            Edit
-          </ion-button>
-          <ion-button 
-            fill="outline" 
-            size="small"
-            color="danger"
-            (click)="deleteProduct(product)">
-            <ion-icon name="trash-outline" slot="start"></ion-icon>
-            Delete
-          </ion-button>
-        </div>
-
-      </ion-card-content>
-    </ion-card>
+    </div>
 
   </div>
 
-  <!-- Add/Edit Product Modal -->
-  <div class="modal-overlay" *ngIf="showAddForm" (click)="closeAddForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      
-      <div class="modal-header">
-        <h2>{{editingProduct ? 'Edit Product' : 'Add New Product'}}</h2>
-        <ion-button fill="clear" (click)="closeAddForm()">
+  <!-- Add/Edit Product Form (Inline, No Modal) -->
+  <ion-card *ngIf="showAddForm" class="add-product-card">
+    <ion-card-header>
+      <div class="header-content">
+        <div class="header-icon">{{detectedEmoji || '📦'}}</div>
+        <div class="header-text">
+          <h2>{{editingProduct ? 'Edit Product' : 'Add New Product'}}</h2>
+          <p>Fill in the details below</p>
+        </div>
+        <ion-button fill="clear" (click)="closeAddForm()" class="close-btn">
           <ion-icon name="close" slot="icon-only"></ion-icon>
         </ion-button>
       </div>
-
+    </ion-card-header>
+    
+    <ion-card-content>
       <form [formGroup]="addProductForm" (ngSubmit)="editingProduct ? updateProduct() : addProduct()">
         
-        <ion-item>
-          <ion-label position="floating">Product Name *</ion-label>
-          <ion-input formControlName="name" type="text"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="floating">Category *</ion-label>
-          <ion-select formControlName="category">
-            <ion-select-option *ngFor="let cat of categories" [value]="cat">
-              {{cat}}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="floating">Description *</ion-label>
-          <ion-textarea formControlName="description" rows="2"></ion-textarea>
-        </ion-item>
-
-        <div class="form-row">
-          <ion-item>
-            <ion-label position="floating">Price (₹) *</ion-label>
-            <ion-input formControlName="price" type="number"></ion-input>
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">📝 Basic Information</h3>
+          
+          <ion-item lines="full" *ngIf="!showCustomProductName">
+            <ion-label position="floating">Product Name *</ion-label>
+            <ion-select formControlName="name" interface="action-sheet" (ionChange)="onProductNameSelect($event)" placeholder="Select product">
+              <ion-select-option *ngFor="let product of masterProductList" [value]="product">{{product}}</ion-select-option>
+              <ion-select-option value="__custom__">➕ Add Custom Product</ion-select-option>
+            </ion-select>
           </ion-item>
           
-          <ion-item>
-            <ion-label position="floating">Unit *</ion-label>
-            <ion-select formControlName="unit">
-              <ion-select-option value="kg">kg</ion-select-option>
-              <ion-select-option value="gm">gm</ion-select-option>
-              <ion-select-option value="ltr">ltr</ion-select-option>
-              <ion-select-option value="pcs">pcs</ion-select-option>
-              <ion-select-option value="dozen">dozen</ion-select-option>
-            </ion-select>
+          <ion-item lines="full" *ngIf="showCustomProductName">
+            <ion-label position="floating">Custom Product Name *</ion-label>
+            <ion-input formControlName="customName" type="text" (ionChange)="onProductNameChange($event)" placeholder="Enter product name"></ion-input>
+            <ion-button slot="end" fill="clear" (click)="cancelCustomProduct()" type="button">
+              <ion-icon name="close-circle" color="danger"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <div class="form-row">
+            <ion-item lines="full">
+              <ion-label position="floating">Category *</ion-label>
+              <ion-select formControlName="category" interface="popover">
+                <ion-select-option *ngFor="let cat of categories" [value]="cat">
+                  {{getTranslatedCategory(cat)}}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            
+            <ion-item lines="full">
+              <ion-label position="floating">Grade *</ion-label>
+              <ion-select formControlName="grade" interface="popover" placeholder="Select grade">
+                <ion-select-option value="A">Grade A - Premium</ion-select-option>
+                <ion-select-option value="B">Grade B - Standard</ion-select-option>
+                <ion-select-option value="C">Grade C - Economy</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
+
+          <ion-item lines="full">
+            <ion-label position="floating">Description *</ion-label>
+            <ion-textarea formControlName="description" rows="3" placeholder="Describe your product quality, origin, etc."></ion-textarea>
           </ion-item>
         </div>
 
-        <ion-item>
-          <ion-label position="floating">Available Quantity *</ion-label>
-          <ion-input formControlName="quantity" type="number"></ion-input>
-        </ion-item>
+        <!-- Pricing Section -->
+        <div class="form-section">
+          <h3 class="section-title">💰 Pricing & Stock</h3>
+          
+          <div class="form-row">
+            <ion-item lines="full">
+              <ion-label position="floating">Base Price (₹) *</ion-label>
+              <ion-input formControlName="price" type="number" placeholder="0"></ion-input>
+              <ion-note slot="helper">Price per unit</ion-note>
+            </ion-item>
+            
+            <ion-item lines="full">
+              <ion-label position="floating">Unit *</ion-label>
+              <ion-select formControlName="unit" interface="popover">
+                <ion-select-option value="kg">Kilogram (kg)</ion-select-option>
+                <ion-select-option value="gm">Gram (gm)</ion-select-option>
+                <ion-select-option value="quintal">Quintal (100 kg)</ion-select-option>
+                <ion-select-option value="ton">Ton (1000 kg)</ion-select-option>
+                <ion-select-option value="ltr">Liter (ltr)</ion-select-option>
+                <ion-select-option value="pcs">Pieces (pcs)</ion-select-option>
+                <ion-select-option value="dozen">Dozen (12 pcs)</ion-select-option>
+                <ion-select-option value="peti">Peti (Box/Crate)</ion-select-option>
+                <ion-select-option value="gaddi">Gaddi (Bundle)</ion-select-option>
+                <ion-select-option value="dhadi">Dhadi (Sack/Bag)</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
 
-        <ion-item>
-          <ion-label position="floating">Image URL</ion-label>
-          <ion-input formControlName="imageUrl" type="url"></ion-input>
-        </ion-item>
+          <ion-item lines="full">
+            <ion-label position="floating">Available Stock *</ion-label>
+            <ion-input formControlName="quantity" type="number" placeholder="0"></ion-input>
+            <ion-note slot="helper">Total quantity available</ion-note>
+          </ion-item>
 
-        <div class="modal-actions">
-          <ion-button expand="block" type="submit" [disabled]="addProductForm.invalid">
-            <ion-icon [name]="editingProduct ? 'save-outline' : 'add-outline'" slot="start"></ion-icon>
+          <ion-item lines="full">
+            <ion-label position="floating">Minimum Order Quantity *</ion-label>
+            <ion-input formControlName="minOrderQty" type="number" placeholder="0"></ion-input>
+            <ion-note slot="helper">Minimum quantity required per order</ion-note>
+          </ion-item>
+        </div>
+
+        <!-- Tiered Pricing Section -->
+        <div class="form-section tiered-pricing-section">
+          <div class="section-header">
+            <h3 class="section-title">📊 Tiered Pricing (Optional)</h3>
+            <ion-button size="small" fill="outline" (click)="addPriceTier()" type="button">
+              <ion-icon name="add" slot="start"></ion-icon>
+              Add Tier
+            </ion-button>
+          </div>
+          <p class="section-description">Set different prices based on order quantity</p>
+          
+          <div class="pricing-tiers" *ngIf="priceTiers.length > 0">
+            <div class="tier-item" *ngFor="let tier of priceTiers; let i = index">
+              <div class="tier-number">{{i + 1}}</div>
+              <div class="tier-inputs">
+                <div class="tier-input-group">
+                  <label>Min Qty</label>
+                  <input type="number" [(ngModel)]="tier.minQty" [ngModelOptions]="{standalone: true}" placeholder="10" />
+                </div>
+                <div class="tier-input-group">
+                  <label>Max Qty</label>
+                  <input type="number" [(ngModel)]="tier.maxQty" [ngModelOptions]="{standalone: true}" placeholder="50" />
+                </div>
+                <div class="tier-input-group">
+                  <label>Price (₹)</label>
+                  <input type="number" [(ngModel)]="tier.price" [ngModelOptions]="{standalone: true}" placeholder="45" />
+                </div>
+              </div>
+              <ion-button fill="clear" color="danger" size="small" (click)="removePriceTier(i)" type="button">
+                <ion-icon name="trash" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          
+          <div class="tier-example" *ngIf="priceTiers.length === 0">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            <p>Example: 1-10 kg &#64; ₹50, 11-50 kg &#64; ₹45, 51+ kg &#64; ₹40</p>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="form-section">
+          <h3 class="section-title">🖼️ Additional</h3>
+          <ion-item lines="full">
+            <ion-label position="floating">Image URL (Optional)</ion-label>
+            <ion-input formControlName="imageUrl" type="url" placeholder="https://..."></ion-input>
+          </ion-item>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <ion-button expand="block" type="submit" [disabled]="addProductForm.invalid" color="primary" size="large">
+            <ion-icon [name]="editingProduct ? 'checkmark-circle' : 'add-circle'" slot="start"></ion-icon>
             {{editingProduct ? 'Update Product' : 'Add Product'}}
+          </ion-button>
+          <ion-button expand="block" fill="outline" (click)="closeAddForm()" type="button" size="large">
+            <ion-icon name="close-circle" slot="start"></ion-icon>
+            Cancel
           </ion-button>
         </div>
 
       </form>
-    </div>
-  </div>
+    </ion-card-content>
+  </ion-card>
 
 </ion-content>

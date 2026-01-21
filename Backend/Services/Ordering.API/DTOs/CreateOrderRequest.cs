@@ -25,6 +25,11 @@ public class OrderItemDto
     public decimal UnitPrice { get; set; }
 }
 
+public class UpdateStatusRequest
+{
+    public string Status { get; set; } = string.Empty;
+}
+
 public class CompletePaymentRequest
 {
     public List<OrderItemDto> Items { get; set; } = new();
