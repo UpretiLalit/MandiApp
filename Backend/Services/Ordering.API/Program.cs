@@ -14,6 +14,12 @@ using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to use specific port
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5002); // Ordering API port
+});
+
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -103,75 +109,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Seed in-memory database with test data
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
-    
-    // Only seed if database is empty
-    if (!context.Buyers.Any())
-    {
-        // Add sample buyers
-        context.Buyers.Add(new Ordering.API.Models.Buyer
-        {
-            Id = "buyer-001",
-            FullName = "Restaurant ABC",
-            PhoneNumber = "+919876543210",
-            Email = "restaurant@example.com",
-            CompanyName = "ABC Foods Pvt Ltd",
-            BusinessAddress = "S.G. Highway, Ahmedabad",
-            DeliveryAddress = "S.G. Highway, Ahmedabad",
-            IsVerified = true
-        });
-        
-        // Add sample vendors
-        context.Vendors.Add(new Ordering.API.Models.Vendor
-        {
-            Id = "vendor-001",
-            FullName = "Ramesh Kumar",
-            PhoneNumber = "+919876543211",
-            BusinessName = "Fresh Farms Co.",
-            BusinessAddress = "APMC Market, Ahmedabad",
-            Latitude = "23.0225",
-            Longitude = "72.5714",
-            IsVerified = true,
-            IsActive = true
-        });
-        
-        context.Vendors.Add(new Ordering.API.Models.Vendor
-        {
-            Id = "vendor-002",
-            FullName = "Suresh Patel",
-            PhoneNumber = "+919876543212",
-            BusinessName = "Green Valley Suppliers",
-            BusinessAddress = "Sardar Patel Market, Ahmedabad",
-            Latitude = "23.0330",
-            Longitude = "72.5850",
-            IsVerified = true,
-            IsActive = true
-        });
-        
-        // Add sample transporter
-        context.Transporters.Add(new Ordering.API.Models.Transporter
-        {
-            Id = "transporter-001",
-            FullName = "Vijay Singh",
-            PhoneNumber = "+919876543213",
-            VehicleNumber = "GJ01AB1234",
-            VehicleType = Ordering.API.Models.VehicleType.FourWheeler,
-            IsVerified = true,
-            IsAvailable = true
-        });
-        
-        context.SaveChanges();
-    }
-}
+// TODO: Database seeding temporarily disabled - tables need to be created first via migrations
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// Disable HTTPS redirection when using Cloudflare Tunnel
+// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

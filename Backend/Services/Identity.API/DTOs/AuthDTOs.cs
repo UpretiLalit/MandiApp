@@ -22,3 +22,5 @@ public record UpdateProfileRequest(
     string? GstNumber = null,
     string? Address = null
 );
+
+public record UpdateLanguageRequest(string Language);

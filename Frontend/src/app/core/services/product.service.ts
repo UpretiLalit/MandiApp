@@ -26,7 +26,7 @@ export class ProductService {
   }
 
   getVendorInventory(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.orderingApiUrl}/products/vendor-inventory`);
+    return this.http.get<any[]>(`${environment.marketplaceApiUrl}/products/vendor-inventory`);
   }
 
   createProduct(request: CreateProductRequest): Observable<Product> {

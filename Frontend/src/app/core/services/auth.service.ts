@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { environment } from '@environments/environment';
 import { AuthResponse, OtpRequest, OtpVerification, RegisterRequest, User } from '../models/auth.model';
 import { Preferences } from '@capacitor/preferences';
+import { LanguageService } from './language.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,9 +14,20 @@ export class AuthService {
   private readonly USER_KEY = 'auth_user';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private _languageService?: LanguageService;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private injector: Injector
+  ) {
     this.loadStoredUser();
+  }
+
+  private get languageService(): LanguageService {
+    if (!this._languageService) {
+      this._languageService = this.injector.get(LanguageService);
+    }
+    return this._languageService;
   }
 
   private async loadStoredUser() {
@@ -54,6 +66,25 @@ export class AuthService {
     await Preferences.set({ key: this.TOKEN_KEY, value: token });
     await Preferences.set({ key: this.USER_KEY, value: JSON.stringify(user) });
     this.currentUserSubject.next(user);
+    
+    // Extract and set language from JWT token
+    this.extractAndSetLanguageFromToken(token);
+  }
+
+  /**
+   * Extract language claim from JWT token and set it
+   */
+  private extractAndSetLanguageFromToken(token: string): void {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const languageClaim = payload.language || payload.Language;
+      
+      if (languageClaim) {
+        this.languageService.setLanguageFromToken(languageClaim);
+      }
+    } catch (error) {
+      console.error('Error extracting language from token:', error);
+    }
   }
 
   async getToken(): Promise<string | null> {

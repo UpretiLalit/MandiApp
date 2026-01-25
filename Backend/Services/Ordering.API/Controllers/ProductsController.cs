@@ -39,4 +39,20 @@ public class ProductsController : ControllerBase
         var products = await _productService.GetProductsByCategoryAsync(category);
         return Ok(products);
     }
+
+    [HttpGet("vendor-inventory")]
+    public async Task<IActionResult> GetVendorInventory()
+    {
+        // Return all products for vendor inventory view
+        var products = await _productService.GetAllProductsAsync();
+        return Ok(products);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateProduct([FromBody] dynamic request)
+    {
+        // Forward to Marketplace API or handle locally
+        // For now, return 501 Not Implemented
+        return StatusCode(501, new { message = "Product creation should be done via Marketplace API" });
+    }
 }

@@ -1,0 +1,54 @@
+tunnel: vyaparmandap-tunnel
+credentials-file: C:\Users\lalit\.cloudflared\540933ad-2c87-4555-b6da-b48d338d19c2.json
+
+# Ingress rules - route external traffic to local services
+ingress:
+  # Frontend - Angular Application
+  - hostname: www.vyaparmandap.com
+    service: http://localhost:4200
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  - hostname: vyaparmandap.com
+    service: http://localhost:4200
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Identity API - Authentication & User Management
+  - hostname: identity-api.vyaparmandap.com
+    service: http://localhost:5003
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Marketplace API - Products, Pricing, Inventory
+  - hostname: marketplace-api.vyaparmandap.com
+    service: http://localhost:5001
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Ordering API - Orders, Payments, Cart
+  - hostname: ordering-api.vyaparmandap.com
+    service: http://localhost:5002
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Logistics Hub - Real-time Tracking, SignalR
+  - hostname: logistics-hub.vyaparmandap.com
+    service: http://localhost:5004
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      websocketCompression: true
+      
+  # Catch-all rule (required)
+  - service: http_status:404
+
+# WebSocket support (important for SignalR)
+warp-routing:
+  enabled: true
+

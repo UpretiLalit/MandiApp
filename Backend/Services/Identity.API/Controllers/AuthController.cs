@@ -83,6 +83,7 @@ public class AuthController : ControllerBase
                 user.PhoneNumber,
                 user.Email,
                 user.Role,
+                user.Language,
                 user.CompanyName
             }
         });
@@ -128,6 +129,7 @@ public class AuthController : ControllerBase
                 user.PhoneNumber,
                 user.Email,
                 user.Role,
+                user.Language,
                 user.CompanyName
             }
         });
@@ -184,5 +186,32 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Update failed", errors = result.Errors });
 
         return Ok(new { message = "Profile updated successfully" });
+    }
+
+    [Authorize]
+    [HttpPatch("users/language")]
+    public async Task<IActionResult> UpdateLanguage([FromBody] UpdateLanguageRequest request)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+            return Unauthorized();
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return NotFound();
+
+        // Validate language code
+        var validLanguages = new[] { "en", "hi", "mr" };
+        if (!validLanguages.Contains(request.Language?.ToLower()))
+            return BadRequest(new { message = "Invalid language code. Supported: en, hi, mr" });
+
+        user.Language = request.Language.ToLower();
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+            return BadRequest(new { message = "Language update failed", errors = result.Errors });
+
+        return Ok(new { message = "Language updated successfully", language = user.Language });
     }
 }

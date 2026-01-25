@@ -1,0 +1,40 @@
+tunnel: mandiapp-tunnel
+credentials-file: C:\Users\lalit\.cloudflared\dad9ffa0-5cf2-4ea0-8a88-f4547c976f0c.json
+
+# Ingress rules - route external traffic to local services
+ingress:
+  # Identity API - Authentication & User Management
+  - hostname: identity-api.mandimarket.com
+    service: http://localhost:5003
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Marketplace API - Products, Pricing, Inventory
+  - hostname: marketplace-api.mandimarket.com
+    service: http://localhost:5001
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Ordering API - Orders, Payments, Cart
+  - hostname: ordering-api.mandimarket.com
+    service: http://localhost:5002
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      
+  # Logistics Hub - Real-time Tracking, SignalR
+  - hostname: logistics-hub.mandimarket.com
+    service: http://localhost:5004
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      websocketCompression: true
+      
+  # Catch-all rule (required)
+  - service: http_status:404
+
+# WebSocket support (important for SignalR)
+warp-routing:
+  enabled: true

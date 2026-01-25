@@ -283,9 +283,13 @@
 
 // Accordion Header (Main Row)
 .accordion-header {
+  /* display: flex; */
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.2s ease;
+  transition: background var(--transition-fast);
   
   &:active {
     background-color: rgba(0, 0, 0, 0.02);
@@ -448,7 +452,6 @@
       padding: 0 10px;
       display: flex;
       align-items: center;
-      gap: 5px;
       flex-shrink: 0;
       
       ion-icon {

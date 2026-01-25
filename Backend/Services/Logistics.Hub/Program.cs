@@ -8,6 +8,12 @@ using Logistics.Hub.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to use specific port
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5004); // Logistics Hub port
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -79,7 +85,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Disable HTTPS redirection when using Cloudflare Tunnel
+// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

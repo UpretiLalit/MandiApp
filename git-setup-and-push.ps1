@@ -173,12 +173,33 @@ Initial commit: MandiApp - Production Ready
 
 Write-Host "Creating commit..." -ForegroundColor Yellow
 git commit -m "$commitMessage"
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Commit failed or no changes to commit" -ForegroundColor Red
+    Write-Host ""
+    git status
+    exit 1
+}
+
 Write-Host "✓ Commit created" -ForegroundColor Green
 Write-Host ""
 
+# Check current branch name
+$currentBranch = git branch --show-current
+Write-Host "Current branch: $currentBranch" -ForegroundColor Yellow
+
+# Rename to main if it's master
+if ($currentBranch -eq "master") {
+    Write-Host "Renaming branch from 'master' to 'main'..." -ForegroundColor Yellow
+    git branch -M main
+    $currentBranch = "main"
+    Write-Host "✓ Branch renamed to 'main'" -ForegroundColor Green
+    Write-Host ""
+}
+
 # Check for remote
-$hasRemote = git remote -v 2>&1
-if ($LASTEXITCODE -eq 0 -and $hasRemote) {
+$remotes = git remote 2>&1
+if ($LASTEXITCODE -eq 0 -and $remotes) {
     Write-Host "Found remote repository:" -ForegroundColor Green
     git remote -v
     Write-Host ""
@@ -186,23 +207,24 @@ if ($LASTEXITCODE -eq 0 -and $hasRemote) {
     $push = Read-Host "Push to remote now? (y/n)"
     if ($push -eq 'y' -or $push -eq 'Y') {
         Write-Host ""
-        Write-Host "Pushing to remote..." -ForegroundColor Yellow
+        Write-Host "Pushing to remote ($currentBranch)..." -ForegroundColor Yellow
         
-        try {
-            git push -u origin main
+        git push -u origin $currentBranch
+        
+        if ($LASTEXITCODE -eq 0) {
             Write-Host ""
             Write-Host "✅ Successfully pushed to remote!" -ForegroundColor Green
-        } catch {
-            Write-Host "❌ Failed to push. Trying 'master' branch..." -ForegroundColor Yellow
-            try {
-                git push -u origin master
-                Write-Host ""
-                Write-Host "✅ Successfully pushed to remote!" -ForegroundColor Green
-            } catch {
-                Write-Host ""
-                Write-Host "❌ Push failed. Please push manually:" -ForegroundColor Red
-                Write-Host "   git push -u origin main" -ForegroundColor White
-            }
+        } else {
+            Write-Host ""
+            Write-Host "❌ Push failed!" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Possible solutions:" -ForegroundColor Yellow
+            Write-Host "1. Check your GitHub credentials" -ForegroundColor White
+            Write-Host "2. Make sure the repository exists on GitHub" -ForegroundColor White
+            Write-Host "3. Try using a Personal Access Token instead of password" -ForegroundColor White
+            Write-Host ""
+            Write-Host "Manual push command:" -ForegroundColor Cyan
+            Write-Host "   git push -u origin $currentBranch" -ForegroundColor White
         }
     }
 } else {
@@ -217,9 +239,8 @@ if ($LASTEXITCODE -eq 0 -and $hasRemote) {
     Write-Host ""
     Write-Host "2. Then run these commands:" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host '   git remote add origin https://github.com/YOUR_USERNAME/MandiApp.git' -ForegroundColor White
-    Write-Host '   git branch -M main' -ForegroundColor White
-    Write-Host '   git push -u origin main' -ForegroundColor White
+    Write-Host "   git remote add origin https://github.com/YOUR_USERNAME/MandiApp.git" -ForegroundColor White
+    Write-Host "   git push -u origin $currentBranch" -ForegroundColor White
     Write-Host ""
     Write-Host "Replace YOUR_USERNAME with your actual GitHub username" -ForegroundColor Cyan
 }

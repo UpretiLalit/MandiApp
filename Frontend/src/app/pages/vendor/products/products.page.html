@@ -3,8 +3,9 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>My Inventory</ion-title>
+    <ion-title>{{ 'vendor.inventory' | translate }}</ion-title>
     <ion-buttons slot="end">
+      <app-language-selector></app-language-selector>
       <ion-button (click)="openAddForm()">
         <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
@@ -14,7 +15,7 @@
   <!-- Search and Filter -->
   <ion-toolbar>
     <ion-searchbar 
-      placeholder="Search products..." 
+      [placeholder]="'common.search' | translate" 
       (ionChange)="onSearchChange($event)">
     </ion-searchbar>
   </ion-toolbar>
@@ -22,13 +23,13 @@
   <ion-toolbar>
     <ion-segment [(ngModel)]="filterStatus" (ionChange)="filterByStatus(filterStatus)">
       <ion-segment-button value="all">
-        <ion-label>All</ion-label>
+        <ion-label>{{ 'common.all' | translate }}</ion-label>
       </ion-segment-button>
       <ion-segment-button value="active">
-        <ion-label>In Stock</ion-label>
+        <ion-label>{{ 'vendor.in_stock' | translate }}</ion-label>
       </ion-segment-button>
       <ion-segment-button value="inactive">
-        <ion-label>Out of Stock</ion-label>
+        <ion-label>{{ 'vendor.out_of_stock' | translate }}</ion-label>
       </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
@@ -47,8 +48,8 @@
         <div class="quick-update-content">
           <ion-icon name="flash" color="warning"></ion-icon>
           <div>
-            <h3>Quick Price Update</h3>
-            <p>Adjust prices with sliders instantly</p>
+            <h3>{{ 'vendor.quick_price_update' | translate }}</h3>
+            <p>{{ 'vendor.quick_price_desc' | translate }}</p>
           </div>
           <ion-icon name="chevron-forward" color="medium"></ion-icon>
         </div>
@@ -58,18 +59,18 @@
     <!-- Loading -->
     <div *ngIf="loading" class="loading-state">
       <ion-spinner name="crescent"></ion-spinner>
-      <p>Loading products...</p>
+      <p>{{ 'common.loading' | translate }}</p>
     </div>
 
     <!-- Empty State -->
     <ion-card *ngIf="!loading && filteredProducts.length == 0" class="empty-state">
       <ion-card-content>
         <ion-icon name="basket-outline" color="medium"></ion-icon>
-        <h3>No Products</h3>
-        <p>Add your first product to start selling</p>
+        <h3>{{ 'products.no_products' | translate }}</h3>
+        <p>{{ 'products.start_adding' | translate }}</p>
         <ion-button expand="block" (click)="openAddForm()">
           <ion-icon name="add-outline" slot="start"></ion-icon>
-          Add Product
+          {{ 'products.add_product' | translate }}
         </ion-button>
       </ion-card-content>
     </ion-card>
@@ -93,23 +94,23 @@
         <!-- Product Info -->
         <div class="card-content">
           <div class="product-header">
-            <h3 class="product-name">{{product.name}}</h3>
+            <h3 class="product-name">{{ product.name | productName }}</h3>
             <span class="grade-badge" [class.grade-a]="product.grade === 'A'" [class.grade-b]="product.grade === 'B'" [class.grade-c]="product.grade === 'C'">
               Grade {{product.grade || 'B'}}
             </span>
           </div>
           <p class="product-category">
             <ion-icon name="pricetag-outline"></ion-icon>
-            {{product.category}}
+            {{ product.category | categoryName }}
           </p>
           
           <div class="product-stats">
             <div class="stat-item price">
-              <span class="label">Price</span>
+              <span class="label">{{ 'products.base_price' | translate }}</span>
               <span class="value">₹{{product.currentPrice}}</span>
             </div>
             <div class="stat-item stock">
-              <span class="label">Stock</span>
+              <span class="label">{{ 'vendor.stock' | translate }}</span>
               <span class="value">{{product.availableQuantity}}</span>
             </div>
           </div>
@@ -138,8 +139,8 @@
       <div class="header-content">
         <div class="header-icon">{{detectedEmoji || '📦'}}</div>
         <div class="header-text">
-          <h2>{{editingProduct ? 'Edit Product' : 'Add New Product'}}</h2>
-          <p>Fill in the details below</p>
+          <h2>{{ (editingProduct ? 'products.edit_product' : 'products.add_product') | translate }}</h2>
+          <p>{{ 'vendor.fill_details' | translate }}</p>
         </div>
         <ion-button fill="clear" (click)="closeAddForm()" class="close-btn">
           <ion-icon name="close" slot="icon-only"></ion-icon>

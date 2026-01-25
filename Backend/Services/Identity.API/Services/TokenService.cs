@@ -29,6 +29,7 @@ public class TokenService : ITokenService
             new Claim(ClaimTypes.Name, user.FullName),
             new Claim(ClaimTypes.Role, user.Role),
             new Claim("phone", user.PhoneNumber ?? string.Empty),
+            new Claim("language", user.Language ?? "en"), // Language preference for i18n
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

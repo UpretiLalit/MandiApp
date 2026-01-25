@@ -28,13 +28,6 @@ export class LoginPage implements OnInit, OnDestroy {
   isAdminPhone: boolean = false;
   readonly ADMIN_PHONE = '8287433081';
   
-  // Mock user database for dev mode
-  private mockUsers = [
-    { id: 'mock-vendor-1', phoneNumber: '8287433082', role: 'Vendor' as 'Buyer' | 'Vendor' | 'Transporter' | 'Admin', fullName: 'Test Vendor', email: 'vendor@test.com' },
-    { id: 'mock-buyer-1', phoneNumber: '9876543210', role: 'Buyer' as 'Buyer' | 'Vendor' | 'Transporter' | 'Admin', fullName: 'Test Buyer', email: 'buyer@test.com' },
-    { id: 'mock-transporter-1', phoneNumber: '9876543211', role: 'Transporter' as 'Buyer' | 'Vendor' | 'Transporter' | 'Admin', fullName: 'Test Transporter', email: 'transporter@test.com' }
-  ];
-  
   // OTP digits for individual inputs
   otpDigits: string[] = ['', '', '', '', '', ''];
   otpAutoReadStatus: string = '';
@@ -96,40 +89,23 @@ export class LoginPage implements OnInit, OnDestroy {
       return;
     }
 
-    // For non-admin users, check if already registered
+    // Send OTP via real API
     const loading = await this.loadingController.create({
-      message: 'Checking registration...',
+      message: 'Sending OTP...',
       spinner: 'crescent'
     });
     await loading.present();
 
-    // TODO: Check backend if user is registered
-    // For now, simulate: if ends with even number = registered, odd = new user
-    const lastDigit = parseInt(phone.charAt(phone.length - 1));
-    const isRegistered = lastDigit % 2 === 0;
-
-    if (isRegistered) {
-      // Auto-login for registered users
-      console.log('USER REGISTERED: Auto-login for', phone);
-      loading.dismiss();
-      await this.autoLogin(phone);
-    } else {
-      // Send OTP for new user registration
-      console.log('NEW USER: Sending OTP for registration');
-      loading.dismiss();
-      this.step = 'otp';
-      this.startCountdown();
-      this.initOtpAutoRead();
-      this.showSuccess('Welcome! OTP sent for registration. Use: 123456');
-    }
-
-    /* Original API call - uncomment when backend is ready
-    this.authService.sendOtp({ phoneNumber: phone }).subscribe({
+    // Always use real API - add +91 country code
+    const phoneWithCountryCode = '+91' + phone;
+    
+    this.authService.sendOtp({ phoneNumber: phoneWithCountryCode }).subscribe({
       next: () => {
         loading.dismiss();
         this.step = 'otp';
         this.startCountdown();
-        this.showSuccess('OTP sent successfully');
+        this.initOtpAutoRead();
+        this.showSuccess('OTP sent successfully to ' + phoneWithCountryCode);
       },
       error: (error) => {
         loading.dismiss();
@@ -137,35 +113,6 @@ export class LoginPage implements OnInit, OnDestroy {
         this.showError('Failed to send OTP. Please try again.');
       }
     });
-    */
-  }
-
-  async autoLogin(phone: string) {
-    const loading = await this.loadingController.create({
-      message: 'Logging in...',
-    });
-    await loading.present();
-
-    // Simulate API call to get user data
-    setTimeout(async () => {
-      // Mock user data - in real app, get from backend
-      const mockUser = {
-        id: 'user-' + phone,
-        fullName: 'User ' + phone.slice(-4),
-        phoneNumber: phone,
-        email: `user${phone.slice(-4)}@mandi.app`,
-        role: 'Buyer' as 'Buyer' | 'Vendor' | 'Transporter' | 'Admin'
-      };
-
-      await this.authService['saveAuthData']('mock-token-' + Date.now(), mockUser);
-      loading.dismiss();
-      this.showSuccess('Welcome back!');
-      
-      // Redirect based on user role from backend
-      setTimeout(() => {
-        this.router.navigate(['/marketplace']);
-      }, 500);
-    }, 1000);
   }
 
   async verifyOtp() {
@@ -181,108 +128,9 @@ export class LoginPage implements OnInit, OnDestroy {
 
     const otp = this.otpForm.value.otp;
 
-    // Development bypass - accept 123456 as valid OTP
-    if (otp === '123456') {
-      loading.dismiss();
-      
-      if (this.isAdminPhone) {
-        // Admin login
-        console.log('ADMIN LOGIN SUCCESSFUL');
-        
-        const adminUser = {
-          id: 'admin-001',
-          fullName: 'System Administrator',
-          phoneNumber: this.ADMIN_PHONE,
-          email: 'admin@mandi.app',
-          role: 'Admin' as 'Buyer' | 'Vendor' | 'Transporter' | 'Admin'
-        };
-        
-        await this.authService['saveAuthData']('mock-admin-token-' + Date.now(), adminUser);
-        this.showSuccess('Welcome Admin!');
-        
-        setTimeout(() => {
-          this.router.navigate(['/admin/verification']);
-        }, 500);
-      } else {
-        // Check mock database first for dev mode
-        console.log('🔍 LOGIN ATTEMPT FOR:', this.phoneNumber);
-        let existingUser = this.mockUsers.find((u: any) => u.phoneNumber === this.phoneNumber);
-        console.log('📱 Found in mockUsers:', existingUser);
-        
-        // If not in mock db, check localStorage (for newly registered users)
-        if (!existingUser) {
-          const storedUsers = localStorage.getItem('registered_users');
-          console.log('💾 localStorage registered_users:', storedUsers);
-          const users = storedUsers ? JSON.parse(storedUsers) : [];
-          console.log('👥 Parsed users:', users);
-          existingUser = users.find((u: any) => u.phoneNumber === this.phoneNumber);
-          console.log('✅ Found user in localStorage:', existingUser);
-        }
-        
-        if (existingUser) {
-          // Existing user - redirect based on role
-          console.log('🎭 USER ROLE:', existingUser.role);
-          console.log('👤 FULL USER DATA:', JSON.stringify(existingUser, null, 2));
-          
-          await this.authService['saveAuthData']('mock-token-' + Date.now(), existingUser);
-          this.showSuccess('Welcome back!');
-          
-          let redirectPath = '/marketplace';
-          if (existingUser.role === 'Vendor') {
-            redirectPath = '/vendor/products';
-            console.log('🏪 VENDOR DETECTED - Redirecting to:', redirectPath);
-          } else if (existingUser.role === 'Transporter') {
-            redirectPath = '/transporter/dashboard';
-            console.log('🚚 TRANSPORTER DETECTED - Redirecting to:', redirectPath);
-          } else if (existingUser.role === 'Admin') {
-            redirectPath = '/admin';
-            console.log('👑 ADMIN DETECTED - Redirecting to:', redirectPath);
-          } else {
-            console.log('🛒 BUYER/DEFAULT - Redirecting to:', redirectPath);
-          }
-          
-          console.log('🚀 FINAL REDIRECT PATH:', redirectPath);
-          setTimeout(() => {
-            this.router.navigate([redirectPath]);
-          }, 300);
-        } else {
-          // User not found in either mockUsers or localStorage
-          // This could be a user created through admin before localStorage integration
-          // Create a basic Buyer account for them to use temporarily
-          console.log('⚠️ USER NOT FOUND - Creating temporary Buyer account for', this.phoneNumber);
-          
-          const tempUser = {
-            id: 'temp-' + Date.now(),
-            phoneNumber: this.phoneNumber,
-            fullName: 'User ' + this.phoneNumber,
-            role: 'Buyer' as 'Buyer' | 'Vendor' | 'Transporter' | 'Admin',
-            email: `${this.phoneNumber}@mandi.app`,
-            createdAt: new Date().toISOString()
-          };
-          
-          // Save to localStorage so they don't have to register again
-          const storedUsers = localStorage.getItem('registered_users');
-          const users = storedUsers ? JSON.parse(storedUsers) : [];
-          users.push(tempUser);
-          localStorage.setItem('registered_users', JSON.stringify(users));
-          console.log('✅ Temporary Buyer account created and saved');
-          
-          // Save auth data
-          await this.authService['saveAuthData']('mock-token-' + Date.now(), tempUser);
-          
-          // Show message
-          this.showSuccess('Welcome! Redirecting to marketplace...');
-          
-          setTimeout(() => {
-            this.router.navigate(['/marketplace']);
-          }, 300);
-        }
-      }
-      return;
-    }
-
-    // Real API call for production
-    this.authService.verifyOtp({ phoneNumber: this.phoneNumber, otp }).subscribe({
+    // Real API call - verify OTP with backend (add country code)
+    const phoneWithCountryCode = '+91' + this.phoneNumber;
+    this.authService.verifyOtp({ phoneNumber: phoneWithCountryCode, otp }).subscribe({
       next: (response: any) => {
         loading.dismiss();
         
@@ -298,17 +146,23 @@ export class LoginPage implements OnInit, OnDestroy {
         }
         
         // Existing user - redirect based on role
+        console.log('✅ LOGIN SUCCESSFUL! User:', response.user);
         const userRole = response.user?.role || 'Buyer';
+        console.log('🎭 USER ROLE:', userRole);
+        
         let redirectPath = '/marketplace';
         
         if (userRole === 'Vendor') {
           redirectPath = '/vendor/products';
+          console.log('🏪 VENDOR - Redirecting to:', redirectPath);
         } else if (userRole === 'Transporter') {
           redirectPath = '/transporter/dashboard';
+          console.log('🚚 TRANSPORTER - Redirecting to:', redirectPath);
         } else if (userRole === 'Admin') {
-          redirectPath = '/admin';
-        } else if (userRole === 'Buyer') {
-          redirectPath = '/marketplace';
+          redirectPath = '/admin/verification';
+          console.log('👑 ADMIN - Redirecting to:', redirectPath);
+        } else {
+          console.log('🛒 BUYER - Redirecting to:', redirectPath);
         }
         
         this.showSuccess('Welcome back!');
@@ -322,9 +176,6 @@ export class LoginPage implements OnInit, OnDestroy {
         this.showError('Invalid OTP. Please try again.');
       }
     });
-
-    loading.dismiss();
-    this.showError('Invalid OTP. Please use 123456 for development.');
   }
 
   async showRegisterPrompt() {

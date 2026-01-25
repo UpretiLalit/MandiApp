@@ -6,7 +6,7 @@ using Logistics.Hub.DTOs;
 namespace Logistics.Hub.Hubs;
 
 [Authorize]
-public class TrackingHub : Hub
+public class TrackingHub : Microsoft.AspNetCore.SignalR.Hub
 {
     private readonly ITrackingService _trackingService;
     private readonly ILogger<TrackingHub> _logger;

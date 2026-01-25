@@ -1,11 +1,11 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.mandiapp.com/api',
-  identityApiUrl: 'https://identity.mandiapp.com/api',
-  marketplaceApiUrl: 'https://marketplace.mandiapp.com/api',
-  orderingApiUrl: 'https://ordering.mandiapp.com/api',
-  logisticsHubUrl: 'https://logistics.mandiapp.com',
-  trackingHubUrl: 'https://logistics.mandiapp.com/hubs/tracking',
+  apiUrl: 'https://ordering-api.mandiapp.in/api',
+  identityApiUrl: 'https://identity-api.mandiapp.in/api',
+  marketplaceApiUrl: 'https://marketplace-api.mandiapp.in/api',
+  orderingApiUrl: 'https://ordering-api.mandiapp.in/api',
+  logisticsHubUrl: 'https://logistics-hub.mandiapp.in',
+  trackingHubUrl: 'https://logistics-hub.mandiapp.in/hubs/tracking',
   razorpayKeyId: 'rzp_live_xxxxxxxxxxxxxx',
   useMockPayment: false,
   firebase: {

@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 
 import { ProductsPageRoutingModule } from './products-routing.module';
 import { ProductsPage } from './products.page';
+import { SharedModule } from '@app/shared/shared.module';
 
 @NgModule({
   imports: [
@@ -12,7 +13,8 @@ import { ProductsPage } from './products.page';
     FormsModule,
     ReactiveFormsModule,
     IonicModule,
-    ProductsPageRoutingModule
+    ProductsPageRoutingModule,
+    SharedModule
   ],
   declarations: [ProductsPage]
 })

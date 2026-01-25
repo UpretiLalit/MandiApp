@@ -43,7 +43,7 @@ export class QuickUpdatePage implements OnInit {
     await loading.present();
 
     // Load from backend vendor-inventory endpoint
-    this.http.get<any[]>(`${environment.orderingApiUrl}/products/vendor-inventory`).subscribe({
+    this.http.get<any[]>(`${environment.marketplaceApiUrl}/products/vendor-inventory`).subscribe({
       next: (products) => {
         this.products = products.map(p => ({
           ...p,

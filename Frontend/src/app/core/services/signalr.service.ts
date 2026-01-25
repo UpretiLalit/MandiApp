@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '@environments/environment';
 
 export interface PriceUpdateEvent {
   productId: string;
@@ -24,14 +25,19 @@ export class SignalrService {
 
   constructor() {}
 
-  public startConnection(hubUrl: string = 'http://localhost:5002/hubs/price'): Promise<void> {
+  public startConnection(hubUrl?: string): Promise<void> {
+    // Use provided URL or fall back to environment config or localhost
+    const url = hubUrl || (environment as any).priceHubUrl || 'http://localhost:5002/hubs/price';
+    
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
       console.log('SignalR already connected');
       return Promise.resolve();
     }
 
+    console.log('Connecting to SignalR Hub:', url);
+
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
+      .withUrl(url, {
         skipNegotiation: true,
         transport: signalR.HttpTransportType.WebSockets
       })

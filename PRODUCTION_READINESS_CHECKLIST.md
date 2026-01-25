@@ -45,51 +45,78 @@
   - [ ] Document manual backup procedure
   - [ ] Test restore process
 
-### 3. 🌐 API Deployment
-- [ ] **Deploy Backend Services**
+### 3. 🌐 API Deployment - **USING CLOUDFLARE TUNNEL** 🎉
+
+**Cost: $0/month (instead of $50-200/month for cloud hosting)**
+
+See detailed guide: [CLOUDFLARE_TUNNEL_GUIDE.md](CLOUDFLARE_TUNNEL_GUIDE.md)
+
+- [ ] **Setup Cloudflare Tunnel** (15 minutes)
+  ```powershell
+  # 1. Install cloudflared
+  .\setup-cloudflare-tunnel.ps1 -Action install
   
-  **Option A: Docker (Recommended)**
-  ```bash
-  cd d:\MandiApp
-  docker-compose up -d
+  # 2. Login to Cloudflare
+  .\setup-cloudflare-tunnel.ps1 -Action login
+  
+  # 3. Create tunnel
+  .\setup-cloudflare-tunnel.ps1 -Action create
+  
+  # 4. Configure DNS
+  .\setup-cloudflare-tunnel.ps1 -Action dns -Domain mandiapp.in
   ```
-  - [ ] Build Docker images for each service
-  - [ ] Test docker-compose configuration
-  - [ ] Verify all services start successfully
   
-  **Option B: Cloud Platform**
-  - [ ] Deploy to Azure App Service / AWS / Railway
-  - [ ] Configure environment variables
-  - [ ] Set up SSL certificates
-  - [ ] Update CORS origins
+- [ ] **Start Backend Services Locally**
+  ```powershell
+  .\start-all-services.ps1
+  ```
   
-- [ ] **Service Health Checks**
-  - [ ] Identity.API: http://yourhost:5003/swagger
-  - [ ] Marketplace.API: http://yourhost:5001/swagger
-  - [ ] Ordering.API: http://yourhost:5002/swagger
-  - [ ] Logistics.Hub: http://yourhost:5004/swagger
+- [ ] **Start Cloudflare Tunnel** (in separate terminal)
+  ```powershell
+  .\setup-cloudflare-tunnel.ps1 -Action start
+  ```
   
-- [ ] **Update Frontend URLs**
-  - [ ] Update `environment.test.ts` with deployed URLs
-  - [ ] Update CORS settings to allow mobile app
+- [ ] **Service URLs (Public HTTPS)**
+  - [ ] Identity.API: https://identity-api.mandiapp.in
+  - [ ] Marketplace.API: https://marketplace-api.mandiapp.in
+  - [ ] Ordering.API: https://ordering-api.mandiapp.in
+  - [ ] Logistics.Hub: https://logistics-hub.mandiapp.in
+  
+- [ ] **Verify CORS Configuration**
+  - [x] All appsettings.json updated with Cloudflare Tunnel URLs
+  - [ ] Restart all backend services after CORS update
+  
+- [ ] **Test Endpoints**
+  ```bash
+  curl https://identity-api.mandiapp.in/api/health
+  curl https://marketplace-api.mandiapp.in/api/health
+  curl https://ordering-api.mandiapp.in/api/health
+  curl https://logistics-hub.mandiapp.in/api/health
+  ```
 
 ### 4. 📱 Frontend Configuration
 - [ ] **Environment Setup**
-  - [ ] Update API URLs in environment files
-  - [ ] Configure SignalR hub URLs
-  - [ ] Test API connectivity
+  - [x] API URLs updated in environment.prod.ts (Cloudflare Tunnel)
+  - [x] API URLs updated in environment.tunnel.ts (for testing)
+  - [ ] Configure SignalR hub URLs: https://logistics-hub.mandiapp.in
+  - [ ] Test API connectivity from mobile app
   
-- [ ] **Build Mobile App**
+- [ ] **Build Mobile App with Tunnel URLs**
   ```bash
   cd Frontend
-  ionic build
-  ionic cap add android
-  ionic cap add ios
-  ionic cap sync
+  
+  # Option 1: Use tunnel environment (recommended for testing)
+  ng build --configuration=tunnel
+  
+  # Option 2: Use production environment
+  ng build --configuration=production
+  
+  # Sync with Capacitor
+  ionic cap sync android
   ```
   - [ ] Generate Android APK for testing
-  - [ ] Test on Android devices
-  - [ ] (Optional) Generate iOS build
+  - [ ] Install APK on test devices
+  - [ ] Test from external network (not localhost)
   
 - [ ] **Test Web Version**
   ```bash

@@ -8,12 +8,13 @@
       <div class="header-title">
         <span class="header-emoji">🌾</span>
         <div>
-          <div class="title-main">Mandi Marketplace</div>
-          <div class="title-sub">Fresh from farm to you</div>
+          <div class="title-main">{{ 'buyer.marketplace' | translate }}</div>
+          <div class="title-sub">{{ 'common.app_name' | translate }}</div>
         </div>
       </div>
     </ion-title>
     <ion-buttons slot="end">
+      <app-language-selector></app-language-selector>
       <ion-button (click)="toggleSearch()">
         <ion-icon [name]="showSearch ? 'close' : 'search-outline'"></ion-icon>
       </ion-button>
@@ -27,7 +28,7 @@
   <!-- Search Bar (Toggle) -->
   <ion-toolbar *ngIf="showSearch" class="search-toolbar">
     <ion-searchbar 
-      placeholder="Search vegetables, fruits, grains..." 
+      [placeholder]="'common.search' | translate" 
       [(ngModel)]="searchTerm"
       (ionChange)="onSearchChange($event)"
       animated="true"
@@ -44,7 +45,7 @@
         [class.active]="selectedCategory === 'All'"
         (click)="filterByCategory('All')">
         <span class="tab-emoji">🛒</span>
-        <span class="tab-label">All</span>
+        <span class="tab-label">{{ 'common.all' | translate }}</span>
       </button>
       
       <button 
@@ -52,7 +53,7 @@
         [class.active]="selectedCategory === 'Vegetables'"
         (click)="filterByCategory('Vegetables')">
         <span class="tab-emoji">🥬</span>
-        <span class="tab-label">Vegetables</span>
+        <span class="tab-label">{{ 'Vegetables' | categoryName }}</span>
       </button>
       
       <button 
@@ -60,7 +61,7 @@
         [class.active]="selectedCategory === 'Fruits'"
         (click)="filterByCategory('Fruits')">
         <span class="tab-emoji">🍎</span>
-        <span class="tab-label">Fruits</span>
+        <span class="tab-label">{{ 'Fruits' | categoryName }}</span>
       </button>
       
       <button 
@@ -68,7 +69,7 @@
         [class.active]="selectedCategory === 'Grains'"
         (click)="filterByCategory('Grains')">
         <span class="tab-emoji">🌾</span>
-        <span class="tab-label">Grains</span>
+        <span class="tab-label">{{ 'Grains' | categoryName }}</span>
       </button>
       
       <button 
@@ -133,7 +134,7 @@
             <div class="gradient-overlay" [ngClass]="getGradientClass(product.category)"></div>
           </div>
           <ion-badge class="category-badge" [color]="product.category === 'Vegetables' ? 'success' : product.category === 'Fruits' ? 'warning' : 'primary'">
-            {{product.category}}
+            {{ product.category | categoryName }}
           </ion-badge>
           <!-- Grade Badge - Moved to Image Container -->
           <ion-badge 
@@ -152,10 +153,10 @@
             <div class="product-header">
               <div class="product-title-row">
                 <span class="product-emoji">{{product.emoji || '🥬'}}</span>
-                <h2 class="product-name">{{product.name}}</h2>
+                <h2 class="product-name">{{ product.name | productName }}</h2>
                 <ion-chip class="unit-chip">
                   <ion-icon name="cube-outline"></ion-icon>
-                  <ion-label>{{product.unit}}</ion-label>
+                  <ion-label>{{ product.unit | unitName }}</ion-label>
                   <span class="unit-separator">•</span>
                   <span class="unit-weight">{{product.unitWeight}}</span>
                 </ion-chip>
@@ -168,7 +169,7 @@
               <div class="price-display">
                 <span class="currency">₹</span>
                 <span class="amount">{{product.vendors[0].price}}</span>
-                <span class="per-unit">/{{product.unit}}</span>
+                <span class="per-unit">/{{ product.unit | unitName }}</span>
               </div>
               <span class="vendor-count">{{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}} available</span>
             </div>

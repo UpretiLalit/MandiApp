@@ -1,6 +1,9 @@
 using Identity.API.Data;
 using Identity.API.Models;
 using Microsoft.EntityFrameworkCore;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
 
 namespace Identity.API.Services;
 
@@ -43,6 +46,15 @@ public class OtpService : IOtpService
 
     public async Task<bool> VerifyOtpAsync(string phoneNumber, string otp)
     {
+        // Check if dev bypass is enabled in configuration
+        var enableDevBypass = _configuration.GetValue<bool>("OtpSettings:EnableDevBypass", false);
+        
+        if (enableDevBypass && otp == "123456")
+        {
+            _logger.LogWarning("🔓 DEV BYPASS MODE: Accepting OTP 123456 for {PhoneNumber}", phoneNumber);
+            return true;
+        }
+        
         var otpRecord = await _context.OtpVerifications
             .Where(o => o.PhoneNumber == phoneNumber && o.OtpCode == otp && !o.IsVerified)
             .OrderByDescending(o => o.CreatedAt)
@@ -74,8 +86,36 @@ public class OtpService : IOtpService
 
     public async Task SendOtpAsync(string phoneNumber, string otp)
     {
-        // TODO: Integrate with SMS service provider (Twilio, AWS SNS, etc.)
-        _logger.LogInformation($"Sending OTP {otp} to {phoneNumber}");
-        await Task.CompletedTask;
+        try
+        {
+            var accountSid = _configuration["TwilioSettings:AccountSid"];
+            var authToken = _configuration["TwilioSettings:AuthToken"];
+            var whatsappFrom = _configuration["TwilioSettings:WhatsAppFrom"];
+
+            if (string.IsNullOrEmpty(accountSid) || string.IsNullOrEmpty(authToken))
+            {
+                _logger.LogWarning("Twilio credentials not configured. OTP: {Otp} for {PhoneNumber}", otp, phoneNumber);
+                return;
+            }
+
+            // Initialize Twilio client
+            Twilio.TwilioClient.Init(accountSid, authToken);
+
+            // Format phone number for WhatsApp (must include country code with +)
+            var toNumber = phoneNumber.StartsWith("+") ? $"whatsapp:{phoneNumber}" : $"whatsapp:+{phoneNumber}";
+            
+            var message = await Twilio.Rest.Api.V2010.Account.MessageResource.CreateAsync(
+                body: $"Your MandiApp verification code is: {otp}. Valid for 5 minutes.",
+                from: new Twilio.Types.PhoneNumber(whatsappFrom),
+                to: new Twilio.Types.PhoneNumber(toNumber)
+            );
+
+            _logger.LogInformation("WhatsApp OTP sent successfully. SID: {MessageSid}, To: {PhoneNumber}", message.Sid, phoneNumber);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send OTP via Twilio WhatsApp to {PhoneNumber}", phoneNumber);
+            // Don't throw - let the OTP still be generated and stored in DB for manual verification
+        }
     }
 }

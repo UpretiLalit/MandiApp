@@ -7,13 +7,19 @@ using Marketplace.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to use specific port
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5001); // Marketplace API port
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database Configuration - Use Supabase PostgreSQL
-var connectionString = builder.Configuration.GetConnectionString("MarketplaceDb") ?? "Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=PYvWmYoMYiO3RiCJ";
+var connectionString = builder.Configuration.GetConnectionString("MarketplaceDb") ?? "Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true";
 builder.Services.AddDbContext<MarketplaceDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -32,7 +38,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role
+    };
+    
+    // Add detailed logging for authentication failures
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"❌ JWT Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var claims = context.Principal?.Claims.Select(c => $"{c.Type}: {c.Value}");
+            Console.WriteLine($"✅ JWT Token validated. Claims: {string.Join(", ", claims ?? new[] { "none" })}");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"⚠️ JWT Challenge: {context.Error}, {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -53,6 +81,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// TODO: Database seeding temporarily disabled - need to create tables first
+/*
 // Apply migrations and seed data
 using (var scope = app.Services.CreateScope())
 {
@@ -60,6 +90,7 @@ using (var scope = app.Services.CreateScope())
     context.Database.EnsureCreated(); // Create database if it doesn't exist
     await DataSeeder.SeedMockDataAsync(context);
 }
+*/
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -68,7 +99,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Disable HTTPS redirection when using Cloudflare Tunnel
+// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
