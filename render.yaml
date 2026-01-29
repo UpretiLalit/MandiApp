@@ -1,0 +1,71 @@
+services:
+  # Identity API
+  - type: web
+    name: mandiapp-identity-api
+    runtime: docker
+    region: singapore
+    plan: free
+    rootDir: Backend
+    dockerfilePath: Dockerfile.identity
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+
+  # Marketplace API
+  - type: web
+    name: mandiapp-marketplace-api
+    runtime: docker
+    region: singapore
+    plan: free
+    rootDir: Backend
+    dockerfilePath: Dockerfile.marketplace
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+
+  # Ordering API
+  - type: web
+    name: mandiapp-ordering-api
+    runtime: docker
+    region: singapore
+    plan: free
+    rootDir: Backend
+    dockerfilePath: Dockerfile.ordering
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+
+  # Logistics Hub
+  - type: web
+    name: mandiapp-logistics-hub
+    runtime: docker
+    region: singapore
+    plan: free
+    rootDir: Backend
+    dockerfilePath: Dockerfile.logistics
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+
+databases:
+  - name: mandiapp-db
+    databaseName: mandiapp
+    user: mandiapp
+    plan: free
+    region: singapore
