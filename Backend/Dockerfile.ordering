@@ -5,6 +5,11 @@ WORKDIR /src
 COPY ["Shared/Shared.Domain/Shared.Domain.csproj", "Shared/Shared.Domain/"]
 COPY ["Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "Shared/Shared.Infrastructure/"]
 
+# Copy Ordering layered projects
+COPY ["Services/Ordering/Ordering.Domain/Ordering.Domain.csproj", "Services/Ordering/Ordering.Domain/"]
+COPY ["Services/Ordering/Ordering.Application/Ordering.Application.csproj", "Services/Ordering/Ordering.Application/"]
+COPY ["Services/Ordering/Ordering.Infrastructure/Ordering.Infrastructure.csproj", "Services/Ordering/Ordering.Infrastructure/"]
+
 # Copy Ordering API project
 COPY ["Services/Ordering.API/Ordering.API.csproj", "Services/Ordering.API/"]
 
@@ -13,6 +18,7 @@ RUN dotnet restore "Services/Ordering.API/Ordering.API.csproj"
 
 # Copy source files
 COPY Shared/ Shared/
+COPY Services/Ordering/ Services/Ordering/
 COPY Services/Ordering.API/ Services/Ordering.API/
 
 # Build and publish
