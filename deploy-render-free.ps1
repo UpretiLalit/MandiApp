@@ -57,16 +57,15 @@ Write-Host "  2. Connect repository: UpretiLalit/MandiApp" -ForegroundColor Whit
 Write-Host "  3. Name: mandiapp-identity-api" -ForegroundColor White
 Write-Host "  4. Region: Singapore" -ForegroundColor White
 Write-Host "  5. Branch: master" -ForegroundColor White
-Write-Host "  6. Root Directory: Backend" -ForegroundColor Cyan
-Write-Host "  7. Dockerfile Path: Services/Identity.API/Dockerfile" -ForegroundColor Cyan
-Write-Host "  8. Environment: Docker" -ForegroundColor Cyan
-Write-Host "  9. Instance Type: Free" -ForegroundColor White
+Write-Host "  6. Root Directory: Backend/Services/Identity.API" -ForegroundColor Cyan
+Write-Host "  7. Environment: Docker (auto-detects Dockerfile)" -ForegroundColor Cyan
+Write-Host "  8. Instance Type: Free" -ForegroundColor White
 Write-Host ""
-Write-Host "  10. Add Environment Variables:" -ForegroundColor White
+Write-Host "  9. Add Environment Variables:" -ForegroundColor White
 Write-Host "      ASPNETCORE_ENVIRONMENT = Production" -ForegroundColor Gray
 Write-Host "      ConnectionStrings__DefaultConnection = $dbUrl;Database=MandiIdentityDB" -ForegroundColor Gray
 Write-Host ""
-Write-Host "  11. Click 'Create Web Service'" -ForegroundColor White
+Write-Host "  10. Click 'Create Web Service'" -ForegroundColor White
 Write-Host ""
 Write-Host "  NOTE: Build takes 5-10 minutes on first deploy" -ForegroundColor Yellow
 Write-Host ""

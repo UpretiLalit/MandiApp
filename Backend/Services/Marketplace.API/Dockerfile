@@ -1,22 +1,22 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy shared projects first
-COPY ["Shared/Shared.Domain/Shared.Domain.csproj", "Shared/Shared.Domain/"]
-COPY ["Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "Shared/Shared.Infrastructure/"]
+# Copy shared projects (relative to Backend/Services/Marketplace.API)
+COPY ["../../Shared/Shared.Domain/Shared.Domain.csproj", "Shared/Shared.Domain/"]
+COPY ["../../Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "Shared/Shared.Infrastructure/"]
 
 # Copy Marketplace API project
-COPY ["Services/Marketplace.API/Marketplace.API.csproj", "Services/Marketplace.API/"]
+COPY ["Marketplace.API.csproj", "Marketplace.API/"]
 
 # Restore
-RUN dotnet restore "Services/Marketplace.API/Marketplace.API.csproj"
+RUN dotnet restore "Marketplace.API/Marketplace.API.csproj"
 
-# Copy everything else
-COPY Shared/ Shared/
-COPY Services/Marketplace.API/ Services/Marketplace.API/
+# Copy everything
+COPY ../../Shared/ Shared/
+COPY . Marketplace.API/
 
 # Build and publish
-WORKDIR "/src/Services/Marketplace.API"
+WORKDIR "/src/Marketplace.API"
 RUN dotnet publish -c Release -o /app/publish
 
 # Runtime image
