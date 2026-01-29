@@ -1,0 +1,62 @@
+================================
+MANUAL DEPLOYMENT INSTRUCTIONS
+================================
+
+Since SSH access is not yet configured, follow these steps:
+
+STEP 1: Add Your SSH Key to Oracle Cloud
+-----------------------------------------
+1. Go to Oracle Cloud Console > Compute > Instances
+2. Click on 'vyaparmandap-server'
+3. Click 'Edit' button
+4. Find 'Add SSH keys' section
+5. Click 'Paste SSH keys'
+6. Paste your public key (shown below)
+7. Click 'Save'
+
+YOUR SSH PUBLIC KEY:
+---------------------------------------------------
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7oNXT0EsGJJRGcfP5JFe/yA7q0zebuh2Fwp/6NHNIoPJmeOP82KiZTk9AqhO2tEX46GZYX8+2HjkMoExRpvVmkUohi8tA2aJH7dCqJmp16anBYAkz5L2H1++uSA7F2ul3TAbN5mFZmOlUSOKaCDBs66HP7I3pdzvSEiCOxa8e+/HE7k9aW3lYfszq/bcN4MS6VOXkg9S0YjdZ3CpvuNZxpzWD2cc9OxpEpRhuh8xeQJzzMbfzUhKMiscbM6YlGGCLTzaLAI+0FnDWndARk8nsxbegVF4NqJ5Lwqbo+SZX/Cm5K7XMZ5bkFMs6tUAYNPDMtAs/0H0/Ur8BjjPJ1cT+TK0nOeF14S94SyoHh7EQdmszOi6vG98hb6j4xDhfJ9tNZq3q8rKQH4EqsGBGcRwSoHckoFyI37AEFXI3fiaSqdY8S6LZrWeByknIOngJmSHd8UEsCDbBq1zWb5kf5gBXrptnUdHrKscixJQbmHusZfOeqIGyX+szdd5vzuZEtDTiOQ/4+GfUGmUECdJ7biFc7B4dy0ZP54IKfKtGugUEwMCEaywYxlMa6UdNUPRzFVXB6VUceauTOO3FUtQMaiW2xock9q9Co1cUvHw4OaeAZ0t4n0o6xI84C4LIE3b1RPlygQcBEfyeNaTRmr83NLxnu83F09L3CCOBbftQobc49Q== lalit@Lalit
+
+---------------------------------------------------
+
+STEP 2: Upload Deployment Package
+----------------------------------
+After adding SSH key, you can upload using SCP:
+
+  scp -r "d:\MandiApp\deployment-package\*" ubuntu@140.245.9.144:~/mandiapp/
+
+Or if username is 'opc':
+
+  scp -r "d:\MandiApp\deployment-package\*" opc@140.245.9.144:~/mandiapp/
+
+STEP 3: Run Setup on VM
+------------------------
+SSH into your VM:
+
+  ssh ubuntu@140.245.9.144
+
+Then run:
+
+  cd ~/mandiapp
+  chmod +x setup.sh
+  ./setup.sh
+
+ALTERNATIVE: Use Oracle Cloud Shell Upload
+-------------------------------------------
+1. In Oracle Cloud Console, open Cloud Shell (top right icon)
+2. Click the 'Upload' button in Cloud Shell menu
+3. Upload the entire folder: d:\MandiApp\deployment-package
+4. From Cloud Shell, SCP to your VM using private IP:
+   
+   scp -r deployment-package/* ubuntu@10.0.0.13:~/mandiapp/
+   ssh ubuntu@10.0.0.13
+   cd ~/mandiapp
+   chmod +x setup.sh
+   ./setup.sh
+
+================================
+
+Deployment package created at:
+d:\MandiApp\deployment-package
+
