@@ -57,15 +57,16 @@ Write-Host "  2. Connect repository: UpretiLalit/MandiApp" -ForegroundColor Whit
 Write-Host "  3. Name: mandiapp-identity-api" -ForegroundColor White
 Write-Host "  4. Region: Singapore" -ForegroundColor White
 Write-Host "  5. Branch: master" -ForegroundColor White
-Write-Host "  6. Root Directory: Backend/Services/Identity.API" -ForegroundColor Cyan
-Write-Host "  7. Environment: Docker (auto-detects Dockerfile)" -ForegroundColor Cyan
-Write-Host "  8. Instance Type: Free" -ForegroundColor White
+Write-Host "  6. Root Directory: Backend" -ForegroundColor Cyan
+Write-Host "  7. Docker Command: docker build -f Dockerfile.identity ." -ForegroundColor Cyan
+Write-Host "  8. Environment: Docker" -ForegroundColor Cyan
+Write-Host "  9. Instance Type: Free" -ForegroundColor White
 Write-Host ""
-Write-Host "  9. Add Environment Variables:" -ForegroundColor White
+Write-Host "  10. Add Environment Variables:" -ForegroundColor White
 Write-Host "      ASPNETCORE_ENVIRONMENT = Production" -ForegroundColor Gray
 Write-Host "      ConnectionStrings__DefaultConnection = $dbUrl;Database=MandiIdentityDB" -ForegroundColor Gray
 Write-Host ""
-Write-Host "  10. Click 'Create Web Service'" -ForegroundColor White
+Write-Host "  11. Click 'Create Web Service'" -ForegroundColor White
 Write-Host ""
 Write-Host "  NOTE: Build takes 5-10 minutes on first deploy" -ForegroundColor Yellow
 Write-Host ""
@@ -76,8 +77,7 @@ Write-Host ""
 Write-Host "[Step 4] Deploy Marketplace API" -ForegroundColor Yellow
 Write-Host "  Repeat Step 3 with these changes:" -ForegroundColor White
 Write-Host "  - Name: mandiapp-marketplace-api" -ForegroundColor Cyan
-Write-Host "  - Root Directory: Backend" -ForegroundColor Cyan
-Write-Host "  - Dockerfile Path: Services/Marketplace.API/Dockerfile" -ForegroundColor Cyan
+Write-Host "  - Docker Command: docker build -f Dockerfile.marketplace ." -ForegroundColor Cyan
 Write-Host "  - Database: MandiMarketplaceDB (in connection string)" -ForegroundColor Cyan
 Write-Host ""
 
@@ -88,8 +88,7 @@ Write-Host "[Step 5] Deploy Ordering API" -ForegroundColor Yellow
 Write-Host "  Repeat Step 3 with these changes:" -ForegroundColor White
 Write-Host "  - Name: mandiapp-ordering-api" -ForegroundColor Cyan
 Write-Host "  - Root Directory: Backend" -ForegroundColor Cyan
-Write-Host "  - Dockerfile Path: Services/Ordering.API/Dockerfile" -ForegroundColor Cyan
-Write-Host "  - Database: MandiOrderingDB (in connection string)" -ForegroundColor Cyan
+Write-Host "  - Docker Command: docker build -f Dockerfile.ordering . -ForegroundColor Cyan
 Write-Host ""
 
 $api3 = Read-Host "Ordering API deployed? Press Enter to continue"
