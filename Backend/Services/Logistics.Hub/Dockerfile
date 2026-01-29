@@ -1,21 +1,30 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["Logistics.Hub.csproj", "./"]
-COPY ["../../Shared/Shared.Domain/Shared.Domain.csproj", "../Shared/Shared.Domain/"]
-COPY ["../../Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "../Shared/Shared.Infrastructure/"]
-RUN dotnet restore "Logistics.Hub.csproj"
-COPY . .
-WORKDIR "/src"
-RUN dotnet build "Logistics.Hub.csproj" -c Release -o /app/build
 
-FROM build AS publish
-RUN dotnet publish "Logistics.Hub.csproj" -c Release -o /app/publish
+# Copy shared projects first
+COPY ["Shared/Shared.Domain/Shared.Domain.csproj", "Shared/Shared.Domain/"]
+COPY ["Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "Shared/Shared.Infrastructure/"]
 
-FROM base AS final
+# Copy Logistics Hub project
+COPY ["Services/Logistics.Hub/Logistics.Hub.csproj", "Services/Logistics.Hub/"]
+
+# Restore
+RUN dotnet restore "Services/Logistics.Hub/Logistics.Hub.csproj"
+
+# Copy everything else
+COPY Shared/ Shared/
+COPY Services/Logistics.Hub/ Services/Logistics.Hub/
+
+# Build and publish
+WORKDIR "/src/Services/Logistics.Hub"
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
+
+# Render uses PORT environment variable
+ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
+
 ENTRYPOINT ["dotnet", "Logistics.Hub.dll"]

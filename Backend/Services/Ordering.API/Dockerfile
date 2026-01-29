@@ -1,21 +1,30 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["Ordering.API.csproj", "./"]
-COPY ["../../Shared/Shared.Domain/Shared.Domain.csproj", "../Shared/Shared.Domain/"]
-COPY ["../../Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "../Shared/Shared.Infrastructure/"]
-RUN dotnet restore "Ordering.API.csproj"
-COPY . .
-WORKDIR "/src"
-RUN dotnet build "Ordering.API.csproj" -c Release -o /app/build
 
-FROM build AS publish
-RUN dotnet publish "Ordering.API.csproj" -c Release -o /app/publish
+# Copy shared projects first
+COPY ["Shared/Shared.Domain/Shared.Domain.csproj", "Shared/Shared.Domain/"]
+COPY ["Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "Shared/Shared.Infrastructure/"]
 
-FROM base AS final
+# Copy Ordering API project
+COPY ["Services/Ordering.API/Ordering.API.csproj", "Services/Ordering.API/"]
+
+# Restore
+RUN dotnet restore "Services/Ordering.API/Ordering.API.csproj"
+
+# Copy everything else
+COPY Shared/ Shared/
+COPY Services/Ordering.API/ Services/Ordering.API/
+
+# Build and publish
+WORKDIR "/src/Services/Ordering.API"
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
+
+# Render uses PORT environment variable
+ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
+
 ENTRYPOINT ["dotnet", "Ordering.API.dll"]

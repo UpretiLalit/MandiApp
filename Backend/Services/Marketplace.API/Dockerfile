@@ -1,21 +1,30 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["Marketplace.API.csproj", "./"]
-COPY ["../../Shared/Shared.Domain/Shared.Domain.csproj", "../Shared/Shared.Domain/"]
-COPY ["../../Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "../Shared/Shared.Infrastructure/"]
-RUN dotnet restore "Marketplace.API.csproj"
-COPY . .
-WORKDIR "/src"
-RUN dotnet build "Marketplace.API.csproj" -c Release -o /app/build
 
-FROM build AS publish
-RUN dotnet publish "Marketplace.API.csproj" -c Release -o /app/publish
+# Copy shared projects first
+COPY ["Shared/Shared.Domain/Shared.Domain.csproj", "Shared/Shared.Domain/"]
+COPY ["Shared/Shared.Infrastructure/Shared.Infrastructure.csproj", "Shared/Shared.Infrastructure/"]
 
-FROM base AS final
+# Copy Marketplace API project
+COPY ["Services/Marketplace.API/Marketplace.API.csproj", "Services/Marketplace.API/"]
+
+# Restore
+RUN dotnet restore "Services/Marketplace.API/Marketplace.API.csproj"
+
+# Copy everything else
+COPY Shared/ Shared/
+COPY Services/Marketplace.API/ Services/Marketplace.API/
+
+# Build and publish
+WORKDIR "/src/Services/Marketplace.API"
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
+
+# Render uses PORT environment variable
+ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
+
 ENTRYPOINT ["dotnet", "Marketplace.API.dll"]
