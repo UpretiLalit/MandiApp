@@ -8,10 +8,11 @@ using Logistics.Hub.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Kestrel to use specific port
+// Configure Kestrel to use PORT from environment (Render requirement)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5004); // Logistics Hub port
+    options.ListenAnyIP(int.Parse(port));
 });
 
 // Add services to the container.
@@ -79,11 +80,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in all environments
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Disable HTTPS redirection when using Cloudflare Tunnel
 // app.UseHttpsRedirection();
