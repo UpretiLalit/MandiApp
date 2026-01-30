@@ -1,14 +1,15 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://140.245.9.144/api',
-  identityApiUrl: 'http://140.245.9.144/api/identity',
-  marketplaceApiUrl: 'http://140.245.9.144/api/marketplace',
-  orderingApiUrl: 'http://140.245.9.144/api/ordering',
-  logisticsHubUrl: 'http://140.245.9.144/api/logistics',
-  trackingHubUrl: 'http://140.245.9.144/api/logistics/hubs/tracking',
-  priceHubUrl: 'http://140.245.9.144/api/marketplace/hubs/price',
-  razorpayKeyId: 'rzp_test_Rt4HsYWkXkSWT4',
-  useMockPayment: true,
+  // Production API URLs on Render.com
+  apiUrl: 'https://mandiapp-ordering-api.onrender.com/api',
+  identityApiUrl: 'https://mandiapp-identity-api.onrender.com/api',
+  marketplaceApiUrl: 'https://mandiapp-marketplace-api.onrender.com/api',
+  orderingApiUrl: 'https://mandiapp-ordering-api.onrender.com/api',
+  logisticsHubUrl: 'https://mandiapp-logistics-hub.onrender.com',
+  trackingHubUrl: 'https://mandiapp-logistics-hub.onrender.com/hubs/tracking',
+  priceHubUrl: 'https://mandiapp-ordering-api.onrender.com/hubs/price',
+  razorpayKeyId: 'rzp_test_Rt4HsYWkXkSWT4', // TODO: Replace with production key
+  useMockPayment: false, // Use real Razorpay in production
   firebase: {
     apiKey: 'your-firebase-api-key',
     authDomain: 'your-app.firebaseapp.com',
