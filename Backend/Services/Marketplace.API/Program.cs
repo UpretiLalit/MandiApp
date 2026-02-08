@@ -82,8 +82,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// TODO: Database seeding temporarily disabled - need to create tables first
-/*
 // Apply migrations and seed data
 using (var scope = app.Services.CreateScope())
 {
@@ -91,7 +89,6 @@ using (var scope = app.Services.CreateScope())
     context.Database.EnsureCreated(); // Create database if it doesn't exist
     await DataSeeder.SeedMockDataAsync(context);
 }
-*/
 
 // Configure the HTTP request pipeline.
 // Enable Swagger in all environments
