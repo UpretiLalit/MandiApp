@@ -110,7 +110,23 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// TODO: Database seeding temporarily disabled - tables need to be created first via migrations
+// Apply database migrations with error handling
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        Console.WriteLine("📊 Applying database migrations for Ordering API...");
+        context.Database.Migrate(); // Apply migrations to create tables
+        Console.WriteLine("✅ Database migrations applied successfully");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Database migration failed: {ex.Message}");
+    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+    Console.WriteLine("⚠️ Service will continue but database operations may fail");
+}
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
