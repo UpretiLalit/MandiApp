@@ -13,7 +13,13 @@ services:
       - key: ASPNETCORE_URLS
         value: http://+:8080
       - key: ConnectionStrings__DefaultConnection
-        sync: false
+        value: Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
+      - key: JwtSettings__SecretKey
+        value: YourSuperSecretKeyForJWTAuthentication12345
+      - key: JwtSettings__Issuer
+        value: MandiApp.Identity
+      - key: JwtSettings__Audience
+        value: MandiApp.Mobile
 
   # Marketplace API
   - type: web
@@ -28,8 +34,14 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://+:8080
-      - key: ConnectionStrings__DefaultConnection
-        sync: false
+      - key: ConnectionStrings__MarketplaceDb
+        value: Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
+      - key: JwtSettings__SecretKey
+        value: YourSuperSecretKeyForJWTAuthentication12345
+      - key: JwtSettings__Issuer
+        value: MandiApp.Identity
+      - key: JwtSettings__Audience
+        value: MandiApp.Mobile
 
   # Ordering API
   - type: web
@@ -38,8 +50,14 @@ services:
     region: singapore
     plan: free
     rootDir: Backend
-    dockerfilePath: Dockerfile.ordering
-    envVars:
+    dockerfilePath: Dockerfile.oOrderingDb
+        value: Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
+      - key: JwtSettings__SecretKey
+        value: YourSuperSecretKeyForJWTAuthentication12345
+      - key: JwtSettings__Issuer
+        value: MandiApp.Identity
+      - key: JwtSettings__Audience
+        value: MandiApp.Mobil
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ASPNETCORE_URLS
@@ -54,8 +72,14 @@ services:
     region: singapore
     plan: free
     rootDir: Backend
-    dockerfilePath: Dockerfile.logistics
-    envVars:
+    dockerfilePath: Dockerfile.lLogisticsDb
+        value: Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
+      - key: JwtSettings__SecretKey
+        value: YourSuperSecretKeyForJWTAuthentication12345
+      - key: JwtSettings__Issuer
+        value: MandiApp.Identity
+      - key: JwtSettings__Audience
+        value: MandiApp.Mobil
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ASPNETCORE_URLS
