@@ -82,12 +82,26 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply migrations and seed data
-using (var scope = app.Services.CreateScope())
+// Apply migrations and seed data with error handling
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-    context.Database.EnsureCreated(); // Create database if it doesn't exist
-    await DataSeeder.SeedMockDataAsync(context);
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+        Console.WriteLine("📊 Attempting to create database...");
+        context.Database.EnsureCreated(); // Create database if it doesn't exist
+        Console.WriteLine("✅ Database created successfully");
+        
+        Console.WriteLine("🌱 Seeding mock data...");
+        await DataSeeder.SeedMockDataAsync(context);
+        Console.WriteLine("✅ Data seeded successfully");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Database initialization failed: {ex.Message}");
+    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+    Console.WriteLine("⚠️ Service will continue without seeded data");
 }
 
 // Configure the HTTP request pipeline.
