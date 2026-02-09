@@ -109,30 +109,26 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply database migrations with error handling
+// Apply database migrations - DO NOT DELETE ENTIRE DATABASE (shared with other services)
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
-        Console.WriteLine("📊 Deleting and recreating database...");
+        Console.WriteLine("📊 Applying EF Core migrations...");
         
-        // Delete the entire database and recreate it
-        await context.Database.EnsureDeletedAsync();
-        Console.WriteLine("✅ Database deleted");
-        
-        await context.Database.EnsureCreatedAsync();
-        Console.WriteLine("✅ Database recreated with EF Core schema");
+        // Use Migrate() which only creates missing tables, doesn't drop existing ones
+        context.Database.Migrate();
+        Console.WriteLine("✅ Migrations applied successfully");
         
         // Test query
         var testCount = await context.Carts.CountAsync();
-        Console.WriteLine($"✅ EF Core query successful! Cart count: {testCount}");
+        Console.WriteLine($"✅ Carts table accessible, count: {testCount}");
     }
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"❌ Database setup failed: {ex.Message}");
-    Console.WriteLine($"Stack: {ex.StackTrace}");
+    Console.WriteLine($"❌ Migration failed: {ex.Message}");
 }
 
 // Configure the HTTP request pipeline.
