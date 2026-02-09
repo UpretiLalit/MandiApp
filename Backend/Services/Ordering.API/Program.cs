@@ -96,15 +96,14 @@ builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<Or
 // SignalR for real-time updates
 builder.Services.AddSignalR();
 
-// CORS
+// CORS - Allow all origins for Render deployment
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:8100", "http://localhost:4200", "http://localhost:4201")
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
     });
 });
 
