@@ -115,6 +115,22 @@ public class OrdersController : ControllerBase
     {
         try
         {
+            // Validate request
+            if (request == null || request.Items == null || !request.Items.Any())
+            {
+                return BadRequest(new { message = "Invalid request: Items are required" });
+            }
+
+            // For demo/testing: Generate product IDs if missing
+            for (int i = 0; i < request.Items.Count; i++)
+            {
+                if (request.Items[i].ProductId == 0)
+                {
+                    request.Items[i] = request.Items[i] with { ProductId = i + 1 };
+                    _logger.LogWarning($"Demo mode: Generated ProductId {i + 1} for {request.Items[i].ProductName}");
+                }
+            }
+
             var buyerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "test-buyer-001";
             var result = await _orderService.CompletePaymentAsync(buyerId, request);
             return Ok(result);
@@ -122,7 +138,7 @@ public class OrdersController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error completing payment");
-            return BadRequest(new { message = "Payment processing failed", error = ex.Message });
+            return BadRequest(new { message = "Payment processing failed", error = ex.Message, details = ex.StackTrace });
         }
     }
 
