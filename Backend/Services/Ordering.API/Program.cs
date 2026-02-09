@@ -115,27 +115,23 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
-        Console.WriteLine("📊 Ensuring database and tables exist...");
+        Console.WriteLine("📊 Applying EF Core migrations...");
         
-        // Use EnsureCreated to guarantee tables are created
-        var created = context.Database.EnsureCreated();
-        if (created)
-        {
-            Console.WriteLine("✅ Database and tables created successfully");
-        }
-        else
-        {
-            Console.WriteLine("✅ Database already exists");
-        }
+        // Use Migrate() to apply migration files (handles existing Identity tables)
+        context.Database.Migrate();
+        Console.WriteLine("✅ Migrations applied successfully");
         
-        // Verify tables exist
-        var tablesExist = context.Carts != null;
-        Console.WriteLine($"✅ Tables verification: Carts table exists = {tablesExist}");
+        // Verify Carts table was created
+        var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        Console.WriteLine($"📊 Pending migrations: {pendingMigrations.Count()}");
+        
+        var cartsExist = await context.Carts.AnyAsync();
+        Console.WriteLine($"✅ Carts table accessible: {cartsExist}");
     }
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"⚠️ Database initialization failed: {ex.Message}");
+    Console.WriteLine($"⚠️ Database migration failed: {ex.Message}");
     Console.WriteLine($"Stack trace: {ex.StackTrace}");
     Console.WriteLine("⚠️ Service will continue but database operations may fail");
 }
