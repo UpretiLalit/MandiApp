@@ -109,7 +109,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply database migrations - DO NOT DELETE ENTIRE DATABASE (shared with other services)
+// Apply database migrations and seed test data
 try
 {
     using (var scope = app.Services.CreateScope())
@@ -121,9 +121,31 @@ try
         context.Database.Migrate();
         Console.WriteLine("✅ Migrations applied successfully");
         
+        // Seed test buyers if they don't exist
+        if (!await context.Buyers.AnyAsync())
+        {
+            Console.WriteLine("🌱 Seeding test buyers...");
+            context.Buyers.AddRange(
+                new Buyer
+                {
+                    Id = "test-buyer-001",
+                    FullName = "Test Buyer",
+                    PhoneNumber = "1234567890",
+                    Email = "buyer@test.com",
+                    BusinessAddress = "Test Business Address",
+                    DeliveryAddress = "Test Delivery Address",
+                    CreditLimit = 100000,
+                    IsVerified = true,
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
+            await context.SaveChangesAsync();
+            Console.WriteLine("✅ Test buyers created");
+        }
+        
         // Test query
         var testCount = await context.Carts.CountAsync();
-        Console.WriteLine($"✅ Carts table accessible, count: {testCount}");
+        Console.WriteLine($"✅ Database ready! Cart count: {testCount}");
     }
 }
 catch (Exception ex)
