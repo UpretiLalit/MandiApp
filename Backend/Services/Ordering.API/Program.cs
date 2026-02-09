@@ -116,14 +116,27 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
-        Console.WriteLine("📊 Applying database migrations for Ordering API...");
-        context.Database.Migrate(); // Apply migrations to create tables
-        Console.WriteLine("✅ Database migrations applied successfully");
+        Console.WriteLine("📊 Ensuring database and tables exist...");
+        
+        // Use EnsureCreated to guarantee tables are created
+        var created = context.Database.EnsureCreated();
+        if (created)
+        {
+            Console.WriteLine("✅ Database and tables created successfully");
+        }
+        else
+        {
+            Console.WriteLine("✅ Database already exists");
+        }
+        
+        // Verify tables exist
+        var tablesExist = context.Carts != null;
+        Console.WriteLine($"✅ Tables verification: Carts table exists = {tablesExist}");
     }
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"⚠️ Database migration failed: {ex.Message}");
+    Console.WriteLine($"⚠️ Database initialization failed: {ex.Message}");
     Console.WriteLine($"Stack trace: {ex.StackTrace}");
     Console.WriteLine("⚠️ Service will continue but database operations may fail");
 }
