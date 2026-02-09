@@ -115,18 +115,31 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
-        Console.WriteLine("📊 Creating Ordering tables...");
+        Console.WriteLine("📊 Recreating Ordering tables with correct schema...");
         
-        // Create tables manually if they don't exist (Identity tables already exist)
+        // Drop existing tables to fix schema mismatches from previous deployments
         await context.Database.ExecuteSqlRawAsync(@"
-            CREATE TABLE IF NOT EXISTS ""Carts"" (
+            DROP TABLE IF EXISTS ""Payments"" CASCADE;
+            DROP TABLE IF EXISTS ""OrderItems"" CASCADE;
+            DROP TABLE IF EXISTS ""Orders"" CASCADE;
+            DROP TABLE IF EXISTS ""CartItems"" CASCADE;
+            DROP TABLE IF EXISTS ""Carts"" CASCADE;
+            DROP TABLE IF EXISTS ""Transporters"" CASCADE;
+            DROP TABLE IF EXISTS ""Vendors"" CASCADE;
+            DROP TABLE IF EXISTS ""Buyers"" CASCADE;
+        ");
+        Console.WriteLine("✅ Dropped old tables");
+        
+        // Create tables with correct schema
+        await context.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE ""Carts"" (
                 ""Id"" SERIAL PRIMARY KEY,
                 ""BuyerId"" TEXT NOT NULL,
                 ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 ""UpdatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
             
-            CREATE TABLE IF NOT EXISTS ""CartItems"" (
+            CREATE TABLE ""CartItems"" (
                 ""Id"" SERIAL PRIMARY KEY,
                 ""CartId"" INTEGER NOT NULL REFERENCES ""Carts""(""Id"") ON DELETE CASCADE,
                 ""ProductId"" TEXT NOT NULL,
@@ -136,7 +149,7 @@ try
                 ""UnitPrice"" DECIMAL(18,2) NOT NULL
             );
             
-            CREATE TABLE IF NOT EXISTS ""Buyers"" (
+            CREATE TABLE ""Buyers"" (
                 ""Id"" TEXT PRIMARY KEY,
                 ""FullName"" TEXT NOT NULL,
                 ""PhoneNumber"" TEXT NOT NULL,
@@ -152,7 +165,7 @@ try
                 ""LastOrderAt"" TIMESTAMP WITH TIME ZONE
             );
             
-            CREATE TABLE IF NOT EXISTS ""Vendors"" (
+            CREATE TABLE ""Vendors"" (
                 ""Id"" TEXT PRIMARY KEY,
                 ""FullName"" TEXT NOT NULL,
                 ""PhoneNumber"" TEXT NOT NULL,
@@ -174,7 +187,7 @@ try
                 ""LastActiveAt"" TIMESTAMP WITH TIME ZONE
             );
             
-            CREATE TABLE IF NOT EXISTS ""Transporters"" (
+            CREATE TABLE ""Transporters"" (
                 ""Id"" TEXT PRIMARY KEY,
                 ""FullName"" TEXT NOT NULL,
                 ""PhoneNumber"" TEXT NOT NULL,
@@ -196,7 +209,7 @@ try
                 ""LastActiveAt"" TIMESTAMP WITH TIME ZONE
             );
             
-            CREATE TABLE IF NOT EXISTS ""Orders"" (
+            CREATE TABLE ""Orders"" (
                 ""Id"" SERIAL PRIMARY KEY,
                 ""OrderNumber"" TEXT NOT NULL UNIQUE,
                 ""BuyerId"" TEXT NOT NULL,
@@ -215,7 +228,7 @@ try
                 ""UpdatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
             
-            CREATE TABLE IF NOT EXISTS ""OrderItems"" (
+            CREATE TABLE ""OrderItems"" (
                 ""Id"" SERIAL PRIMARY KEY,
                 ""OrderId"" INTEGER NOT NULL REFERENCES ""Orders""(""Id"") ON DELETE CASCADE,
                 ""ProductId"" TEXT NOT NULL,
@@ -226,7 +239,7 @@ try
                 ""TotalPrice"" DECIMAL(18,2) NOT NULL
             );
             
-            CREATE TABLE IF NOT EXISTS ""Payments"" (
+            CREATE TABLE ""Payments"" (
                 ""Id"" SERIAL PRIMARY KEY,
                 ""OrderId"" INTEGER NOT NULL REFERENCES ""Orders""(""Id""),
                 ""Amount"" DECIMAL(18,2) NOT NULL,
@@ -238,22 +251,21 @@ try
                 ""UpdatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
             
-            CREATE INDEX IF NOT EXISTS ""IX_Carts_BuyerId"" ON ""Carts""(""BuyerId"");
-            CREATE INDEX IF NOT EXISTS ""IX_Orders_BuyerId"" ON ""Orders""(""BuyerId"");
-            CREATE INDEX IF NOT EXISTS ""IX_Orders_VendorId"" ON ""Orders""(""VendorId"");
+            CREATE INDEX ""IX_Carts_BuyerId"" ON ""Carts""(""BuyerId"");
+            CREATE INDEX ""IX_Orders_BuyerId"" ON ""Orders""(""BuyerId"");
+            CREATE INDEX ""IX_Orders_VendorId"" ON ""Orders""(""VendorId"");
         ");
         
-        Console.WriteLine("✅ All Ordering tables created successfully");
+        Console.WriteLine("✅ All Ordering tables created with correct schema");
         
         // Verify
         var cartsCount = await context.Carts.CountAsync();
-        Console.WriteLine($"✅ Carts table accessible with {cartsCount} records");
+        Console.WriteLine($"✅ Verification: Carts table has {cartsCount} records");
     }
 }
 catch (Exception ex)
 {
     Console.WriteLine($"⚠️ Database setup failed: {ex.Message}");
-    Console.WriteLine($"Stack trace: {ex.StackTrace}");
     Console.WriteLine("⚠️ Service will continue but database operations may fail");
 }
 
