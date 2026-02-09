@@ -273,9 +273,12 @@ catch (Exception ex)
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// CRITICAL: CORS must be before authentication/authorization
+app.UseCors("AllowAll");
+
 // Disable HTTPS redirection when using Cloudflare Tunnel
 // app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
