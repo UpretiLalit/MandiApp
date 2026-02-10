@@ -115,11 +115,22 @@ public class OrdersController : ControllerBase
     {
         try
         {
+            _logger.LogInformation($"Complete payment called. Request is null: {request == null}");
+            
             // Validate request
-            if (request == null || request.Items == null || !request.Items.Any())
+            if (request == null)
             {
+                _logger.LogError("Request is null");
+                return BadRequest(new { message = "Invalid request: Request body is null or invalid JSON" });
+            }
+            
+            if (request.Items == null || !request.Items.Any())
+            {
+                _logger.LogError($"Items validation failed. Items null: {request.Items == null}, Items count: {request.Items?.Count ?? 0}");
                 return BadRequest(new { message = "Invalid request: Items are required" });
             }
+
+            _logger.LogInformation($"Processing payment with {request.Items.Count} items");
 
             // For demo/testing: Generate product IDs if missing
             for (int i = 0; i < request.Items.Count; i++)
@@ -132,13 +143,17 @@ public class OrdersController : ControllerBase
             }
 
             var buyerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "test-buyer-001";
+            _logger.LogInformation($"Processing payment for buyer: {buyerId}");
+            
             var result = await _orderService.CompletePaymentAsync(buyerId, request);
+            _logger.LogInformation($"Payment completed successfully. Order ID: {result}");
+            
             return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error completing payment");
-            return BadRequest(new { message = "Payment processing failed", error = ex.Message, details = ex.StackTrace });
+            _logger.LogError(ex, "Error completing payment. Message: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
+            return StatusCode(500, new { message = "Payment processing failed", error = ex.Message, details = ex.StackTrace, innerException = ex.InnerException?.Message });
         }
     }
 

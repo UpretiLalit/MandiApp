@@ -50,20 +50,24 @@ services:
     region: singapore
     plan: free
     rootDir: Backend
-    dockerfilePath: Dockerfile.oOrderingDb
-        value: Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
+    dockerfilePath: Dockerfile.ordering
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__OrderingDb
+        value: Host=dpg-d5tlem7gi27c73fagde0-a.singapore-postgres.render.com;Port=5432;Database=mandiapp;Username=mandiapp;Password=EPSiAomLiKxGfKyaHFZ6yWsfWnAjSzPq;Ssl Mode=Require
       - key: JwtSettings__SecretKey
         value: YourSuperSecretKeyForJWTAuthentication12345
       - key: JwtSettings__Issuer
         value: MandiApp.Identity
       - key: JwtSettings__Audience
-        value: MandiApp.Mobil
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
-      - key: ASPNETCORE_URLS
-        value: http://+:8080
-      - key: ConnectionStrings__DefaultConnection
-        sync: false
+        value: MandiApp.Mobile
+      - key: PaymentGateway__KeyId
+        value: rzp_test_SERWenUrVJZ9ar
+      - key: PaymentGateway__KeySecret
+        value: 0536Jzfa3b5odBJRMzJg1KA4
 
   # Logistics Hub
   - type: web
@@ -72,20 +76,20 @@ services:
     region: singapore
     plan: free
     rootDir: Backend
-    dockerfilePath: Dockerfile.lLogisticsDb
-        value: Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
+    dockerfilePath: Dockerfile.logistics
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__LogisticsDb
+        value: Host=dpg-d5tlem7gi27c73fagde0-a.singapore-postgres.render.com;Port=5432;Database=mandiapp;Username=mandiapp;Password=EPSiAomLiKxGfKyaHFZ6yWsfWnAjSzPq;Ssl Mode=Require
       - key: JwtSettings__SecretKey
         value: YourSuperSecretKeyForJWTAuthentication12345
       - key: JwtSettings__Issuer
         value: MandiApp.Identity
       - key: JwtSettings__Audience
-        value: MandiApp.Mobil
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
-      - key: ASPNETCORE_URLS
-        value: http://+:8080
-      - key: ConnectionStrings__DefaultConnection
-        sync: false
+        value: MandiApp.Mobile
 
 databases:
   - name: mandiapp-db
