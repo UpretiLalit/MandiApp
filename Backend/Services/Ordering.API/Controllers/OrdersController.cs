@@ -53,6 +53,15 @@ public class OrdersController : ControllerBase
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetOrders()
+    {
+        // For demo/testing: use test buyer if not authenticated
+        var buyerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "test-buyer-001";
+        var orders = await _orderService.GetBuyerOrdersAsync(buyerId);
+        return Ok(orders);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOrder(int id)
     {

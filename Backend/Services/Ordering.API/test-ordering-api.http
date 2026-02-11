@@ -1,0 +1,196 @@
+### Ordering API - End-to-End Test Suite
+### Base URL
+@baseUrl = https://mandiapp-ordering-api.onrender.com/api
+@localUrl = http://localhost:5003/api
+
+### Use Render for testing
+@url = {{baseUrl}}
+
+### ============================================
+### 1. Health Check - Test if API is running
+### ============================================
+GET {{url}}/../health
+Accept: application/json
+
+### ============================================
+### 2. GET All Orders (for test-buyer-001)
+### ============================================
+GET {{url}}/orders
+Accept: application/json
+
+### Expected: 200 OK with array of orders (may be empty initially)
+
+### ============================================
+### 3. Create Order - Escrow Payment
+### ============================================
+POST {{url}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "productName": "Fresh Tomatoes",
+      "vendorId": "vendor-001",
+      "quantity": 10,
+      "unitPrice": 40.00
+    },
+    {
+      "productId": 2,
+      "productName": "Onions",
+      "vendorId": "vendor-002",
+      "quantity": 5,
+      "unitPrice": 30.00
+    }
+  ],
+  "deliveryAddress": "123 Test Street, Mumbai, Maharashtra 400001",
+  "produceTotal": 550.00,
+  "logisticsFee": 50.00,
+  "serviceFee": 10.00,
+  "totalLandingCost": 610.00,
+  "paymentMethod": "Escrow",
+  "isEscrow": true
+}
+
+### Expected: 201 Created with order details
+
+### ============================================
+### 4. Complete Payment - Demo Mode with productId 0
+### ============================================
+POST {{url}}/orders/complete-payment
+Content-Type: application/json
+Accept: application/json
+
+{
+  "items": [
+    {
+      "productId": 0,
+      "productName": "Fresh Tomatoes",
+      "vendorId": "vendor-002",
+      "quantity": 1,
+      "unitPrice": 42
+    }
+  ],
+  "deliveryAddress": "Test Address",
+  "produceTotal": 42,
+  "logisticsFee": 50,
+  "serviceFee": 1,
+  "totalLandingCost": 93,
+  "paymentMethod": "UPI",
+  "isEscrow": false,
+  "paymentId": "mock_pay_test123",
+  "razorpayOrderId": "order_test123",
+  "razorpaySignature": "mock_sig_test123",
+  "paymentStatus": "Success"
+}
+
+### Expected: 200 OK with order and payment confirmation
+
+### ============================================
+### 5. Complete Payment - Real Razorpay Flow
+### ============================================
+POST {{url}}/orders/complete-payment
+Content-Type: application/json
+Accept: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "productName": "Fresh Cabbage",
+      "vendorId": "vendor-001",
+      "quantity": 3,
+      "unitPrice": 25
+    }
+  ],
+  "deliveryAddress": "456 Real Address, Delhi",
+  "produceTotal": 75,
+  "logisticsFee": 40,
+  "serviceFee": 2,
+  "totalLandingCost": 117,
+  "paymentMethod": "Razorpay",
+  "isEscrow": false,
+  "paymentId": "pay_real123456",
+  "razorpayOrderId": "order_real123456",
+  "razorpaySignature": "real_signature_hash",
+  "paymentStatus": "Success"
+}
+
+### Expected: 200 OK with order created and payment recorded
+
+### ============================================
+### 6. Get Specific Order by ID
+### ============================================
+GET {{url}}/orders/1
+Accept: application/json
+
+### Expected: 200 OK with order details or 404 if not exists
+
+### ============================================
+### 7. Get My Orders (requires authentication)
+### ============================================
+GET {{url}}/orders/my-orders
+Accept: application/json
+
+### Expected: 401 Unauthorized (no auth token) or 200 OK if authenticated
+
+### ============================================
+### 8. Update Order Status
+### ============================================
+PUT {{url}}/orders/1/status
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "Processing"
+}
+
+### Expected: 200 OK with updated order
+
+### ============================================
+### 9. Cancel Order
+### ============================================
+POST {{url}}/orders/1/cancel
+Content-Type: application/json
+Accept: application/json
+
+{
+  "reason": "Customer request"
+}
+
+### Expected: 200 OK with cancellation confirmation
+
+### ============================================
+### 10. Get Vendor Orders (requires Vendor role)
+### ============================================
+GET {{url}}/orders/vendor-orders
+Accept: application/json
+
+### Expected: 401 Unauthorized (no auth token with Vendor role)
+
+### ============================================
+### TEST SCENARIOS COVERED:
+### ============================================
+### ✅ API Health Check
+### ✅ Get all orders (test buyer)
+### ✅ Create order with escrow
+### ✅ Complete payment with demo mode (productId = 0)
+### ✅ Complete payment with real Razorpay
+### ✅ Get specific order by ID
+### ✅ Get authenticated user orders
+### ✅ Update order status
+### ✅ Cancel order
+### ✅ Vendor orders (authorization test)
+
+### ============================================
+### EXPECTED RESULTS:
+### ============================================
+### - All GET /orders should return 200 OK
+### - POST /orders should create order and return 201
+### - POST /complete-payment should handle productId=0 (demo mode)
+### - POST /complete-payment should work with real product IDs
+### - Foreign key constraints should be satisfied (buyers, vendors exist)
+### - Orders should be retrievable after creation
+### - Status updates should work
+### - Cancellation should work
