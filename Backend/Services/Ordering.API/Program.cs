@@ -144,6 +144,42 @@ try
             Console.WriteLine("✅ Test buyers created");
         }
         
+        // Seed test vendors if they don't exist
+        if (!await context.Vendors.AnyAsync())
+        {
+            Console.WriteLine("🌱 Seeding test vendors...");
+            context.Vendors.AddRange(
+                new Vendor
+                {
+                    Id = "vendor-001",
+                    FullName = "Vendor One",
+                    PhoneNumber = "9876543210",
+                    Email = "vendor1@test.com",
+                    BusinessName = "Fresh Produce Co",
+                    BusinessAddress = "Vendor Address 1",
+                    IsVerified = true,
+                    IsActive = true,
+                    CommissionRate = 0.03m,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new Vendor
+                {
+                    Id = "vendor-002",
+                    FullName = "Vendor Two",
+                    PhoneNumber = "9876543211",
+                    Email = "vendor2@test.com",
+                    BusinessName = "Organic Farms",
+                    BusinessAddress = "Vendor Address 2",
+                    IsVerified = true,
+                    IsActive = true,
+                    CommissionRate = 0.03m,
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
+            await context.SaveChangesAsync();
+            Console.WriteLine("✅ Test vendors created");
+        }
+        
         // Test query
         var testCount = await context.Carts.CountAsync();
         Console.WriteLine($"✅ Database ready! Cart count: {testCount}");
