@@ -59,7 +59,39 @@ public class OrdersController : ControllerBase
         // For demo/testing: use test buyer if not authenticated
         var buyerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "test-buyer-001";
         var orders = await _orderService.GetBuyerOrdersAsync(buyerId);
-        return Ok(orders);
+        
+        // Convert enum to string for frontend
+        var result = orders.Select(o => new
+        {
+            o.Id,
+            o.OrderNumber,
+            o.BuyerId,
+            o.ProduceTotal,
+            o.LogisticsFee,
+            o.ServiceFee,
+            o.TotalAmount,
+            Status = o.Status.ToString(), // Convert enum to string
+            o.DeliveryAddress,
+            o.PickupAddress,
+            o.TransporterId,
+            o.TransporterName,
+            o.BuyerName,
+            o.CreatedAt,
+            o.UpdatedAt,
+            OrderItems = o.OrderItems?.Select(item => new
+            {
+                item.Id,
+                item.OrderId,
+                item.ProductId,
+                item.ProductName,
+                item.VendorId,
+                item.Quantity,
+                item.UnitPrice,
+                item.TotalPrice
+            })
+        });
+        
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
@@ -69,7 +101,38 @@ public class OrdersController : ControllerBase
         if (order == null)
             return NotFound();
 
-        return Ok(order);
+        // Convert enum to string for frontend
+        var result = new
+        {
+            order.Id,
+            order.OrderNumber,
+            order.BuyerId,
+            order.ProduceTotal,
+            order.LogisticsFee,
+            order.ServiceFee,
+            order.TotalAmount,
+            Status = order.Status.ToString(), // Convert enum to string
+            order.DeliveryAddress,
+            order.PickupAddress,
+            order.TransporterId,
+            order.TransporterName,
+            order.BuyerName,
+            order.CreatedAt,
+            order.UpdatedAt,
+            OrderItems = order.OrderItems?.Select(item => new
+            {
+                item.Id,
+                item.OrderId,
+                item.ProductId,
+                item.ProductName,
+                item.VendorId,
+                item.Quantity,
+                item.UnitPrice,
+                item.TotalPrice
+            })
+        };
+
+        return Ok(result);
     }
 
     [HttpGet("my-orders")]
@@ -80,7 +143,39 @@ public class OrdersController : ControllerBase
             return Unauthorized();
 
         var orders = await _orderService.GetBuyerOrdersAsync(buyerId);
-        return Ok(orders);
+        
+        // Convert enum to string for frontend
+        var result = orders.Select(o => new
+        {
+            o.Id,
+            o.OrderNumber,
+            o.BuyerId,
+            o.ProduceTotal,
+            o.LogisticsFee,
+            o.ServiceFee,
+            o.TotalAmount,
+            Status = o.Status.ToString(), // Convert enum to string
+            o.DeliveryAddress,
+            o.PickupAddress,
+            o.TransporterId,
+            o.TransporterName,
+            o.BuyerName,
+            o.CreatedAt,
+            o.UpdatedAt,
+            OrderItems = o.OrderItems?.Select(item => new
+            {
+                item.Id,
+                item.OrderId,
+                item.ProductId,
+                item.ProductName,
+                item.VendorId,
+                item.Quantity,
+                item.UnitPrice,
+                item.TotalPrice
+            })
+        });
+        
+        return Ok(result);
     }
 
     [Authorize(Roles = "Vendor")]
