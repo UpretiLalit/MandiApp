@@ -16,7 +16,7 @@ public class CreateOrderRequest
     public bool IsEscrow { get; set; } = true;
 }
 
-public class OrderItemDto
+public record OrderItemDto
 {
     public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;

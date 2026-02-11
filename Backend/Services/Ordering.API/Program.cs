@@ -5,6 +5,7 @@ using System.Text;
 using Ordering.API.Data;
 using Ordering.API.Services;
 using Ordering.API.Hubs;
+using Ordering.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Identity.API.Models;
 using Ordering.Infrastructure;
