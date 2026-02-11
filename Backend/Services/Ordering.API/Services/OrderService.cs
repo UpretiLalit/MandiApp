@@ -312,18 +312,18 @@ public class OrderService : IOrderService
         return true;
     }
 
-    public async Task<object> CreatePaymentOrderAsync(CreateOrderRequest request)
+    public Task<object> CreatePaymentOrderAsync(CreateOrderRequest request)
     {
         var amountInPaise = (int)(request.TotalLandingCost * 100);
         var razorpayOrderId = $"order_{Guid.NewGuid().ToString("N").Substring(0, 14)}";
         
-        return new
+        return Task.FromResult<object>(new
         {
             razorpayOrderId = razorpayOrderId,
             amount = amountInPaise,
             currency = "INR",
             key = "rzp_test_YOUR_KEY_ID"
-        };
+        });
     }
 
     public async Task<object> CompletePaymentAsync(string buyerId, CompletePaymentRequest request)
