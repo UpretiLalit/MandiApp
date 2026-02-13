@@ -4,13 +4,55 @@
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
     <ion-title>My Orders</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="loadOrders()">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
   
-  <!-- Status Filter -->
+  <!-- Enhanced Status Filter with Counts -->
   <ion-toolbar>
-    <ion-segment [(ngModel)]="selectedStatus" (ionChange)="filterByStatus(($event.detail.value || 'All').toString())" scrollable>
-      <ion-segment-button *ngFor="let filter of statusFilters" [value]="filter.value">
-        <ion-label>{{filter.label}}</ion-label>
+    <ion-segment [(ngModel)]="selectedStatus" (ionChange)="filterByStatus(($event.detail.value || 'All').toString())" scrollable mode="md">
+      <ion-segment-button value="all">
+        <ion-label>
+          <div class="filter-label">
+            <span>All</span>
+            <ion-badge color="medium">{{orders.length}}</ion-badge>
+          </div>
+        </ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="Pending">
+        <ion-label>
+          <div class="filter-label">
+            <span>Pending</span>
+            <ion-badge color="warning">{{getStatusCount('Pending')}}</ion-badge>
+          </div>
+        </ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="Processing">
+        <ion-label>
+          <div class="filter-label">
+            <span>Processing</span>
+            <ion-badge color="secondary">{{getStatusCount('Processing')}}</ion-badge>
+          </div>
+        </ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="InTransit">
+        <ion-label>
+          <div class="filter-label">
+            <span>In Transit</span>
+            <ion-badge color="primary">{{getStatusCount('InTransit')}}</ion-badge>
+          </div>
+        </ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="Delivered">
+        <ion-label>
+          <div class="filter-label">
+            <span>Delivered</span>
+            <ion-badge color="success">{{getStatusCount('Delivered')}}</ion-badge>
+          </div>
+        </ion-label>
       </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
@@ -41,22 +83,64 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Order Cards -->
-    <ion-card *ngFor="let order of filteredOrders" class="order-card">
+    <!-- Order Cards with Enhanced Design -->
+    <ion-card *ngFor="let order of filteredOrders" class="order-card modern-card">
       
-      <!-- Order Header -->
-      <div class="order-header" [class]="'status-' + order.status.toLowerCase()">
-        <div class="header-left">
-          <h3>{{order.orderNumber}}</h3>
-          <small>{{order.orderDate}}</small>
+      <!-- Order Header with Timeline Badge -->
+      <div class="order-header-modern" [class]="'status-' + order.status.toLowerCase()">
+        <div class="header-content">
+          <div class="order-info">
+            <h2 class="order-number">{{order.orderNumber}}</h2>
+            <p class="order-date">
+              <ion-icon name="calendar-outline"></ion-icon>
+              {{order.orderDate}}
+            </p>
+          </div>
+          <div class="status-badge-container">
+            <ion-badge [color]="getStatusColor(order.status)" class="status-badge-modern">
+              <ion-icon [name]="getStatusIcon(order.status)"></ion-icon>
+              <span>{{order.status}}</span>
+            </ion-badge>
+            <p class="status-subtitle">{{getStatusMessage(order.status)}}</p>
+          </div>
         </div>
-        <ion-badge [color]="getStatusColor(order.status)">
-          <ion-icon [name]="getStatusIcon(order.status)"></ion-icon>
-          {{order.status}}
-        </ion-badge>
       </div>
 
-      <ion-card-content>
+      <ion-card-content class="modern-content">
+        
+        <!-- Order Timeline/Progress -->
+        <div class="order-timeline" *ngIf="order.status !== 'Cancelled'">
+          <div class="timeline-step" [class.active]="isStepActive('Pending', order.status)" [class.completed]="isStepCompleted('Pending', order.status)">
+            <div class="step-icon">
+              <ion-icon name="time-outline"></ion-icon>
+            </div>
+            <span class="step-label">Placed</span>
+          </div>
+          <div class="timeline-connector" [class.active]="isStepCompleted('Pending', order.status)"></div>
+          
+          <div class="timeline-step" [class.active]="isStepActive('Processing', order.status)" [class.completed]="isStepCompleted('Processing', order.status)">
+            <div class="step-icon">
+              <ion-icon name="construct-outline"></ion-icon>
+            </div>
+            <span class="step-label">Processing</span>
+          </div>
+          <div class="timeline-connector" [class.active]="isStepCompleted('Processing', order.status)"></div>
+          
+          <div class="timeline-step" [class.active]="isStepActive('InTransit', order.status)" [class.completed]="isStepCompleted('InTransit', order.status)">
+            <div class="step-icon">
+              <ion-icon name="rocket-outline"></ion-icon>
+            </div>
+            <span class="step-label">In Transit</span>
+          </div>
+          <div class="timeline-connector" [class.active]="isStepCompleted('InTransit', order.status)"></div>
+          
+          <div class="timeline-step" [class.active]="isStepActive('Delivered', order.status)" [class.completed]="isStepCompleted('Delivered', order.status)">
+            <div class="step-icon">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+            </div>
+            <span class="step-label">Delivered</span>
+          </div>
+        </div>
         
         <!-- Vendor Info -->
         <div class="vendor-section">

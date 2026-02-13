@@ -418,4 +418,31 @@ export class OrdersPage implements OnInit {
       event.target.complete();
     }, 1000);
   }
+
+  // Helper methods for timeline
+  getStatusCount(status: string): number {
+    return this.orders.filter(o => o.status === status).length;
+  }
+
+  getStatusMessage(status: string): string {
+    const messages: any = {
+      'Pending': 'Order received, waiting confirmation',
+      'Processing': 'Vendor is preparing your order',
+      'InTransit': 'On the way to delivery location',
+      'Delivered': 'Successfully delivered',
+      'Cancelled': 'Order was cancelled'
+    };
+    return messages[status] || 'Status update';
+  }
+
+  isStepActive(step: string, currentStatus: string): boolean {
+    return step === currentStatus;
+  }
+
+  isStepCompleted(step: string, currentStatus: string): boolean {
+    const statusOrder = ['Pending', 'Processing', 'InTransit', 'Delivered'];
+    const stepIndex = statusOrder.indexOf(step);
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    return currentIndex > stepIndex;
+  }
 }
