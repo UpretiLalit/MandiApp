@@ -49,7 +49,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateProduct([FromBody] dynamic request)
+    public IActionResult CreateProduct([FromBody] dynamic request)
     {
         // Forward to Marketplace API or handle locally
         // For now, return 501 Not Implemented

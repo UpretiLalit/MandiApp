@@ -77,7 +77,7 @@ public class OrdersController : ControllerBase
             o.TransporterName,
             o.BuyerName,
             o.CreatedAt,
-            o.UpdatedAt,
+
             OrderItems = o.OrderItems?.Select(item => new
             {
                 item.Id,
@@ -118,7 +118,6 @@ public class OrdersController : ControllerBase
             order.TransporterName,
             order.BuyerName,
             order.CreatedAt,
-            order.UpdatedAt,
             OrderItems = order.OrderItems?.Select(item => new
             {
                 item.Id,
@@ -161,7 +160,7 @@ public class OrdersController : ControllerBase
             o.TransporterName,
             o.BuyerName,
             o.CreatedAt,
-            o.UpdatedAt,
+
             OrderItems = o.OrderItems?.Select(item => new
             {
                 item.Id,
