@@ -28,6 +28,23 @@ export class MarketplacePage implements OnInit, OnDestroy {
   productQuantities: Map<string, number> = new Map(); // Store quantities per product
   quantityStepperVisible: Map<string, boolean> = new Map(); // Track stepper visibility per product
   expandedVendors: Set<string> = new Set(); // Track which vendor cards are expanded
+  productsInCart: Set<string> = new Set(); // Track which products are already in cart
+  
+  // Image Viewer Properties
+  isImageViewerOpen: boolean = false;
+  selectedProduct: any = null;
+  zoomLevel: number = 1;
+  panX: number = 0;
+  panY: number = 0;
+  private lastTouchDistance: number = 0;
+  private lastTouchX: number = 0;
+  private lastTouchY: number = 0;
+  
+  // Carousel Properties
+  private imageIndexMap: Map<string, number> = new Map(); // Track current image per product
+  currentViewerImageIndex: number = 0;
+  private viewerTouchStartX: number = 0;
+  private viewerSwipeThreshold: number = 50;
   
   private priceUpdateSubscription?: Subscription;
   private connectionStateSubscription?: Subscription;
@@ -239,8 +256,10 @@ export class MarketplacePage implements OnInit, OnDestroy {
           name: product.name,
           category: product.category,
           unit: product.unit,
+          unitWeight: product.minOrderQty ? `${product.minOrderQty} ${product.unit}` : '1 kg',
           imageUrl: product.imageUrl,
           emoji: emojiMap[product.name] || '🥬', // Default emoji
+          availableQuantity: 0, // Will be calculated from all vendors
           vendors: []
         });
       }
@@ -262,6 +281,8 @@ export class MarketplacePage implements OnInit, OnDestroy {
           grade: grade,
           description: product.description
         });
+        // Add to total available quantity
+        grouped.get(product.name).availableQuantity += product.availableQuantity;
       }
     });
     
@@ -694,6 +715,10 @@ export class MarketplacePage implements OnInit, OnDestroy {
     this.router.navigate(['/cart']);
   }
 
+  goToOrders() {
+    this.router.navigate(['/orders']);
+  }
+
   async quickBuyBestPrice(product: any) {
     const bestVendor = product.vendors[0];
     
@@ -742,6 +767,10 @@ export class MarketplacePage implements OnInit, OnDestroy {
       next: () => {
         loading.dismiss();
         this.cartCount++;
+        // Add product to cart tracking
+        this.productsInCart.add(product.name);
+        // Filter out the product from display
+        this.filteredProducts = this.filteredProducts.filter(p => p.name !== product.name);
         this.showToast(
           `✓ Added ${quantity} ${product.unit}${quantity > 1 ? 's' : ''}`,
           'success'
@@ -915,5 +944,216 @@ export class MarketplacePage implements OnInit, OnDestroy {
 
   isVendorExpanded(productName: string, vendorId: number): boolean {
     return this.expandedVendors.has(`${productName}-${vendorId}`);
+  }
+
+  // Image Viewer Methods
+  openImageViewer(product: any) {
+    this.selectedProduct = product;
+    this.currentViewerImageIndex = this.getCurrentImageIndex(product.name);
+    this.isImageViewerOpen = true;
+    this.resetZoom();
+  }
+
+  closeImageViewer() {
+    this.isImageViewerOpen = false;
+    this.selectedProduct = null;
+    this.currentViewerImageIndex = 0;
+    this.resetZoom();
+  }
+
+  getProductImages(): string[] {
+    if (!this.selectedProduct) return [];
+    
+    // Use imageUrls array if available, otherwise fallback to single imageUrl or generate placeholder
+    if (this.selectedProduct.imageUrls && this.selectedProduct.imageUrls.length > 0) {
+      return this.selectedProduct.imageUrls;
+    } else if (this.selectedProduct.imageUrl) {
+      return [this.selectedProduct.imageUrl];
+    } else {
+      // Generate placeholder images based on product category
+      return this.getPlaceholderImages(this.selectedProduct);
+    }
+  }
+
+  getPlaceholderImages(product: any): string[] {
+    // Return placeholder URLs based on product category and name
+    const category = product.category.toLowerCase();
+    const name = product.name.toLowerCase().replace(/\s+/g, '-');
+    
+    // Use Unsplash API for high-quality placeholder images
+    return [
+      `https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80`, // Vegetables
+      `https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80`, // Fresh produce
+      `https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800&q=80`  // Market
+    ];
+  }
+
+  handleImageError(event: any) {
+    // Fallback to placeholder when image fails to load
+    event.target.src = 'https://via.placeholder.com/800x600/f8f9fa/6c757d?text=No+Image';
+  }
+
+  // Carousel Methods for Product Cards
+  getCurrentImageIndex(productName: string): number {
+    return this.imageIndexMap.get(productName) || 0;
+  }
+
+  setImageIndex(productName: string, index: number, event?: Event) {
+    if (event) event.stopPropagation();
+    this.imageIndexMap.set(productName, index);
+  }
+
+  nextImage(productName: string, event?: Event) {
+    if (event) event.stopPropagation();
+    const product = this.filteredProducts.find((p: any) => p.name === productName);
+    if (product && product.imageUrls) {
+      const currentIndex = this.getCurrentImageIndex(productName);
+      const nextIndex = (currentIndex + 1) % product.imageUrls.length;
+      this.setImageIndex(productName, nextIndex);
+    }
+  }
+
+  previousImage(productName: string, event?: Event) {
+    if (event) event.stopPropagation();
+    const product = this.filteredProducts.find((p: any) => p.name === productName);
+    if (product && product.imageUrls) {
+      const currentIndex = this.getCurrentImageIndex(productName);
+      const prevIndex = currentIndex === 0 ? product.imageUrls.length - 1 : currentIndex - 1;
+      this.setImageIndex(productName, prevIndex);
+    }
+  }
+
+  // Gallery Viewer Navigation
+  nextViewerImage() {
+    const images = this.getProductImages();
+    if (this.currentViewerImageIndex < images.length - 1) {
+      this.currentViewerImageIndex++;
+      this.resetZoom();
+    }
+  }
+
+  previousViewerImage() {
+    if (this.currentViewerImageIndex > 0) {
+      this.currentViewerImageIndex--;
+      this.resetZoom();
+    }
+  }
+
+  setViewerImageIndex(index: number) {
+    this.currentViewerImageIndex = index;
+    this.resetZoom();
+  }
+
+  handleViewerTouchStart(event: TouchEvent) {
+    if (event.touches.length === 1) {
+      this.viewerTouchStartX = event.touches[0].clientX;
+    }
+  }
+
+  handleViewerTouchMove(event: TouchEvent) {
+    // Allow pinch zoom to handle this if two fingers
+    if (event.touches.length > 1) return;
+  }
+
+  handleViewerTouchEnd(event: TouchEvent) {
+    if (event.changedTouches.length === 1 && this.zoomLevel === 1) {
+      const touchEndX = event.changedTouches[0].clientX;
+      const deltaX = touchEndX - this.viewerTouchStartX;
+      
+      if (Math.abs(deltaX) > this.viewerSwipeThreshold) {
+        if (deltaX > 0) {
+          this.previousViewerImage();
+        } else {
+          this.nextViewerImage();
+        }
+      }
+    }
+  }
+
+  addToCartFromViewer() {
+    if (this.selectedProduct) {
+      this.quickBuyBestPrice(this.selectedProduct);
+      this.closeImageViewer();
+    }
+  }
+
+  zoomIn() {
+    if (this.zoomLevel < 3) {
+      this.zoomLevel += 0.5;
+    }
+  }
+
+  zoomOut() {
+    if (this.zoomLevel > 1) {
+      this.zoomLevel -= 0.5;
+      // Reset pan when zooming out to avoid displacement
+      if (this.zoomLevel === 1) {
+        this.panX = 0;
+        this.panY = 0;
+      }
+    }
+  }
+
+  resetZoom() {
+    this.zoomLevel = 1;
+    this.panX = 0;
+    this.panY = 0;
+  }
+
+  handleTouchStart(event: TouchEvent) {
+    if (event.touches.length === 2) {
+      // Pinch zoom started
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      this.lastTouchDistance = this.getDistance(touch1, touch2);
+    } else if (event.touches.length === 1 && this.zoomLevel > 1) {
+      // Pan started
+      this.lastTouchX = event.touches[0].clientX;
+      this.lastTouchY = event.touches[0].clientY;
+    }
+  }
+
+  handleTouchMove(event: TouchEvent) {
+    event.preventDefault();
+    
+    if (event.touches.length === 2) {
+      // Pinch zoom
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const currentDistance = this.getDistance(touch1, touch2);
+      
+      if (this.lastTouchDistance > 0) {
+        const scale = currentDistance / this.lastTouchDistance;
+        const newZoom = this.zoomLevel * scale;
+        
+        if (newZoom >= 1 && newZoom <= 3) {
+          this.zoomLevel = newZoom;
+        }
+      }
+      
+      this.lastTouchDistance = currentDistance;
+    } else if (event.touches.length === 1 && this.zoomLevel > 1) {
+      // Pan
+      const deltaX = event.touches[0].clientX - this.lastTouchX;
+      const deltaY = event.touches[0].clientY - this.lastTouchY;
+      
+      this.panX += deltaX;
+      this.panY += deltaY;
+      
+      this.lastTouchX = event.touches[0].clientX;
+      this.lastTouchY = event.touches[0].clientY;
+    }
+  }
+
+  handleTouchEnd(event: TouchEvent) {
+    if (event.touches.length < 2) {
+      this.lastTouchDistance = 0;
+    }
+  }
+
+  private getDistance(touch1: Touch, touch2: Touch): number {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 }

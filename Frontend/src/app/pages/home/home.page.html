@@ -1,7 +1,16 @@
-<ion-header>
+<ion-header class="home-header">
   <ion-toolbar color="primary">
-    <ion-title>Mandi App</ion-title>
+    <ion-title>
+      <div class="header-title">
+        <span class="app-icon">🌾</span>
+        <div>
+          <div class="title-main">{{ 'common.app_name' | translate }}</div>
+          <div class="title-sub">Smart Mandi Platform</div>
+        </div>
+      </div>
+    </ion-title>
     <ion-buttons slot="end">
+      <app-language-selector></app-language-selector>
       <ion-button (click)="logout()">
         <ion-icon name="log-out-outline"></ion-icon>
       </ion-button>
@@ -9,103 +18,275 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="home-content">
   <div class="home-container">
-    <!-- Welcome Card -->
-    <ion-card class="welcome-card">
-      <ion-card-header>
-        <ion-card-title>Welcome, {{userName}}</ion-card-title>
-        <ion-card-subtitle>{{userRole}}</ion-card-subtitle>
-      </ion-card-header>
-    </ion-card>
-
-    <!-- Role-based Navigation Cards -->
-    <div class="nav-cards">
-      
-      <!-- Buyer Dashboard -->
-      <ion-card *ngIf="userRole == 'Buyer'" class="nav-card" (click)="router.navigate(['/marketplace'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="cart-outline" class="big-icon" color="primary"></ion-icon>
-          <h2>Daily Price List</h2>
-          <p>Browse today's products</p>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="userRole == 'Buyer'" class="nav-card" (click)="router.navigate(['/cart'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="basket-outline" class="big-icon" color="success"></ion-icon>
-          <h2>My Cart</h2>
-          <p>Review & checkout</p>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="userRole == 'Buyer'" class="nav-card" (click)="router.navigate(['/orders'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="receipt-outline" class="big-icon" color="tertiary"></ion-icon>
-          <h2>My Orders</h2>
-          <p>Track deliveries</p>
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Vendor Dashboard -->
-      <ion-card *ngIf="userRole == 'Vendor'" class="nav-card" (click)="router.navigate(['/vendor/products'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="cube-outline" class="big-icon" color="primary"></ion-icon>
-          <h2>My Products</h2>
-          <p>Manage inventory</p>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="userRole == 'Vendor'" class="nav-card" (click)="router.navigate(['/vendor/quick-update'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="pricetag-outline" class="big-icon" color="warning"></ion-icon>
-          <h2>Update Prices</h2>
-          <p>Quick price slider</p>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="userRole == 'Vendor'" class="nav-card" (click)="router.navigate(['/vendor/orders'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="list-outline" class="big-icon" color="success"></ion-icon>
-          <h2>Orders</h2>
-          <p>Manage orders</p>
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Transporter Dashboard -->
-      <ion-card *ngIf="userRole == 'Transporter'" class="nav-card" (click)="router.navigate(['/transporter/deliveries'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="car-outline" class="big-icon" color="primary"></ion-icon>
-          <h2>My Deliveries</h2>
-          <p>Active pickups</p>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="userRole == 'Transporter'" class="nav-card" (click)="router.navigate(['/transporter/map'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="map-outline" class="big-icon" color="danger"></ion-icon>
-          <h2>Route Map</h2>
-          <p>Navigate to mandi</p>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="userRole == 'Transporter'" class="nav-card" (click)="router.navigate(['/transporter/scan'])">
-        <ion-card-content class="card-content">
-          <ion-icon name="qr-code-outline" class="big-icon" color="tertiary"></ion-icon>
-          <h2>Scan QR</h2>
-          <p>Confirm pickup/delivery</p>
-        </ion-card-content>
-      </ion-card>
-
+    
+    <!-- Hero Welcome Section -->
+    <div class="hero-section">
+      <div class="welcome-badge">
+        <ion-icon [name]="getRoleIcon()" color="primary"></ion-icon>
+      </div>
+      <h1 class="welcome-title">Welcome back, {{userName}}!</h1>
+      <p class="welcome-subtitle">{{getRoleDescription()}}</p>
     </div>
 
-    <!-- Profile Card -->
-    <ion-card class="profile-card" (click)="router.navigate(['/profile'])">
+    <!-- BUYER DASHBOARD -->
+    <div *ngIf="userRole == 'Buyer'" class="role-dashboard buyer-dashboard">
+      
+      <!-- Quick Actions -->
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+        <ion-icon name="flash"></ion-icon>
+      </div>
+      
+      <div class="quick-actions-grid">
+        <ion-card class="action-card primary" (click)="router.navigate(['/marketplace'])">
+          <div class="card-icon-wrapper primary">
+            <ion-icon name="storefront"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Marketplace</h3>
+            <p>Browse & Buy Products</p>
+            <ion-badge color="success" *ngIf="newProductsCount > 0">{{newProductsCount}} New</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card success" (click)="router.navigate(['/cart'])">
+          <div class="card-icon-wrapper success">
+            <ion-icon name="cart"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>My Cart</h3>
+            <p>Review & Checkout</p>
+            <ion-badge color="primary" *ngIf="cartItemsCount > 0">{{cartItemsCount}} Items</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card warning" (click)="router.navigate(['/orders'])">
+          <div class="card-icon-wrapper warning">
+            <ion-icon name="receipt"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>My Orders</h3>
+            <p>Track Deliveries</p>
+            <ion-badge color="danger" *ngIf="activeOrdersCount > 0">{{activeOrdersCount}} Active</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-section">
+        <div class="section-header">
+          <h2>Your Activity</h2>
+          <ion-icon name="analytics"></ion-icon>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <ion-icon name="bag-check" color="success"></ion-icon>
+            <div class="stat-value">{{totalOrders || 0}}</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <ion-icon name="cash" color="primary"></ion-icon>
+            <div class="stat-value">₹{{totalSpent || 0}}</div>
+            <div class="stat-label">Total Spent</div>
+          </div>
+          <div class="stat-card">
+            <ion-icon name="star" color="warning"></ion-icon>
+            <div class="stat-value">{{favoriteVendors || 0}}</div>
+            <div class="stat-label">Fav Vendors</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENDOR DASHBOARD -->
+    <div *ngIf="userRole == 'Vendor'" class="role-dashboard vendor-dashboard">
+      
+      <!-- Quick Actions -->
+      <div class="section-header">
+        <h2>Vendor Tools</h2>
+        <ion-icon name="construct"></ion-icon>
+      </div>
+      
+      <div class="quick-actions-grid">
+        <ion-card class="action-card primary" (click)="router.navigate(['/vendor/products'])">
+          <div class="card-icon-wrapper primary">
+            <ion-icon name="cube"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>My Products</h3>
+            <p>Manage Inventory</p>
+            <ion-badge color="medium">{{productsCount || 0}} Items</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card success" (click)="router.navigate(['/vendor/quick-update'])">
+          <div class="card-icon-wrapper success">
+            <ion-icon name="pricetag"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Update Prices</h3>
+            <p>Quick Price Slider</p>
+            <ion-badge color="warning">Fast Update</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card warning" (click)="router.navigate(['/vendor/orders'])">
+          <div class="card-icon-wrapper warning">
+            <ion-icon name="list"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Orders</h3>
+            <p>Manage Customer Orders</p>
+            <ion-badge color="danger" *ngIf="pendingOrdersCount > 0">{{pendingOrdersCount}} Pending</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card tertiary" (click)="router.navigate(['/vendor/products/new'])">
+          <div class="card-icon-wrapper tertiary">
+            <ion-icon name="add-circle"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Add Product</h3>
+            <p>List New Item</p>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-section">
+        <div class="section-header">
+          <h2>Business Overview</h2>
+          <ion-icon name="trending-up"></ion-icon>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <ion-icon name="bag-handle" color="success"></ion-icon>
+            <div class="stat-value">{{totalSales || 0}}</div>
+            <div class="stat-label">Total Sales</div>
+          </div>
+          <div class="stat-card">
+            <ion-icon name="cash" color="primary"></ion-icon>
+            <div class="stat-value">₹{{totalRevenue || 0}}</div>
+            <div class="stat-label">Revenue</div>
+          </div>
+          <div class="stat-card">
+            <ion-icon name="star" color="warning"></ion-icon>
+            <div class="stat-value">{{vendorRating || 0}}</div>
+            <div class="stat-label">Rating</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSPORTER DASHBOARD -->
+    <div *ngIf="userRole == 'Transporter'" class="role-dashboard transporter-dashboard">
+      
+      <!-- Quick Actions -->
+      <div class="section-header">
+        <h2>Delivery Hub</h2>
+        <ion-icon name="speedometer"></ion-icon>
+      </div>
+      
+      <div class="quick-actions-grid">
+        <ion-card class="action-card primary" (click)="router.navigate(['/transporter/deliveries'])">
+          <div class="card-icon-wrapper primary">
+            <ion-icon name="car"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>My Deliveries</h3>
+            <p>Active Pickups</p>
+            <ion-badge color="danger" *ngIf="activeDeliveriesCount > 0">{{activeDeliveriesCount}} Active</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card success" (click)="router.navigate(['/transporter/map'])">
+          <div class="card-icon-wrapper success">
+            <ion-icon name="map"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Route Map</h3>
+            <p>Navigate to Mandi</p>
+            <ion-badge color="primary">GPS Active</ion-badge>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card warning" (click)="router.navigate(['/transporter/scan'])">
+          <div class="card-icon-wrapper warning">
+            <ion-icon name="qr-code"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Scan QR</h3>
+            <p>Confirm Pickup/Delivery</p>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+
+        <ion-card class="action-card tertiary" (click)="router.navigate(['/transporter/earnings'])">
+          <div class="card-icon-wrapper tertiary">
+            <ion-icon name="wallet"></ion-icon>
+          </div>
+          <div class="card-content">
+            <h3>Earnings</h3>
+            <p>View Payment History</p>
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </ion-card>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-section">
+        <div class="section-header">
+          <h2>Performance</h2>
+          <ion-icon name="trophy"></ion-icon>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <div class="stat-value">{{completedDeliveries || 0}}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-card">
+            <ion-icon name="cash" color="primary"></ion-icon>
+            <div class="stat-value">₹{{totalEarnings || 0}}</div>
+            <div class="stat-label">Earnings</div>
+          </div>
+          <div class="stat-card">
+            <ion-icon name="star" color="warning"></ion-icon>
+            <div class="stat-value">{{transporterRating || 0}}</div>
+            <div class="stat-label">Rating</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Section (Common for all) -->
+    <ion-card class="profile-section" (click)="router.navigate(['/profile'])">
       <ion-card-content>
-        <ion-icon name="person-outline" color="medium"></ion-icon>
-        <span>My Profile</span>
-        <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
+        <div class="profile-info">
+          <ion-avatar>
+            <div class="avatar-placeholder">
+              <ion-icon name="person"></ion-icon>
+            </div>
+          </ion-avatar>
+          <div class="profile-details">
+            <h3>{{userName}}</h3>
+            <p>{{userRole}} Account</p>
+          </div>
+        </div>
+        <ion-icon name="chevron-forward" color="medium"></ion-icon>
       </ion-card-content>
     </ion-card>
+
   </div>
 </ion-content>

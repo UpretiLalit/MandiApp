@@ -239,20 +239,75 @@
   }
 }
 
-// Products Grid
+// Products Grid - Updated for ProductCard Component
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
   padding: 16px;
   
   @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  
+  @media (max-width: 576px) {
     grid-template-columns: 1fr;
   }
 }
 
-// Product Card
-.product-card {
+// Product wrapper contains card + vendor comparison in same column
+.product-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Vendor Comparison Section (Shows when expanded, stays in same column)
+.vendor-comparison-section {
+  animation: slideDown 0.3s ease-out;
+  
+  .comparison-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    
+    ion-card-header {
+      background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+      color: white;
+      padding: 12px 16px;
+      
+      ion-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        
+        ion-icon {
+          font-size: 1.2rem;
+        }
+      }
+    }
+    
+    ion-card-content {
+      padding: 12px;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Product Card - OLD STYLES (for vendor comparison cards)
+.product-card.accordion-card {
   margin: 0;
   border-radius: 20px;
   overflow: hidden;
@@ -300,15 +355,107 @@
   }
 }
 
-// Product Image Container
+// Product Image Container with Professional Carousel
 .product-image-container {
   position: relative;
   width: 100%;
-  height: 240px;
+  height: 280px;
   overflow: hidden;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: #f8f9fa;
   border-bottom: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
   
+  // Image Carousel
+  .image-carousel {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    
+    .carousel-images {
+      display: flex;
+      height: 100%;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      img.product-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #fff;
+      }
+    }
+    
+    // Navigation Arrows
+    .carousel-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      opacity: 0;
+      transition: all 0.3s ease;
+      
+      ion-icon {
+        font-size: 20px;
+      }
+      
+      &.prev {
+        left: 12px;
+      }
+      
+      &.next {
+        right: 12px;
+      }
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.8);
+        transform: translateY(-50%) scale(1.1);
+      }
+    }
+    
+    // Carousel Dots
+    .carousel-dots {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 5;
+      
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        &.active {
+          width: 20px;
+          border-radius: 3px;
+          background: white;
+        }
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.8);
+        }
+      }
+    }
+  }
+  
+  // Fallback Emoji Display
   .product-image {
     width: 100%;
     height: 100%;
@@ -317,14 +464,6 @@
     align-items: center;
     justify-content: center;
     
-    .product-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    
-    // High-quality emoji for instant recognition - LARGER SIZE
     .product-emoji-large {
       font-size: 120px;
       display: flex;
@@ -336,8 +475,6 @@
       text-shadow: 0 4px 12px rgba(0,0,0,0.15);
       position: relative;
       z-index: 1;
-      
-      // Add subtle animation on hover
       transition: transform 0.3s ease;
     }
     
@@ -353,6 +490,16 @@
     }
   }
   
+  &:hover {
+    .carousel-nav {
+      opacity: 1;
+    }
+    
+    .zoom-indicator {
+      opacity: 1;
+    }
+  }
+  
   .category-badge {
     position: absolute;
     top: 12px;
@@ -362,10 +509,10 @@
     padding: 6px 12px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
-    z-index: 2;
+    z-index: 6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
   
-  // Grade Badge - Better Placement on Image
   .grade-badge-image {
     position: absolute;
     bottom: 12px;
@@ -376,10 +523,33 @@
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(10px);
-    z-index: 2;
+    z-index: 6;
     display: flex;
     align-items: center;
     gap: 6px;
+    
+    ion-icon {
+      font-size: 1rem;
+    }
+  }
+  
+  .zoom-indicator {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 6;
     
     ion-icon {
       font-size: 1rem;
@@ -1267,6 +1437,269 @@
       --background: rgba(146, 148, 151, 0.15);
       --color: #6c757d;
       border: 1px solid rgba(146, 148, 151, 0.3);
+    }
+  }
+}
+
+// ==================== PROFESSIONAL IMAGE GALLERY MODAL ====================
+.image-viewer-modal {
+  --width: 100%;
+  --height: 100%;
+  --border-radius: 0;
+  
+  .image-viewer-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    
+    .viewer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      
+      .product-info-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+        flex: 1;
+        
+        .viewer-emoji {
+          font-size: 40px;
+        }
+        
+        h3 {
+          margin: 0 0 4px 0;
+          font-size: 18px;
+          font-weight: 700;
+        }
+        
+        p {
+          margin: 0;
+          font-size: 13px;
+          opacity: 0.7;
+        }
+      }
+      
+      ion-button {
+        --color: white;
+      }
+    }
+    
+    .main-image-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      
+      .swipeable-gallery {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        .gallery-slide {
+          width: 100%;
+          height: 100%;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          img.full-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.1s ease-out;
+            touch-action: none;
+          }
+        }
+      }
+      
+      // Gallery Navigation Arrows
+      .gallery-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.3s ease;
+        
+        ion-icon {
+          font-size: 24px;
+        }
+        
+        &.prev {
+          left: 20px;
+        }
+        
+        &.next {
+          right: 20px;
+        }
+        
+        &:hover {
+          background: white;
+          transform: translateY(-50%) scale(1.1);
+        }
+      }
+      
+      .zoom-controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+        
+        ion-button {
+          --background: rgba(255, 255, 255, 0.9);
+          --color: #000;
+          --border-radius: 50%;
+          width: 44px;
+          height: 44px;
+          margin: 0;
+          
+          &:hover {
+            --background: rgba(255, 255, 255, 1);
+          }
+        }
+      }
+    }
+    
+    // Thumbnail Strip (Like Amazon/Flipkart)
+    .thumbnail-strip {
+      background: rgba(0, 0, 0, 0.95);
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-x: auto;
+      
+      &::-webkit-scrollbar {
+        height: 4px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+      }
+      
+      .thumbnail-container {
+        display: flex;
+        gap: 8px;
+        
+        .thumbnail {
+          width: 60px;
+          height: 60px;
+          border-radius: 8px;
+          overflow: hidden;
+          cursor: pointer;
+          border: 2px solid transparent;
+          transition: all 0.3s ease;
+          flex-shrink: 0;
+          
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          
+          &.active {
+            border-color: var(--ion-color-primary);
+            box-shadow: 0 0 0 2px rgba(var(--ion-color-primary-rgb), 0.3);
+          }
+          
+          &:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+          }
+        }
+      }
+    }
+    
+    .viewer-details {
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      max-height: 30vh;
+      overflow-y: auto;
+      
+      .detail-row {
+        display: flex;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: white;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        ion-icon {
+          font-size: 24px;
+          color: var(--ion-color-primary);
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+        
+        div {
+          flex: 1;
+          
+          small {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.6;
+            margin-bottom: 4px;
+          }
+          
+          p {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 500;
+            
+            strong {
+              font-size: 18px;
+              color: var(--ion-color-primary);
+            }
+          }
+        }
+      }
+    }
+    
+    .viewer-actions {
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      
+      ion-button {
+        margin: 0;
+        font-weight: 700;
+        font-size: 16px;
+        height: 52px;
+      }
     }
   }
 }

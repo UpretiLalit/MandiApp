@@ -12,7 +12,8 @@ export interface Product {
   currentPrice: number;
   availableQuantity: number;
   minOrderQty?: number; // Minimum order quantity
-  imageUrl?: string;
+  imageUrl?: string; // Primary image (backward compatibility)
+  imageUrls?: string[]; // Multiple product images for gallery
   emoji?: string;
   isActive: boolean;
   priceTiers?: Array<{minQty: number, maxQty: number, price: number}>; // Tiered pricing

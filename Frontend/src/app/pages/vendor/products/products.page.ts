@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { ProductService } from '@core/services/product.service';
 import { Product } from '@core/models/product.model';
+import { AuthService } from '@core/services/auth.service';
 import { LanguageService } from '@core/services/language.service';
 
 @Component({
@@ -116,6 +117,7 @@ export class ProductsPage implements OnInit {
     private alertController: AlertController,
     private loadingController: LoadingController,
     private toastController: ToastController,
+    private authService: AuthService,
     private languageService: LanguageService
   ) {}
 
@@ -144,7 +146,15 @@ export class ProductsPage implements OnInit {
     });
   }
 
-  loadProducts() {
+  async loadProducts() {
+    // Check if user is authenticated
+    if (!this.authService.isAuthenticated()) {
+      console.error('User not authenticated');
+      this.showToast('Please login to continue', 'warning');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
     this.loading = true;
     
     // Load from backend vendor-inventory endpoint for real-time data
@@ -157,7 +167,15 @@ export class ProductsPage implements OnInit {
       error: (error) => {
         console.error('Error loading products:', error);
         this.loading = false;
-        this.showToast('Failed to load products', 'danger');
+        
+        // Handle 401 Unauthorized - token expired or invalid
+        if (error.status === 401) {
+          this.showToast('Session expired. Please login again', 'warning');
+          this.authService.logout();
+          this.router.navigate(['/auth/login']);
+        } else {
+          this.showToast('Failed to load products', 'danger');
+        }
       }
     });
   }

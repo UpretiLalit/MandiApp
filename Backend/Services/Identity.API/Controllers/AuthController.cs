@@ -33,15 +33,26 @@ public class AuthController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("Generating OTP for phone: {PhoneNumber}", request.PhoneNumber);
             var otp = await _otpService.GenerateOtpAsync(request.PhoneNumber);
+            
+            _logger.LogInformation("Attempting to send OTP via WhatsApp to: {PhoneNumber}", request.PhoneNumber);
             await _otpService.SendOtpAsync(request.PhoneNumber, otp);
 
+            _logger.LogInformation("✅ OTP sent successfully to {PhoneNumber}. OTP: {Otp}", request.PhoneNumber, otp);
             return Ok(new { message = "OTP sent successfully", phoneNumber = request.PhoneNumber });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending OTP");
-            return StatusCode(500, new { message = "Failed to send OTP" });
+            _logger.LogError(ex, "❌ Error in SendOtp endpoint for {PhoneNumber}: {ErrorMessage}", request.PhoneNumber, ex.Message);
+            
+            // Return more specific error information
+            return StatusCode(500, new 
+            { 
+                message = "Failed to send OTP. Please try again later.", 
+                error = ex.Message,
+                phoneNumber = request.PhoneNumber 
+            });
         }
     }
 

@@ -110,7 +110,21 @@ export class LoginPage implements OnInit, OnDestroy {
       error: (error) => {
         loading.dismiss();
         console.error('Error sending OTP:', error);
-        this.showError('Failed to send OTP. Please try again.');
+        
+        // Provide specific error messages based on error status
+        let errorMessage = 'Failed to send OTP. Please try again.';
+        
+        if (error.status === 500) {
+          errorMessage = 'Server error. Our OTP service is temporarily unavailable. Please try again in a few minutes.';
+        } else if (error.status === 429) {
+          errorMessage = 'Too many attempts. Please wait a few minutes before trying again.';
+        } else if (error.status === 400) {
+          errorMessage = 'Invalid phone number format. Please check and try again.';
+        } else if (error.status === 0) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        }
+        
+        this.showError(errorMessage);
       }
     });
   }

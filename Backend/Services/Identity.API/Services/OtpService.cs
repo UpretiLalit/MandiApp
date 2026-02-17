@@ -22,26 +22,38 @@ public class OtpService : IOtpService
 
     public async Task<string> GenerateOtpAsync(string phoneNumber)
     {
-        // Generate 6-digit OTP
-        var random = new Random();
-        var otp = random.Next(100000, 999999).ToString();
-
-        var expiryMinutes = _configuration.GetValue<int>("OtpSettings:ExpiryInMinutes", 5);
-
-        var otpVerification = new OtpVerification
+        try
         {
-            PhoneNumber = phoneNumber,
-            OtpCode = otp,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
-            IsVerified = false,
-            Attempts = 0
-        };
+            _logger.LogInformation("Generating OTP for {PhoneNumber}", phoneNumber);
+            
+            // Generate 6-digit OTP
+            var random = new Random();
+            var otp = random.Next(100000, 999999).ToString();
 
-        _context.OtpVerifications.Add(otpVerification);
-        await _context.SaveChangesAsync();
+            var expiryMinutes = _configuration.GetValue<int>("OtpSettings:ExpiryInMinutes", 5);
 
-        return otp;
+            var otpVerification = new OtpVerification
+            {
+                PhoneNumber = phoneNumber,
+                OtpCode = otp,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
+                IsVerified = false,
+                Attempts = 0
+            };
+
+            _logger.LogInformation("Saving OTP to database for {PhoneNumber}", phoneNumber);
+            _context.OtpVerifications.Add(otpVerification);
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("✅ OTP generated and saved: {Otp} for {PhoneNumber}", otp, phoneNumber);
+            return otp;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Failed to generate OTP for {PhoneNumber}: {ErrorMessage}", phoneNumber, ex.Message);
+            throw;
+        }
     }
 
     public async Task<bool> VerifyOtpAsync(string phoneNumber, string otp)

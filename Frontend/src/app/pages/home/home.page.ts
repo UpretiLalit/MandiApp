@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { OrderService } from '@core/services/order.service';
 
 @Component({
   selector: 'app-home',
@@ -10,9 +11,31 @@ import { AuthService } from '@core/services/auth.service';
 export class HomePage implements OnInit {
   userRole: string = '';
   userName: string = '';
+  
+  // Buyer Stats
+  newProductsCount: number = 0;
+  cartItemsCount: number = 0;
+  activeOrdersCount: number = 0;
+  totalOrders: number = 0;
+  totalSpent: number = 0;
+  favoriteVendors: number = 0;
+  
+  // Vendor Stats
+  productsCount: number = 0;
+  pendingOrdersCount: number = 0;
+  totalSales: number = 0;
+  totalRevenue: number = 0;
+  vendorRating: number = 0;
+  
+  // Transporter Stats
+  activeDeliveriesCount: number = 0;
+  completedDeliveries: number = 0;
+  totalEarnings: number = 0;
+  transporterRating: number = 0;
 
   constructor(
     private authService: AuthService,
+    private orderService: OrderService,
     public router: Router
   ) {}
 
@@ -21,39 +44,81 @@ export class HomePage implements OnInit {
     if (user) {
       this.userRole = user.role;
       this.userName = user.fullName;
-      this.navigateBasedOnRole();
+      this.loadDashboardStats();
     }
   }
 
-  navigateBasedOnRole() {
-    console.log('🏠 HOME PAGE navigateBasedOnRole() called for role:', this.userRole);
+  loadDashboardStats() {
     switch (this.userRole) {
       case 'Buyer':
-        console.log('🛒 HOME: Redirecting Buyer to /marketplace');
-        this.router.navigate(['/marketplace']);
+        this.loadBuyerStats();
         break;
       case 'Vendor':
-        console.log('🏪 HOME: Redirecting Vendor to /vendor/products');
-        this.router.navigate(['/vendor/products']);
+        this.loadVendorStats();
         break;
       case 'Transporter':
-        console.log('🚚 HOME: Redirecting Transporter to /transporter/dashboard');
-        this.router.navigate(['/transporter/dashboard']);
+        this.loadTransporterStats();
         break;
-      default:
-        console.log('❌ HOME: No role, redirecting to login');
-        this.router.navigate(['/auth/login']);
+    }
+  }
+
+  loadBuyerStats() {
+    // Load cart count
+    this.orderService.getCart().subscribe({
+      next: (cart) => {
+        this.cartItemsCount = cart.cartItems?.length || 0;
+      },
+      error: (error) => console.error('Error loading cart:', error)
+    });
+    
+    // Mock data for now - replace with actual API calls
+    this.newProductsCount = 12;
+    this.activeOrdersCount = 3;
+    this.totalOrders = 45;
+    this.totalSpent = 15680;
+    this.favoriteVendors = 8;
+  }
+
+  loadVendorStats() {
+    // Mock data - replace with actual API calls
+    this.productsCount = 24;
+    this.pendingOrdersCount = 7;
+    this.totalSales = 156;
+    this.totalRevenue = 45300;
+    this.vendorRating = 4.5;
+  }
+
+  loadTransporterStats() {
+    // Mock data - replace with actual API calls
+    this.activeDeliveriesCount = 5;
+    this.completedDeliveries = 89;
+    this.totalEarnings = 12450;
+    this.transporterRating = 4.8;
+  }
+
+  getRoleIcon(): string {
+    switch (this.userRole) {
+      case 'Buyer': return 'basket';
+      case 'Vendor': return 'storefront';
+      case 'Transporter': return 'car-sport';
+      default: return 'person';
+    }
+  }
+
+  getRoleDescription(): string {
+    switch (this.userRole) {
+      case 'Buyer': return 'Browse fresh products and manage your orders';
+      case 'Vendor': return 'Manage your inventory and track sales';
+      case 'Transporter': return 'Manage deliveries and track earnings';
+      default: return 'Mandi App Dashboard';
     }
   }
 
   async logout() {
     await this.authService.logout();
-    // Clear all storage
     localStorage.clear();
     sessionStorage.clear();
-    // Replace URL to prevent back navigation
     this.router.navigate(['/auth/login'], { replaceUrl: true });
-    // Force reload to clear any cached state
     window.location.href = '/auth/login';
   }
 }

@@ -172,6 +172,20 @@
     "quick_price_desc": "Adjust prices with sliders instantly",
     "fill_details": "Fill in the details below"
   },
+  "orders": {
+    "pending": "Pending",
+    "processing": "Processing",
+    "in_transit": "In Transit",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "placed": "Placed",
+    "order_placed": "Order received, waiting confirmation",
+    "order_processing": "Vendor is preparing your order",
+    "order_in_transit": "On the way to delivery location",
+    "order_delivered": "Successfully delivered",
+    "no_orders": "No orders yet",
+    "start_shopping": "Start shopping to place your first order"
+  },
   "buyer": {
     "welcome": "Welcome Buyer! You can now browse and order products.",
     "marketplace": "Marketplace",

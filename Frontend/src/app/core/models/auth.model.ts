@@ -5,6 +5,7 @@ export interface User {
   email?: string;
   role: 'Buyer' | 'Vendor' | 'Transporter' | 'Admin';
   companyName?: string;
+  address?: string;
 }
 
 export interface AuthResponse {

@@ -18,6 +18,9 @@
       <ion-button (click)="toggleSearch()">
         <ion-icon [name]="showSearch ? 'close' : 'search-outline'"></ion-icon>
       </ion-button>
+      <ion-button (click)="goToOrders()">
+        <ion-icon name="receipt-outline"></ion-icon>
+      </ion-button>
       <ion-button (click)="goToCart()">
         <ion-icon name="cart-outline"></ion-icon>
         <ion-badge *ngIf="cartCount > 0" color="danger">{{cartCount}}</ion-badge>
@@ -120,153 +123,48 @@
       </ion-button>
     </div>
 
-    <!-- Product Cards Grid -->
+    <!-- Product Cards with Inline Vendor Comparison -->
     <div class="products-grid">
-      <ion-card *ngFor="let product of filteredProducts" class="product-card accordion-card">
+      <div class="product-wrapper" *ngFor="let product of filteredProducts">
+        <!-- Product Card -->
+        <app-product-card 
+          [product]="product"
+          [showVendorInfo]="true"
+          [showGrade]="true"
+          (productClick)="toggleProductExpansion(product.name)"
+          (imageClick)="openImageViewer(product)"
+          (addToCart)="quickBuyBestPrice(product)">
+        </app-product-card>
         
-        <!-- Product Image with High-Quality Emoji Icon - MOVED OUTSIDE ACCORDION -->
-        <div class="product-image-container">
-          <div class="product-image">
-            <!-- High-quality emoji for instant recognition -->
-            <div class="product-img product-emoji-large">
-              {{product.emoji || '🥬'}}
-            </div>
-            <div class="gradient-overlay" [ngClass]="getGradientClass(product.category)"></div>
-          </div>
-          <ion-badge class="category-badge" [color]="product.category === 'Vegetables' ? 'success' : product.category === 'Fruits' ? 'warning' : 'primary'">
-            {{ product.category | categoryName }}
-          </ion-badge>
-          <!-- Grade Badge - Moved to Image Container -->
-          <ion-badge 
-            class="grade-badge-image" 
-            [color]="product.vendors[0].grade === 'A' ? 'success' : product.vendors[0].grade === 'B' ? 'warning' : 'danger'">
-            <ion-icon name="ribbon"></ion-icon>
-            Grade {{product.vendors[0].grade}}
-          </ion-badge>
-        </div>
-        
-        <!-- Accordion Main Row -->
-        <div class="accordion-header" (click)="toggleProductExpansion(product.name)">
-          
-          <!-- Product Info -->
-          <ion-card-content class="accordion-main-content">
-            <div class="product-header">
-              <div class="product-title-row">
-                <span class="product-emoji">{{product.emoji || '🥬'}}</span>
-                <h2 class="product-name">{{ product.name | productName }}</h2>
-                <ion-chip class="unit-chip">
-                  <ion-icon name="cube-outline"></ion-icon>
-                  <ion-label>{{ product.unit | unitName }}</ion-label>
-                  <span class="unit-separator">•</span>
-                  <span class="unit-weight">{{product.unitWeight}}</span>
-                </ion-chip>
-              </div>
-            </div>
+        <!-- Vendor Comparison (shown when expanded) -->
+        <div class="vendor-comparison-section" *ngIf="isProductExpanded(product.name)">
+          <ion-card class="comparison-card">
+            <ion-card-header>
+              <ion-card-title>
+                <ion-icon name="people-outline"></ion-icon>
+                Compare Vendors
+              </ion-card-title>
+            </ion-card-header>
             
-            <!-- Starting Price Display -->
-            <div class="starting-price-card">
-              <span class="price-label">Best Price</span>
-              <div class="price-display">
-                <span class="currency">₹</span>
-                <span class="amount">{{product.vendors[0].price}}</span>
-                <span class="per-unit">/{{ product.unit | unitName }}</span>
-              </div>
-              <span class="vendor-count">{{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}} available</span>
-            </div>
-            
-            <!-- Compare Button: below pricing for uniform design -->
-            <button class="expand-indicator">
-              <ion-icon 
-                [name]="isProductExpanded(product.name) ? 'chevron-up' : 'chevron-down'" 
-                class="expand-icon">
-              </ion-icon>
-              <span class="expand-text">Compare Vendors</span>
-            </button>
-            
-          </ion-card-content>
-        </div>
-          
-        <!-- Quick Buy Section with Quantity Stepper -->
-        <div class="quick-buy-section" (click)="$event.stopPropagation()">
-          <!-- Quantity Stepper - Shown only when activated -->
-          <div class="quantity-stepper" *ngIf="isQuantityStepperVisible(product.name)">
-            <button 
-              class="qty-btn"
-              [disabled]="!canDecrement(product)"
-              (click)="decrementQuantity(product, $event)">
-              <ion-icon name="remove"></ion-icon>
-            </button>
-            <div class="qty-display">
-              <span class="qty-value">{{getProductQuantity(product.name)}}</span>
-              <span class="qty-unit">{{product.unit}}</span>
-            </div>
-            <button 
-              class="qty-btn"
-              [disabled]="!canIncrement(product)"
-              (click)="incrementQuantity(product, $event)">
-              <ion-icon name="add"></ion-icon>
-            </button>
-          </div>
+            <ion-card-content>
+              <!-- Vendor List for Comparison -->
+              <div class="vendor-list">
+                <div *ngFor="let vendor of product.vendors; let i = index" 
+                     class="vendor-item" 
+                     [class.best-price]="i === 0"
+                   [class.rank-2]="i === 1"
+                   [class.rank-3]="i === 2"
+                   [class.expanded]="isVendorExpanded(product.name, vendor.vendorId)"
+                   (click)="toggleVendorExpansion(product.name, vendor.vendorId, $event)">
+                
+                <!-- Vendor Ranking Badge -->
+                <div class="rank-badge" *ngIf="i < 3">
+                  <ion-icon [name]="i === 0 ? 'trophy' : i === 1 ? 'medal' : 'ribbon'"></ion-icon>
+                  <span>#{{i + 1}}</span>
+                </div>
 
-          <!-- Quick Buy Button - Changes text based on stepper state -->
-          <ion-button 
-            expand="block"
-            color="success"
-            class="quick-buy-btn"
-            (click)="quickBuyBestPrice(product)">
-            <ion-icon [name]="isQuantityStepperVisible(product.name) ? 'cart' : 'flash'" slot="start"></ion-icon>
-            <div class="quick-buy-content">
-              <span class="quick-buy-label">{{isQuantityStepperVisible(product.name) ? 'Add to Cart' : 'Quick Buy'}}</span>
-              <span class="quick-buy-price">{{product.vendors[0].pricePerUnit}}</span>
-            </div>
-            <ion-icon [name]="isQuantityStepperVisible(product.name) ? 'checkmark' : 'cart'" slot="end"></ion-icon>
-          </ion-button>
-          <p class="quick-buy-hint">
-            <ion-icon name="information-circle-outline"></ion-icon>
-            <span>Best price vendor • Fast checkout</span>
-          </p>
-        </div>
-
-        <!-- Vendor Comparison List - Expandable Accordion Content -->
-        <div class="vendors-comparison accordion-content" *ngIf="isProductExpanded(product.name)">
-          <div class="comparison-header">
-            <ion-icon name="analytics-outline"></ion-icon>
-            <span>All Vendors - Choose by Trust or Price</span>
-          </div>
-          
-          <div class="comparison-info">
-            <div class="info-chips">
-              <ion-chip color="success" class="info-chip">
-                <ion-icon name="checkmark-circle"></ion-icon>
-                <ion-label>Best Value</ion-label>
-              </ion-chip>
-              <ion-chip color="primary" class="info-chip">
-                <ion-icon name="people"></ion-icon>
-                <ion-label>{{product.vendors.length}} Vendors</ion-label>
-              </ion-chip>
-            </div>
-          </div>
-          
-          <div *ngFor="let vendor of product.vendors; let i = index" 
-               class="vendor-item" 
-               [class.best-price]="i === 0"
-               [class.rank-2]="i === 1"
-               [class.rank-3]="i === 2"
-               [class.expanded]="isVendorExpanded(product.name, vendor.vendorId)"
-               (click)="toggleVendorExpansion(product.name, vendor.vendorId, $event)">
-            
-            <!-- Best Value Tag -->
-            <div class="best-tag" *ngIf="i === 0">
-              <ion-icon name="trophy"></ion-icon>
-              <span>Best Value</span>
-            </div>
-            
-            <!-- Rank Badge -->
-            <ion-badge class="rank-badge" *ngIf="i > 0 && i < 3" [color]="i === 1 ? 'warning' : 'medium'">
-              #{{i + 1}}
-            </ion-badge>
-            
-            <div class="vendor-content">
+                <!-- Vendor Basic Info -->
+                <div class="vendor-content">
               <!-- Vendor Details -->
               <div class="vendor-details">
                 <div class="vendor-name-row">
@@ -345,11 +243,132 @@
             </div>
           </div>
         </div>
+        </ion-card-content>
       </ion-card>
     </div>
+      </div> <!-- Close product-wrapper -->
+    </div> <!-- Close products-grid -->
 
-  </div>
-</ion-content>
+  </div> <!-- Close marketplace-container -->
+
+  <!-- Professional Image Gallery Modal - LIKE ZOMATO/SWIGGY -->
+  <ion-modal [isOpen]="isImageViewerOpen" (didDismiss)="closeImageViewer()" class="image-viewer-modal">
+  <ng-template>
+    <div class="image-viewer-container">
+      <!-- Header -->
+      <div class="viewer-header">
+        <div class="product-info-header">
+          <span class="viewer-emoji">{{selectedProduct?.emoji || '🥬'}}</span>
+          <div>
+            <h3>{{ selectedProduct?.name | productName }}</h3>
+            <p>{{ selectedProduct?.category | categoryName }} • {{currentViewerImageIndex + 1}}/{{getProductImages().length}}</p>
+          </div>
+        </div>
+        <ion-button fill="clear" (click)="closeImageViewer()">
+          <ion-icon name="close" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+
+      <!-- Main Swipeable Image Gallery -->
+      <div class="main-image-container" 
+           (touchstart)="handleViewerTouchStart($event)"
+           (touchmove)="handleViewerTouchMove($event)"
+           (touchend)="handleViewerTouchEnd($event)">
+        
+        <div class="swipeable-gallery" 
+             [style.transform]="'translateX(-' + (currentViewerImageIndex * 100) + '%)'">
+          <div class="gallery-slide" *ngFor="let imageUrl of getProductImages()">
+            <img [src]="imageUrl" 
+                 [alt]="selectedProduct?.name"
+                 class="full-image"
+                 [style.transform]="'scale(' + zoomLevel + ') translate(' + panX + 'px, ' + panY + 'px)'"
+                 (touchstart)="handleTouchStart($event)"
+                 (touchmove)="handleTouchMove($event)"
+                 (touchend)="handleTouchEnd($event)"
+                 (error)="handleImageError($event)">
+          </div>
+        </div>
+        
+        <!-- Gallery Navigation -->
+        <button class="gallery-nav prev" 
+                *ngIf="getProductImages().length > 1"
+                (click)="previousViewerImage()">
+          <ion-icon name="chevron-back"></ion-icon>
+        </button>
+        <button class="gallery-nav next" 
+                *ngIf="getProductImages().length > 1"
+                (click)="nextViewerImage()">
+          <ion-icon name="chevron-forward"></ion-icon>
+        </button>
+        
+        <!-- Zoom Controls -->
+        <div class="zoom-controls">
+          <ion-button fill="solid" size="small" (click)="zoomIn()">
+            <ion-icon name="add" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button fill="solid" size="small" (click)="resetZoom()">
+            <ion-icon name="contract-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button fill="solid" size="small" (click)="zoomOut()">
+            <ion-icon name="remove" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+
+      <!-- Thumbnail Strip -->
+      <div class="thumbnail-strip" *ngIf="getProductImages().length > 1">
+        <div class="thumbnail-container">
+          <div *ngFor="let imageUrl of getProductImages(); let i = index"
+               class="thumbnail"
+               [class.active]="i === currentViewerImageIndex"
+               (click)="setViewerImageIndex(i)">
+            <img [src]="imageUrl" [alt]="selectedProduct?.name">
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Details -->
+      <div class="viewer-details">
+        <div class="detail-row">
+          <ion-icon name="pricetag-outline"></ion-icon>
+          <div>
+            <small>Best Price</small>
+            <p><strong>₹{{selectedProduct?.vendors[0]?.price}}/{{ selectedProduct?.unit | unitName }}</strong></p>
+          </div>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="cube-outline"></ion-icon>
+          <div>
+            <small>Unit</small>
+            <p>{{ selectedProduct?.unit | unitName }} • {{selectedProduct?.unitWeight}}</p>
+          </div>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="ribbon-outline"></ion-icon>
+          <div>
+            <small>Grade</small>
+            <p>Grade {{selectedProduct?.vendors[0]?.grade}} Quality</p>
+          </div>
+        </div>
+        <div class="detail-row" *ngIf="selectedProduct?.description">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <div>
+            <small>Description</small>
+            <p>{{selectedProduct?.description}}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="viewer-actions">
+        <ion-button expand="block" color="primary" (click)="addToCartFromViewer()">
+          <ion-icon name="cart-outline" slot="start"></ion-icon>
+          Add to Cart • ₹{{selectedProduct?.vendors[0]?.price}}
+        </ion-button>
+      </div>
+    </div>
+  </ng-template>
+</ion-modal>
 
 <!-- Floating Cart Button -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="cartCount > 0">
@@ -357,3 +376,4 @@
     <ion-icon name="cart"></ion-icon>
   </ion-fab-button>
 </ion-fab>
+</ion-content>

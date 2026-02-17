@@ -1,0 +1,411 @@
+// ==================== PROFESSIONAL PRODUCT CARD ====================
+// International B2B Design Standards
+
+.product-card {
+  margin: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  background: white;
+  
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    
+    .image-nav {
+      opacity: 1;
+    }
+  }
+  
+  &.compact {
+    .image-container {
+      height: 180px;
+    }
+    
+    .product-content {
+      padding: 12px;
+    }
+  }
+}
+
+// ==================== IMAGE CONTAINER ====================
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  
+  // Product Image with Supabase Transformation
+  .product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px 16px 0 0;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    
+    &.loaded {
+      opacity: 1;
+    }
+  }
+  
+  // Emoji Fallback
+  .emoji-fallback {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    
+    .product-emoji {
+      font-size: 100px;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      animation: float 3s ease-in-out infinite;
+    }
+  }
+  
+  // Image Navigation
+  .image-nav {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    
+    .nav-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: all;
+      transition: all 0.2s ease;
+      
+      ion-icon {
+        font-size: 18px;
+        color: #333;
+      }
+      
+      &:hover {
+        background: white;
+        transform: scale(1.1);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+  
+  // Badges
+  .image-count-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+    
+    ion-icon {
+      font-size: 14px;
+    }
+  }
+  
+  .category-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    font-weight: 600;
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 3;
+  }
+  
+  .grade-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    font-weight: 700;
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+    
+    ion-icon {
+      font-size: 14px;
+    }
+  }
+}
+
+// ==================== SKELETON SHIMMER LOADER ====================
+.skeleton-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  z-index: 1;
+  
+  .shimmer-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 25%,
+      rgba(255, 255, 255, 0.6) 50%,
+      rgba(255, 255, 255, 0.4) 75%,
+      transparent 100%
+    );
+    animation: shimmer 2s infinite;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+// ==================== PRODUCT CONTENT ====================
+.product-content {
+  padding: 16px;
+  
+  .product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+    
+    .product-name {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a1a;
+      line-height: 1.3;
+      flex: 1;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    }
+    
+    .product-emoji-small {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+  }
+  
+  .unit-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+    
+    ion-icon {
+      font-size: 16px;
+      color: #6c757d;
+    }
+  }
+  
+  .price-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    
+    .price-main {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      
+      .currency {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ion-color-primary);
+      }
+      
+      .amount {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--ion-color-primary);
+        line-height: 1;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      
+      .per-unit {
+        font-size: 13px;
+        color: #6c757d;
+        font-weight: 600;
+      }
+    }
+    
+    .stock-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+    }
+  }
+  
+  .vendor-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+    
+    ion-icon {
+      font-size: 16px;
+    }
+    
+    .rating-chip {
+      height: 22px;
+      margin-left: auto;
+      
+      ion-icon {
+        font-size: 12px;
+        margin-right: 2px;
+      }
+      
+      ion-label {
+        font-size: 11px;
+        font-weight: 700;
+        margin: 0;
+      }
+    }
+  }
+  
+  .add-cart-btn {
+    margin: 0;
+    font-weight: 700;
+    font-size: 14px;
+    height: 44px;
+    --border-radius: 12px;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    
+    ion-icon {
+      font-size: 20px;
+    }
+  }
+}
+
+// ==================== RESPONSIVE DESIGN ====================
+@media (max-width: 576px) {
+  .product-card {
+    border-radius: 12px;
+    
+    .image-container {
+      height: 220px;
+    }
+    
+    .product-content {
+      padding: 12px;
+      
+      .product-header .product-name {
+        font-size: 15px;
+      }
+      
+      .price-section .price-main .amount {
+        font-size: 24px;
+      }
+    }
+  }
+}
+
+// ==================== DARK MODE SUPPORT ====================
+@media (prefers-color-scheme: dark) {
+  .product-card {
+    background: #1a1a1a;
+    
+    .product-content {
+      .product-name {
+        color: #ffffff;
+      }
+      
+      .unit-info,
+      .vendor-info {
+        color: #b0b0b0;
+        
+        ion-icon {
+          color: #b0b0b0;
+        }
+      }
+      
+      .price-section {
+        background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+        
+        .per-unit {
+          color: #b0b0b0;
+        }
+      }
+    }
+  }
+  
+  .skeleton-loader {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+  }
+}

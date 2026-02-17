@@ -1,0 +1,108 @@
+<ion-card class="product-card" [class.compact]="compact" (click)="onCardClick()">
+  <!-- Professional Image Container with Shimmer Loading -->
+  <div class="image-container" (click)="onImageAreaClick($event)">
+    
+    <!-- Skeleton Shimmer Loader -->
+    <div class="skeleton-loader" *ngIf="!imageLoaded">
+      <div class="shimmer-wrapper">
+        <div class="shimmer"></div>
+      </div>
+    </div>
+
+    <!-- Product Image with Supabase Transformation -->
+    <img 
+      *ngIf="!imageError && transformedImageUrl"
+      [src]="transformedImageUrl" 
+      [alt]="product.name"
+      class="product-image"
+      [class.loaded]="imageLoaded"
+      (load)="onImageLoad()"
+      (error)="onImageError()"
+      loading="lazy">
+
+    <!-- Fallback Emoji Display -->
+    <div class="emoji-fallback" *ngIf="imageError || !transformedImageUrl">
+      <span class="product-emoji">{{product.emoji || '🥬'}}</span>
+    </div>
+
+    <!-- Image Navigation for Multiple Photos -->
+    <div class="image-nav" *ngIf="hasMultipleImages() && imageLoaded">
+      <button class="nav-btn prev" (click)="previousImage($event)">
+        <ion-icon name="chevron-back"></ion-icon>
+      </button>
+      <button class="nav-btn next" (click)="nextImage($event)">
+        <ion-icon name="chevron-forward"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Image Counter Badge -->
+    <ion-badge class="image-count-badge" *ngIf="getImageCount() > 1">
+      <ion-icon name="images-outline"></ion-icon>
+      {{currentImageIndex + 1}}/{{getImageCount()}}
+    </ion-badge>
+
+    <!-- Category Badge -->
+    <ion-badge class="category-badge" 
+               [color]="product.category === 'Vegetables' ? 'success' : 
+                        product.category === 'Fruits' ? 'warning' : 'primary'">
+      {{product.category}}
+    </ion-badge>
+
+    <!-- Grade Badge -->
+    <ion-badge class="grade-badge" 
+               *ngIf="showGrade"
+               [color]="getGradeColor()">
+      <ion-icon name="ribbon"></ion-icon>
+      Grade {{getGrade()}}
+    </ion-badge>
+  </div>
+
+  <!-- Product Details -->
+  <ion-card-content class="product-content">
+    <!-- Product Title -->
+    <div class="product-header">
+      <h3 class="product-name">{{product.name}}</h3>
+      <span class="product-emoji-small">{{product.emoji || '🥬'}}</span>
+    </div>
+
+    <!-- Unit Information -->
+    <div class="unit-info">
+      <ion-icon name="cube-outline"></ion-icon>
+      <span>{{product.unit}} • {{product.unitWeight}}</span>
+    </div>
+
+    <!-- Price Section -->
+    <div class="price-section">
+      <div class="price-main">
+        <span class="currency">₹</span>
+        <span class="amount">{{getBestPrice()}}</span>
+        <span class="per-unit">/{{product.unit}}</span>
+      </div>
+      <ion-badge class="stock-badge" 
+                 [color]="product.availableQuantity > 10 ? 'success' : 
+                          product.availableQuantity > 0 ? 'warning' : 'danger'">
+        {{product.availableQuantity > 0 ? 'In Stock' : 'Out of Stock'}}
+      </ion-badge>
+    </div>
+
+    <!-- Vendor Info (Optional) -->
+    <div class="vendor-info" *ngIf="showVendorInfo && product.vendors && product.vendors.length > 0">
+      <ion-icon name="storefront-outline"></ion-icon>
+      <span>{{product.vendors.length}} vendor{{product.vendors.length > 1 ? 's' : ''}}</span>
+      <ion-chip class="rating-chip" *ngIf="product.vendors[0].rating">
+        <ion-icon name="star" color="warning"></ion-icon>
+        <ion-label>{{product.vendors[0].rating}}</ion-label>
+      </ion-chip>
+    </div>
+
+    <!-- Add to Cart Button -->
+    <ion-button 
+      expand="block" 
+      class="add-cart-btn"
+      [disabled]="product.availableQuantity <= 0"
+      (click)="onAddToCartClick($event)">
+      <ion-icon name="cart-outline" slot="start"></ion-icon>
+      {{product.availableQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}}
+    </ion-button>
+  </ion-card-content>
+</ion-card>

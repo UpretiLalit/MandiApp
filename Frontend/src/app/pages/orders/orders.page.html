@@ -3,8 +3,12 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>My Orders</ion-title>
+    <ion-title class="page-title">
+      <ion-icon name="receipt-outline" class="title-icon"></ion-icon>
+      {{ 'buyer.my_orders' | translate }}
+    </ion-title>
     <ion-buttons slot="end">
+      <app-language-selector></app-language-selector>
       <ion-button (click)="loadOrders()">
         <ion-icon name="refresh-outline"></ion-icon>
       </ion-button>
@@ -17,7 +21,7 @@
       <ion-segment-button value="all">
         <ion-label>
           <div class="filter-label">
-            <span>All</span>
+            <span>{{ 'common.all' | translate }}</span>
             <ion-badge color="medium">{{orders.length}}</ion-badge>
           </div>
         </ion-label>
@@ -25,7 +29,7 @@
       <ion-segment-button value="Pending">
         <ion-label>
           <div class="filter-label">
-            <span>Pending</span>
+            <span>{{ 'orders.pending' | translate }}</span>
             <ion-badge color="warning">{{getStatusCount('Pending')}}</ion-badge>
           </div>
         </ion-label>
@@ -33,7 +37,7 @@
       <ion-segment-button value="Processing">
         <ion-label>
           <div class="filter-label">
-            <span>Processing</span>
+            <span>{{ 'orders.processing' | translate }}</span>
             <ion-badge color="secondary">{{getStatusCount('Processing')}}</ion-badge>
           </div>
         </ion-label>
@@ -41,7 +45,7 @@
       <ion-segment-button value="InTransit">
         <ion-label>
           <div class="filter-label">
-            <span>In Transit</span>
+            <span>{{ 'orders.in_transit' | translate }}</span>
             <ion-badge color="primary">{{getStatusCount('InTransit')}}</ion-badge>
           </div>
         </ion-label>
@@ -49,7 +53,7 @@
       <ion-segment-button value="Delivered">
         <ion-label>
           <div class="filter-label">
-            <span>Delivered</span>
+            <span>{{ 'orders.delivered' | translate }}</span>
             <ion-badge color="success">{{getStatusCount('Delivered')}}</ion-badge>
           </div>
         </ion-label>

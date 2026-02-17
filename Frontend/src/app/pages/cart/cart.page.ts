@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { OrderService } from '@core/services/order.service';
 import { Cart, CartItem } from '@core/models/order.model';
+import { AuthService } from '@core/services/auth.service';
 import { environment } from '@environments/environment';
 
 @Component({
@@ -35,15 +36,25 @@ export class CartPage implements OnInit {
     private router: Router,
     private alertController: AlertController,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    this.loadUserAddress();
     this.loadCart();
   }
 
   ionViewWillEnter() {
+    this.loadUserAddress();
     this.loadCart();
+  }
+
+  loadUserAddress() {
+    const user = this.authService.getCurrentUser();
+    if (user && user.address) {
+      this.deliveryAddress = user.address;
+    }
   }
 
   async loadCart() {
