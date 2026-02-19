@@ -59,15 +59,23 @@ public class AuthController : ControllerBase
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
     {
+        _logger.LogInformation("🔍 Verifying OTP for PhoneNumber: {PhoneNumber}, OTP: {Otp}", request.PhoneNumber, request.Otp);
+        
         var isValid = await _otpService.VerifyOtpAsync(request.PhoneNumber, request.Otp);
 
         if (!isValid)
+        {
+            _logger.LogWarning("❌ Invalid OTP for PhoneNumber: {PhoneNumber}, OTP: {Otp}", request.PhoneNumber, request.Otp);
             return BadRequest(new { message = "Invalid or expired OTP" });
+        }
 
+        _logger.LogInformation("✅ OTP verified successfully for {PhoneNumber}", request.PhoneNumber);
+        
         var user = await _userManager.FindByNameAsync(request.PhoneNumber);
 
         if (user == null)
         {
+            _logger.LogInformation("👤 New user detected: {PhoneNumber}", request.PhoneNumber);
             // New user - return registration required flag
             return Ok(new
             {
@@ -77,6 +85,8 @@ public class AuthController : ControllerBase
             });
         }
 
+        _logger.LogInformation("👤 Existing user found: {UserId}, Role: {Role}", user.Id, user.Role);
+        
         // Existing user - generate token
         user.LastLoginAt = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);

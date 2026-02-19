@@ -94,11 +94,21 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// CORS must be before Authentication and Authorization
+app.UseCors("AllowAll");
+
 // Disable HTTPS redirection when using Cloudflare Tunnel
 // app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Log configuration on startup
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("🚀 Identity API starting...");
+logger.LogInformation("🔧 Dev Bypass: {DevBypass}", app.Configuration.GetValue<bool>("OtpSettings:EnableDevBypass"));
+logger.LogInformation("🔧 Disable OTP Sending: {DisableSending}", app.Configuration.GetValue<bool>("OtpSettings:DisableSending"));
+logger.LogInformation("🌐 Allowed Origins: {Origins}", string.Join(", ", app.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>()));
 
 app.Run();

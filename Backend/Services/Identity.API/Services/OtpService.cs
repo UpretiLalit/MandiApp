@@ -58,8 +58,12 @@ public class OtpService : IOtpService
 
     public async Task<bool> VerifyOtpAsync(string phoneNumber, string otp)
     {
+        _logger.LogInformation("🔍 VerifyOtpAsync called - PhoneNumber: {PhoneNumber}, OTP: {Otp}", phoneNumber, otp);
+        
         // Check if dev bypass is enabled in configuration
         var enableDevBypass = _configuration.GetValue<bool>("OtpSettings:EnableDevBypass", false);
+        
+        _logger.LogInformation("🔧 Dev Bypass Enabled: {EnableDevBypass}", enableDevBypass);
         
         if (enableDevBypass && otp == "123456")
         {
@@ -67,18 +71,26 @@ public class OtpService : IOtpService
             return true;
         }
         
+        _logger.LogInformation("🔎 Looking up OTP in database for {PhoneNumber}", phoneNumber);
+        
         var otpRecord = await _context.OtpVerifications
             .Where(o => o.PhoneNumber == phoneNumber && o.OtpCode == otp && !o.IsVerified)
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
 
         if (otpRecord == null)
+        {
+            _logger.LogWarning("❌ No OTP record found for PhoneNumber: {PhoneNumber}, OTP: {Otp}", phoneNumber, otp);
             return false;
+        }
 
+        _logger.LogInformation("📝 OTP record found - Attempts: {Attempts}, ExpiresAt: {ExpiresAt}", otpRecord.Attempts, otpRecord.ExpiresAt);
+        
         otpRecord.Attempts++;
 
         if (otpRecord.ExpiresAt < DateTime.UtcNow)
         {
+            _logger.LogWarning("⏰ OTP expired for {PhoneNumber}", phoneNumber);
             await _context.SaveChangesAsync();
             return false;
         }
@@ -86,12 +98,15 @@ public class OtpService : IOtpService
         var maxAttempts = _configuration.GetValue<int>("OtpSettings:MaxAttempts", 3);
         if (otpRecord.Attempts > maxAttempts)
         {
+            _logger.LogWarning("🚫 Max attempts exceeded for {PhoneNumber}", phoneNumber);
             await _context.SaveChangesAsync();
             return false;
         }
 
         otpRecord.IsVerified = true;
         await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("✅ OTP verified successfully for {PhoneNumber}", phoneNumber);
 
         return true;
     }
