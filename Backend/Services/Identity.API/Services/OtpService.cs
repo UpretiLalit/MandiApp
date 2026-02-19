@@ -100,6 +100,15 @@ public class OtpService : IOtpService
     {
         try
         {
+            // Check if OTP sending is disabled
+            var disableOtpSending = _configuration.GetValue<bool>("OtpSettings:DisableSending", false);
+            
+            if (disableOtpSending)
+            {
+                _logger.LogWarning("📱 OTP SENDING DISABLED - OTP for {PhoneNumber}: {Otp}", phoneNumber, otp);
+                return;
+            }
+
             var accountSid = _configuration["TwilioSettings:AccountSid"];
             var authToken = _configuration["TwilioSettings:AuthToken"];
             var whatsappFrom = _configuration["TwilioSettings:WhatsAppFrom"];
