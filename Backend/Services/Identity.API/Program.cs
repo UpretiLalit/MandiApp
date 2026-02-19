@@ -64,10 +64,22 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 
-// CORS
+// CORS - Allow specific origins including localhost for development
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
+    ?? new[] { "http://localhost:4200", "http://localhost:8100" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+    
+    // Fallback policy for development
+    options.AddPolicy("AllowAllOrigins", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
