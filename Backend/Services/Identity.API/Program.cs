@@ -139,10 +139,10 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Log configuration on startup
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("🚀 Identity API starting...");
-logger.LogInformation("🔧 Dev Bypass: {DevBypass}", app.Configuration.GetValue<bool>("OtpSettings:EnableDevBypass"));
-logger.LogInformation("🔧 Disable OTP Sending: {DisableSending}", app.Configuration.GetValue<bool>("OtpSettings:DisableSending"));
-logger.LogInformation("🌐 Allowed Origins: {Origins}", string.Join(", ", app.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>()));
+var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+startupLogger.LogInformation("🚀 Identity API starting...");
+startupLogger.LogInformation("🔧 Dev Bypass: {DevBypass}", app.Configuration.GetValue<bool>("OtpSettings:EnableDevBypass"));
+startupLogger.LogInformation("🔧 Disable OTP Sending: {DisableSending}", app.Configuration.GetValue<bool>("OtpSettings:DisableSending"));
+startupLogger.LogInformation("🌐 Allowed Origins: {Origins}", string.Join(", ", app.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>()));
 
 app.Run();
