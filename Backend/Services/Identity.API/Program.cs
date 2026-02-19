@@ -89,6 +89,40 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Auto-migrate database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        logger.LogInformation("📊 Checking database schema...");
+        
+        // Add Language column if it doesn't exist
+        var sql = @"
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'AspNetUsers' AND column_name = 'Language'
+                ) THEN
+                    ALTER TABLE ""AspNetUsers"" 
+                    ADD COLUMN ""Language"" VARCHAR(10) NOT NULL DEFAULT 'en';
+                    RAISE NOTICE 'Language column added';
+                END IF;
+            END $$;
+        ";
+        
+        dbContext.Database.ExecuteSqlRaw(sql);
+        logger.LogInformation("✅ Database schema updated successfully");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "❌ Failed to update database schema");
+    }
+}
+
 // Configure the HTTP request pipeline.
 // Enable Swagger in all environments for testing
 app.UseSwagger();
