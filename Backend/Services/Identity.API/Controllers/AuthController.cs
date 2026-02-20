@@ -113,47 +113,65 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var existingUser = await _userManager.FindByNameAsync(request.PhoneNumber);
-        if (existingUser != null)
-            return BadRequest(new { message = "User already exists" });
-
-        var user = new ApplicationUser
+        try
         {
-            UserName = request.PhoneNumber,
-            PhoneNumber = request.PhoneNumber,
-            Email = request.Email,
-            FullName = request.FullName,
-            Role = request.Role,
-            Language = request.Language ?? "en",
-            CompanyName = request.CompanyName,
-            GstNumber = request.GstNumber,
-            Address = request.Address,
-            PhoneNumberConfirmed = true,
-            IsActive = true
-        };
-
-        var result = await _userManager.CreateAsync(user);
-
-        if (!result.Succeeded)
-            return BadRequest(new { message = "Registration failed", errors = result.Errors });
-
-        var token = _tokenService.GenerateJwtToken(user);
-
-        return Ok(new
-        {
-            message = "Registration successful",
-            token,
-            user = new
+            _logger.LogInformation("📝 Registration request for: {PhoneNumber}, Role: {Role}", request.PhoneNumber, request.Role);
+            
+            var existingUser = await _userManager.FindByNameAsync(request.PhoneNumber);
+            if (existingUser != null)
             {
-                user.Id,
-                user.FullName,
-                user.PhoneNumber,
-                user.Email,
-                user.Role,
-                user.Language,
-                user.CompanyName
+                _logger.LogWarning("⚠️ User already exists: {PhoneNumber}", request.PhoneNumber);
+                return BadRequest(new { message = "User already exists" });
             }
-        });
+
+            var user = new ApplicationUser
+            {
+                UserName = request.PhoneNumber,
+                PhoneNumber = request.PhoneNumber,
+                Email = request.Email,
+                FullName = request.FullName,
+                Role = request.Role,
+                Language = request.Language ?? "en",
+                CompanyName = request.CompanyName,
+                GstNumber = request.GstNumber,
+                Address = request.Address,
+                PhoneNumberConfirmed = true,
+                IsActive = true
+            };
+
+            _logger.LogInformation("Creating user in database...");
+            var result = await _userManager.CreateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogError("❌ User creation failed: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
+                return BadRequest(new { message = "Registration failed", errors = result.Errors });
+            }
+
+            _logger.LogInformation("✅ User created successfully. Generating token...");
+            var token = _tokenService.GenerateJwtToken(user);
+
+            return Ok(new
+            {
+                message = "Registration successful",
+                token,
+                user = new
+                {
+                    user.Id,
+                    user.FullName,
+                    user.PhoneNumber,
+                    user.Email,
+                    user.Role,
+                    user.Language,
+                    user.CompanyName
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 Registration exception for {PhoneNumber}", request.PhoneNumber);
+            return StatusCode(500, new { message = "Registration failed", error = ex.Message });
+        }
     }
 
     [Authorize]
