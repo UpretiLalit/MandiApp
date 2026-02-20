@@ -115,19 +115,24 @@ public class AuthController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("📝 Registration request for: {PhoneNumber}, Role: {Role}", request.PhoneNumber, request.Role);
+            // Ensure phone number has country code
+            var phoneWithCountryCode = request.PhoneNumber.StartsWith("+") 
+                ? request.PhoneNumber 
+                : $"+91{request.PhoneNumber}";
             
-            var existingUser = await _userManager.FindByNameAsync(request.PhoneNumber);
+            _logger.LogInformation("📝 Registration request for: {PhoneNumber}, Role: {Role}", phoneWithCountryCode, request.Role);
+            
+            var existingUser = await _userManager.FindByNameAsync(phoneWithCountryCode);
             if (existingUser != null)
             {
-                _logger.LogWarning("⚠️ User already exists: {PhoneNumber}", request.PhoneNumber);
+                _logger.LogWarning("⚠️ User already exists: {PhoneNumber}", phoneWithCountryCode);
                 return BadRequest(new { message = "User already exists" });
             }
 
             var user = new ApplicationUser
             {
-                UserName = request.PhoneNumber,
-                PhoneNumber = request.PhoneNumber,
+                UserName = phoneWithCountryCode,
+                PhoneNumber = phoneWithCountryCode,
                 Email = request.Email,
                 FullName = request.FullName,
                 Role = request.Role,
