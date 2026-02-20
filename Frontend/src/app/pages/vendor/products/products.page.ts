@@ -147,14 +147,6 @@ export class ProductsPage implements OnInit {
   }
 
   async loadProducts() {
-    // Check if user is authenticated
-    if (!this.authService.isAuthenticated()) {
-      console.error('User not authenticated');
-      this.showToast('Please login to continue', 'warning');
-      this.router.navigate(['/auth/login']);
-      return;
-    }
-
     this.loading = true;
     
     // Load from backend vendor-inventory endpoint for real-time data
@@ -167,15 +159,7 @@ export class ProductsPage implements OnInit {
       error: (error) => {
         console.error('Error loading products:', error);
         this.loading = false;
-        
-        // Handle 401 Unauthorized - token expired or invalid
-        if (error.status === 401) {
-          this.showToast('Session expired. Please login again', 'warning');
-          this.authService.logout();
-          this.router.navigate(['/auth/login']);
-        } else {
-          this.showToast('Failed to load products', 'danger');
-        }
+        this.showToast('Failed to load products', 'danger');
       }
     });
   }

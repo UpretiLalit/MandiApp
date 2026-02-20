@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Debug Token</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3880ff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #3171e0;
+        }
+        .success {
+            background: #2dd36f;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            margin-top: 20px;
+            display: none;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Set Debug Token</h1>
+        <p>This will create a dummy token for testing. Use this when backend auth is not working.</p>
+        
+        <button onclick="setDummyToken()">Set Dummy Token (1 Year Expiry)</button>
+        <button onclick="checkToken()" style="background: #ffc409;">Check Current Token</button>
+        <button onclick="clearToken()" style="background: #eb445a;">Clear Token</button>
+        
+        <div id="success" class="success"></div>
+        <textarea id="tokenDisplay" placeholder="Token will appear here..."></textarea>
+    </div>
+
+    <script>
+        function setDummyToken() {
+            // Create a dummy JWT token that expires in 1 year
+            const header = btoa(JSON.stringify({
+                alg: "HS256",
+                typ: "JWT"
+            }));
+            
+            const now = Math.floor(Date.now() / 1000);
+            const payload = btoa(JSON.stringify({
+                sub: "test-vendor-123",
+                unique_name: "+918287433081",
+                role: "Vendor",
+                nameid: "test-vendor-123",
+                language: "en",
+                iat: now,
+                exp: now + (365 * 24 * 60 * 60), // 1 year from now
+                iss: "MandiApp.Identity",
+                aud: "MandiApp.Mobile"
+            }));
+            
+            // Dummy signature (backend won't validate this in dev mode)
+            const signature = "dummy-signature-for-testing";
+            
+            const token = `${header}.${payload}.${signature}`;
+            
+            // Save to localStorage (Capacitor Preferences uses this in browser)
+            localStorage.setItem('auth_token', token);
+            localStorage.setItem('auth_user', JSON.stringify({
+                id: "test-vendor-123",
+                phoneNumber: "+918287433081",
+                role: "Vendor",
+                fullName: "Test Vendor",
+                language: "en",
+                isActive: true
+            }));
+            
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('success').textContent = '✅ Token saved! Reload the app.';
+            document.getElementById('tokenDisplay').value = token;
+        }
+        
+        function checkToken() {
+            const token = localStorage.getItem('auth_token');
+            const user = localStorage.getItem('auth_user');
+            
+            if (token) {
+                document.getElementById('tokenDisplay').value = 
+                    'TOKEN:\n' + token + '\n\nUSER:\n' + user;
+                document.getElementById('success').style.display = 'block';
+                document.getElementById('success').textContent = '✅ Token exists';
+            } else {
+                document.getElementById('tokenDisplay').value = 'No token found';
+                document.getElementById('success').style.display = 'block';
+                document.getElementById('success').style.background = '#eb445a';
+                document.getElementById('success').textContent = '❌ No token found';
+            }
+        }
+        
+        function clearToken() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            localStorage.clear();
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('success').style.background = '#eb445a';
+            document.getElementById('success').textContent = '🗑️ Token cleared';
+            document.getElementById('tokenDisplay').value = '';
+        }
+    </script>
+</body>
+</html>

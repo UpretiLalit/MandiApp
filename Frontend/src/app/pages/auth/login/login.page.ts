@@ -145,8 +145,15 @@ export class LoginPage implements OnInit, OnDestroy {
     // Real API call - verify OTP with backend (add country code)
     const phoneWithCountryCode = '+91' + this.phoneNumber;
     this.authService.verifyOtp({ phoneNumber: phoneWithCountryCode, otp }).subscribe({
-      next: (response: any) => {
+      next: async (response: any) => {
         loading.dismiss();
+        
+        console.log('📥 VERIFY OTP RESPONSE:', response);
+        console.log('🔑 TOKEN:', response.token ? 'EXISTS' : 'MISSING');
+        
+        // Check token was saved
+        const savedToken = await this.authService.getToken();
+        console.log('💾 TOKEN SAVED TO STORAGE:', savedToken ? 'YES' : 'NO');
         
         // Check if new user needs registration
         if (response.isNewUser) {
@@ -186,7 +193,9 @@ export class LoginPage implements OnInit, OnDestroy {
       },
       error: (error) => {
         loading.dismiss();
-        console.error('Error verifying OTP:', error);
+        console.error('❌ VERIFY OTP ERROR:', error);
+        console.error('❌ ERROR STATUS:', error.status);
+        console.error('❌ ERROR RESPONSE:', error.error);
         this.showError('Invalid OTP. Please try again.');
       }
     });

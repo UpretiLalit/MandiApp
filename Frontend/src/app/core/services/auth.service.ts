@@ -95,13 +95,17 @@ export class AuthService {
   async logout() {
     await Preferences.remove({ key: this.TOKEN_KEY });
     await Preferences.remove({ key: this.USER_KEY });
-    // Clear any other stored data
     await Preferences.clear();
     this.currentUserSubject.next(null);
     return true;
   }
 
-  isAuthenticated(): boolean {
+  async isAuthenticated(): Promise<boolean> {
+    const { value: token } = await Preferences.get({ key: this.TOKEN_KEY });
+    return token !== null;
+  }
+
+  isAuthenticatedSync(): boolean {
     return this.currentUserSubject.value !== null;
   }
 
