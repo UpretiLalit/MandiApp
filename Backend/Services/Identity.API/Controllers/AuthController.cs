@@ -141,7 +141,8 @@ public class AuthController : ControllerBase
                 GstNumber = request.GstNumber,
                 Address = request.Address,
                 PhoneNumberConfirmed = true,
-                IsActive = true
+                IsActive = true,
+                Status = "Active"
             };
 
             _logger.LogInformation("Creating user in database...");
