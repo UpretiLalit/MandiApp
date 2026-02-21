@@ -18,10 +18,15 @@ public class Product
     public string? Grade { get; set; } // A, B, C
     public string? PriceTiersJson { get; set; } // JSON string for tiered pricing
     public bool IsActive { get; set; } = true;
+    public bool IsLive { get; set; } = false; // Vendor controls if product is live
+    public Guid? MasterProductId { get; set; } // Link to master product catalog
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
     [JsonIgnore]
     public ICollection<PriceHistory> PriceHistory { get; set; } = new List<PriceHistory>();
+    
+    [JsonIgnore]
+    public MasterProduct? MasterProduct { get; set; }
 }

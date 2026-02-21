@@ -12,10 +12,22 @@ public class MarketplaceDbContext : DbContext
     public DbSet<Product> Products { get; set; }
     public DbSet<PriceHistory> PriceHistories { get; set; }
     public DbSet<VendorInventory> VendorInventories { get; set; }
+    public DbSet<MasterProduct> MasterProducts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<MasterProduct>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Unit).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ImageUrls).HasColumnType("text[]");
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.Name);
+        });
 
         modelBuilder.Entity<Product>(entity =>
         {
@@ -31,6 +43,12 @@ public class MarketplaceDbContext : DbContext
             entity.HasIndex(e => e.VendorId);
             entity.HasIndex(e => e.Category);
             entity.HasIndex(e => e.Grade);
+            entity.HasIndex(e => e.IsLive);
+            
+            entity.HasOne(e => e.MasterProduct)
+                .WithMany()
+                .HasForeignKey(e => e.MasterProductId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<PriceHistory>(entity =>
