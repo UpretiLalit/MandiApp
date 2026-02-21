@@ -4,6 +4,7 @@ import { LoadingController, ToastController, AlertController } from '@ionic/angu
 import { ProductService } from '@core/services/product.service';
 import { OrderService } from '@core/services/order.service';
 import { SignalrService, PriceUpdateEvent } from '@core/services/signalr.service';
+import { MasterProductService, MasterProduct } from '@core/services/master-product.service';
 import { Product } from '@core/models/product.model';
 import { Subscription } from 'rxjs';
 
@@ -15,6 +16,9 @@ import { Subscription } from 'rxjs';
 export class MarketplacePage implements OnInit, OnDestroy {
   products: Product[] = [];
   filteredProducts: any[] = [];
+  masterProducts: MasterProduct[] = [];
+  filteredMasterProducts: MasterProduct[] = [];
+  showMasterProducts: boolean = true;
   categories: string[] = ['All', 'Vegetables', 'Fruits', 'Grains', 'Dairy', 'Spices'];
   selectedCategory: string = 'All';
   searchTerm: string = '';
@@ -56,11 +60,13 @@ export class MarketplacePage implements OnInit, OnDestroy {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController,
-    private signalrService: SignalrService
+    private signalrService: SignalrService,
+    private masterProductService: MasterProductService
   ) {}
 
   ngOnInit() {
     this.loadProducts();
+    this.loadMasterProducts();
     this.loadCartCount();
     this.initializeSignalR();
   }
@@ -220,6 +226,48 @@ export class MarketplacePage implements OnInit, OnDestroy {
         this.showToast('Using demo data - Backend not connected', 'warning');
       }
     });
+  }
+
+  async loadMasterProducts() {
+    this.masterProductService.getAllMasterProducts().subscribe({
+      next: (products) => {
+        console.log('Loaded master products:', products);
+        this.masterProducts = Array.isArray(products) ? products : [];
+        this.filteredMasterProducts = [...this.masterProducts];
+        
+        if (this.masterProducts.length > 0) {
+          this.showToast(`✅ ${this.masterProducts.length} products available in catalog`, 'success');
+        }
+      },
+      error: (error) => {
+        console.error('Error loading master products:', error);
+        this.masterProducts = [];
+        this.filteredMasterProducts = [];
+      }
+    });
+  }
+
+  filterMasterProducts() {
+    if (!Array.isArray(this.masterProducts)) {
+      this.filteredMasterProducts = [];
+      return;
+    }
+    
+    this.filteredMasterProducts = this.masterProducts.filter(product => {
+      const matchesCategory = this.selectedCategory === 'All' || 
+        product.category === this.selectedCategory || 
+        product.category.toLowerCase() === this.selectedCategory.toLowerCase();
+      
+      const matchesSearch = !this.searchTerm || 
+        product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        (product.nameHindi && product.nameHindi.includes(this.searchTerm));
+      
+      return matchesCategory && matchesSearch;
+    });
+  }
+
+  toggleMasterProducts() {
+    this.showMasterProducts = !this.showMasterProducts;
   }
 
   groupProducts(products: Product[]): any[] {
@@ -623,6 +671,7 @@ export class MarketplacePage implements OnInit, OnDestroy {
   filterByCategory(category: string) {
     this.selectedCategory = category;
     this.applyFilters();
+    this.filterMasterProducts();
   }
 
   changeSortOrder(event: any) {
@@ -633,6 +682,7 @@ export class MarketplacePage implements OnInit, OnDestroy {
   onSearchChange(event: any) {
     this.searchTerm = event.detail.value || '';
     this.applyFilters();
+    this.filterMasterProducts();
   }
 
   applyFilters() {

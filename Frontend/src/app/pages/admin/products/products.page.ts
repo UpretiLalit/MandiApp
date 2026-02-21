@@ -84,19 +84,33 @@ export class ProductsPage implements OnInit {
     await loading.present();
 
     try {
-      this.masterProducts = await this.masterProductService.getAllMasterProducts().toPromise() || [];
-      this.filteredMasterProducts = [...this.masterProducts];
-      console.log('Loaded master products:', this.masterProducts.length);
-      
-      if (this.masterProducts.length === 0) {
-        this.showToast('No master products found. Please seed the database.', 'warning');
-      } else {
-        this.showToast(`✅ Loaded ${this.masterProducts.length} master products`, 'success');
-      }
+      this.masterProductService.getAllMasterProducts().subscribe({
+        next: (products) => {
+          console.log('Received products:', products);
+          this.masterProducts = Array.isArray(products) ? products : [];
+          this.filteredMasterProducts = [...this.masterProducts];
+          
+          if (this.masterProducts.length === 0) {
+            this.showToast('No master products found. Wait for backend to seed.', 'warning');
+          } else {
+            this.showToast(`✅ Loaded ${this.masterProducts.length} master products`, 'success');
+          }
+        },
+        error: (error: any) => {
+          console.error('Failed to load master products:', error);
+          this.masterProducts = [];
+          this.filteredMasterProducts = [];
+          this.showToast('Failed to load products: ' + (error.error?.message || error.message), 'danger');
+        },
+        complete: () => {
+          this.isLoading = false;
+          loading.dismiss();
+        }
+      });
     } catch (error: any) {
-      console.error('Failed to load master products:', error);
-      this.showToast('Failed to load products: ' + (error.error?.message || error.message), 'danger');
-    } finally {
+      console.error('Exception loading master products:', error);
+      this.masterProducts = [];
+      this.filteredMasterProducts = [];
       this.isLoading = false;
       await loading.dismiss();
     }
@@ -113,6 +127,11 @@ export class ProductsPage implements OnInit {
   }
 
   applyFilters() {
+    if (!Array.isArray(this.masterProducts)) {
+      this.filteredMasterProducts = [];
+      return;
+    }
+    
     this.filteredMasterProducts = this.masterProducts.filter(product => {
       const matchesCategory = this.selectedCategory === 'All' || product.category === this.selectedCategory;
       const matchesSearch = !this.searchTerm || 

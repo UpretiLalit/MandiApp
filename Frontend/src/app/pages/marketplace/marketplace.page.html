@@ -112,6 +112,48 @@
 <ion-content>
   <div class="marketplace-container">
     
+    <!-- Master Products Catalog Section -->
+    <div class="master-products-section" *ngIf="filteredMasterProducts.length > 0">
+      <div class="section-header">
+        <h2>
+          <ion-icon name="grid-outline"></ion-icon>
+          Product Catalog ({{ filteredMasterProducts.length }})
+        </h2>
+        <ion-button fill="clear" (click)="toggleMasterProducts()">
+          <ion-icon [name]="showMasterProducts ? 'chevron-up' : 'chevron-down'"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="master-products-grid" *ngIf="showMasterProducts">
+        <ion-card *ngFor="let product of filteredMasterProducts" class="master-product-card">
+          <div class="product-image">
+            <img *ngIf="product.imageUrls && product.imageUrls.length > 0" 
+                 [src]="product.imageUrls[0]" 
+                 [alt]="product.name"
+                 (error)="$any($event.target).src='assets/placeholder-product.png'">
+            <ion-badge class="category-badge" [color]="product.category === 'Vegetable' ? 'success' : product.category === 'Fruit' ? 'warning' : 'tertiary'">
+              {{ product.category }}
+            </ion-badge>
+          </div>
+          
+          <ion-card-content>
+            <h3>{{ product.name }}</h3>
+            <p class="hindi-name" *ngIf="product.nameHindi">{{ product.nameHindi }}</p>
+            <p class="description" *ngIf="product.description">{{ product.description }}</p>
+            <div class="product-meta">
+              <ion-chip outline>
+                <ion-icon name="scale-outline"></ion-icon>
+                <ion-label>{{ product.unit }}</ion-label>
+              </ion-chip>
+              <ion-chip outline *ngIf="product.subCategory">
+                <ion-label>{{ product.subCategory }}</ion-label>
+              </ion-chip>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </div>
+    
     <!-- Empty State -->
     <div *ngIf="filteredProducts.length == 0" class="empty-state">
       <ion-icon name="basket-outline" class="empty-icon"></ion-icon>
