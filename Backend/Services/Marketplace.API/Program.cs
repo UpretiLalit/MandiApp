@@ -121,12 +121,26 @@ try
                 ""Grade"" TEXT,
                 ""Emoji"" TEXT,
                 ""IsActive"" BOOLEAN NOT NULL DEFAULT true,
+                ""IsLive"" BOOLEAN NOT NULL DEFAULT false,
+                ""MasterProductId"" UUID,
                 ""PriceTiersJson"" TEXT,
                 ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 ""UpdatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
             CREATE INDEX IF NOT EXISTS ""IX_Products_VendorId"" ON ""Products""(""VendorId"");
             CREATE INDEX IF NOT EXISTS ""IX_Products_Category"" ON ""Products""(""Category"");
+            CREATE INDEX IF NOT EXISTS ""IX_Products_IsLive"" ON ""Products""(""IsLive"");
+            
+            -- Add columns to existing table if they don't exist
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Products' AND column_name = 'IsLive') THEN
+                    ALTER TABLE ""Products"" ADD COLUMN ""IsLive"" BOOLEAN NOT NULL DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Products' AND column_name = 'MasterProductId') THEN
+                    ALTER TABLE ""Products"" ADD COLUMN ""MasterProductId"" UUID;
+                END IF;
+            END $$;
         ");
         Console.WriteLine("✅ Products table ready");
         
