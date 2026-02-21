@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AlertController, ToastController, ModalController } from '@ionic/angular';
+import { AlertController, ToastController, ModalController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { MasterProductService, MasterProduct } from '@core/services/master-product.service';
 
 interface Product {
   id: string;
@@ -23,8 +24,13 @@ interface Product {
 })
 export class ProductsPage implements OnInit {
   products: Product[] = [];
+  masterProducts: MasterProduct[] = [];
+  filteredMasterProducts: MasterProduct[] = [];
   showProductForm: boolean = false;
   editingProduct: Product | null = null;
+  selectedCategory: string = 'All';
+  searchTerm: string = '';
+  isLoading: boolean = false;
   
   productForm = {
     name: '',
@@ -55,44 +61,65 @@ export class ProductsPage implements OnInit {
   constructor(
     private alertController: AlertController,
     private toastController: ToastController,
-    private router: Router
+    private router: Router,
+    private masterProductService: MasterProductService,
+    private loadingController: LoadingController
   ) {}
 
   ngOnInit() {
     this.loadProducts();
+    this.loadMasterProducts();
   }
 
-  loadProducts() {
-    // Master product catalog - vendors will add pricing and units
-    this.products = [
-      {
-        id: '1',
-        name: 'Tomatoes',
-        category: 'Vegetables',
-        emoji: '🍅',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2',
-        name: 'Onions',
-        category: 'Vegetables',
-        emoji: '🧅',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        name: 'Mangoes',
-        category: 'Fruits',
-        emoji: '🥭',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+  async loadProducts() {
+    // Legacy products - kept for backward compatibility
+    this.products = [];
+  }
+
+  async loadMasterProducts() {
+    this.isLoading = true;
+    const loading = await this.loadingController.create({
+      message: 'Loading master products...'
+    });
+    await loading.present();
+
+    try {
+      this.masterProducts = await this.masterProductService.getAllMasterProducts().toPromise() || [];
+      this.filteredMasterProducts = [...this.masterProducts];
+      console.log('Loaded master products:', this.masterProducts.length);
+      
+      if (this.masterProducts.length === 0) {
+        this.showToast('No master products found. Please seed the database.', 'warning');
+      } else {
+        this.showToast(`✅ Loaded ${this.masterProducts.length} master products`, 'success');
       }
-    ];
+    } catch (error: any) {
+      console.error('Failed to load master products:', error);
+      this.showToast('Failed to load products: ' + (error.error?.message || error.message), 'danger');
+    } finally {
+      this.isLoading = false;
+      await loading.dismiss();
+    }
+  }
+
+  filterByCategory(category: string) {
+    this.selectedCategory = category;
+    this.applyFilters();
+  }
+
+  onSearchChange(event: any) {
+    this.searchTerm = event.detail.value || '';
+    this.applyFilters();
+  }
+
+  applyFilters() {
+    this.filteredMasterProducts = this.masterProducts.filter(product => {
+      const matchesCategory = this.selectedCategory === 'All' || product.category === this.selectedCategory;
+      const matchesSearch = !this.searchTerm || 
+        product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        (product.nameHindi && product.nameHindi.includes(this.searchTerm));
+      return matchesCategory && matchesSearch;
+    });
   }
 
   openProductForm() {
@@ -392,5 +419,15 @@ export class ProductsPage implements OnInit {
     }
     result.push(current);
     return result;
+  }
+
+  getCategoryColor(category: string): string {
+    const colors: any = {
+      'Vegetable': 'success',
+      'Fruit': 'warning',
+      'Grain': 'tertiary',
+      'Pulse': 'secondary'
+    };
+    return colors[category] || 'medium';
   }
 }

@@ -3,171 +3,141 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/admin"></ion-back-button>
     </ion-buttons>
-    <ion-title>Product Management</ion-title>
+    <ion-title>Master Products Catalog</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="downloadTemplate()">
-        <ion-icon name="download-outline"></ion-icon>
-        <ion-label>Template</ion-label>
-      </ion-button>
-      <ion-button (click)="exportProducts()">
-        <ion-icon name="cloud-download-outline"></ion-icon>
-        <ion-label>Export</ion-label>
-      </ion-button>
-      <ion-button (click)="triggerFileInput()">
-        <ion-icon name="cloud-upload-outline"></ion-icon>
-        <ion-label>Import</ion-label>
-      </ion-button>
-      <ion-button (click)="openProductForm()">
-        <ion-icon name="add-circle-outline"></ion-icon>
+      <ion-button (click)="loadMasterProducts()">
+        <ion-icon name="refresh-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  
+  <!-- Search and Filter -->
+  <ion-toolbar>
+    <ion-searchbar 
+      [(ngModel)]="searchTerm" 
+      (ionChange)="onSearchChange($event)"
+      placeholder="Search products (English or Hindi)...">
+    </ion-searchbar>
+  </ion-toolbar>
+  
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="selectedCategory" (ionChange)="filterByCategory(selectedCategory)" scrollable>
+      <ion-segment-button value="All">
+        <ion-label>All</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="Vegetable">
+        <ion-label>🥬 Vegetables</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="Fruit">
+        <ion-label>🍎 Fruits</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="Grain">
+        <ion-label>🌾 Grains</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
 </ion-header>
-<input #fileInput type="file" accept=".csv,.xlsx,.xls" style="display: none" (change)="importProducts($event)">
 
 <ion-content>
   <!-- Stats Cards -->
   <div class="stats-container">
     <ion-card class="stat-card">
       <ion-card-content>
-        <div class="stat-value">{{ products.length }}</div>
+        <div class="stat-value">{{ masterProducts.length }}</div>
         <div class="stat-label">Total Products</div>
       </ion-card-content>
     </ion-card>
     <ion-card class="stat-card">
       <ion-card-content>
-        <div class="stat-value">{{ getActiveProducts() }}</div>
-        <div class="stat-label">Active</div>
+        <div class="stat-value">{{ filteredMasterProducts.length }}</div>
+        <div class="stat-label">Showing</div>
       </ion-card-content>
     </ion-card>
     <ion-card class="stat-card">
       <ion-card-content>
-        <div class="stat-value">{{ categories.length }}</div>
-        <div class="stat-label">Categories</div>
+        <div class="stat-value">{{ selectedCategory === 'All' ? 'All' : selectedCategory }}</div>
+        <div class="stat-label">Category</div>
       </ion-card-content>
     </ion-card>
   </div>
 
-  <!-- Products List -->
-  <ion-list>
-    <ion-item-group *ngFor="let category of categories">
-      <ion-item-divider color="light" *ngIf="getProductsByCategory(category) > 0">
-        <ion-label>{{ category }} ({{ getProductsByCategory(category) }})</ion-label>
-      </ion-item-divider>
-      
-      <ng-container *ngFor="let product of products">
-        <ion-item *ngIf="product.category === category"
-                  [class.inactive]="!product.isActive">
-          <div slot="start" class="product-emoji">{{ product.emoji }}</div>
-          <ion-label>
-            <h2>{{ product.name }}</h2>
-            <p>₹{{ product.currentPrice }} per {{ product.unit }}</p>
-            <p class="text-muted">{{ product.unitWeight }}</p>
-          </ion-label>
-          <ion-badge [color]="product.isActive ? 'success' : 'medium'" slot="end">
-            {{ product.isActive ? 'Active' : 'Inactive' }}
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading master products...</p>
+  </div>
+
+  <!-- Master Products Grid -->
+  <div class="products-grid" *ngIf="!isLoading && filteredMasterProducts.length > 0">
+    <ion-card *ngFor="let product of filteredMasterProducts" class="product-card">
+      <!-- Product Images Carousel -->
+      <div class="product-images">
+        <img *ngIf="product.imageUrls && product.imageUrls.length > 0" 
+             [src]="product.imageUrls[0]" 
+             [alt]="product.name"
+             (error)="$any($event.target).src='assets/placeholder-product.png'">
+        <div class="image-count" *ngIf="product.imageUrls && product.imageUrls.length > 1">
+          <ion-icon name="images-outline"></ion-icon>
+          {{ product.imageUrls.length }}
+        </div>
+      </div>
+
+      <ion-card-header>
+        <ion-card-subtitle>
+          <ion-badge [color]="getCategoryColor(product.category)">
+            {{ product.category }}
           </ion-badge>
-          <ion-button fill="clear" slot="end" (click)="editProduct(product)">
-            <ion-icon name="create-outline"></ion-icon>
-          </ion-button>
-          <ion-button fill="clear" slot="end" (click)="toggleProductStatus(product)"
-                    [color]="product.isActive ? 'medium' : 'success'">
-          <ion-icon [name]="product.isActive ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-        </ion-button>
-        <ion-button fill="clear" slot="end" (click)="deleteProduct(product)" color="danger">
-          <ion-icon name="trash-outline"></ion-icon>
-        </ion-button>
-        </ion-item>
-      </ng-container>
-    </ion-item-group>
-  </ion-list>
+          <span *ngIf="product.subCategory" class="subcategory">{{ product.subCategory }}</span>
+        </ion-card-subtitle>
+        <ion-card-title>
+          {{ product.name }}
+          <span class="hindi-name" *ngIf="product.nameHindi">{{ product.nameHindi }}</span>
+        </ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <p class="description" *ngIf="product.description">{{ product.description }}</p>
+        <div class="product-meta">
+          <ion-chip outline>
+            <ion-icon name="scale-outline"></ion-icon>
+            <ion-label>Unit: {{ product.unit }}</ion-label>
+          </ion-chip>
+          <ion-chip outline color="primary">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <ion-label>{{ product.createdAt | date:'short' }}</ion-label>
+          </ion-chip>
+        </div>
+        
+        <!-- All Images Preview -->
+        <div class="all-images" *ngIf="product.imageUrls && product.imageUrls.length > 1">
+          <div class="image-thumbnails">
+            <img *ngFor="let imgUrl of product.imageUrls.slice(0, 4)" 
+                 [src]="imgUrl" 
+                 [alt]="product.name"
+                 (error)="$any($event.target).src='assets/placeholder-product.png'">
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
 
   <!-- Empty State -->
-  <div class="empty-state" *ngIf="products.length === 0">
+  <div class="empty-state" *ngIf="!isLoading && filteredMasterProducts.length === 0 && masterProducts.length > 0">
+    <ion-icon name="search-outline"></ion-icon>
+    <h3>No Products Found</h3>
+    <p>Try adjusting your search or filter</p>
+    <ion-button (click)="selectedCategory = 'All'; searchTerm = ''; applyFilters()">
+      Clear Filters
+    </ion-button>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && masterProducts.length === 0">
     <ion-icon name="basket-outline"></ion-icon>
-    <h3>No Products Yet</h3>
-    <p>Start by adding your first product</p>
-    <ion-button (click)="openProductForm()">
-      <ion-icon name="add" slot="start"></ion-icon>
-      Add Product
+    <h3>No Master Products</h3>
+    <p>The master catalog is empty. Please seed the database.</p>
+    <ion-button (click)="loadMasterProducts()">
+      <ion-icon name="refresh" slot="start"></ion-icon>
+      Refresh
     </ion-button>
   </div>
 </ion-content>
-
-<!-- Product Form Modal -->
-<ion-modal [isOpen]="showProductForm" (didDismiss)="closeProductForm()">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>{{ editingProduct ? 'Edit' : 'Add' }} Product</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeProductForm()">
-            <ion-icon name="close"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content>
-      <div class="form-container">
-        <!-- Emoji Selector -->
-        <div class="emoji-selector-container">
-          <ion-label position="stacked">Product Icon</ion-label>
-          <div class="emoji-display" (click)="toggleEmojiPicker()">
-            <div class="selected-emoji">{{ productForm.emoji }}</div>
-            <ion-button fill="clear" size="small">
-              <ion-icon name="chevron-down-outline"></ion-icon>
-            </ion-button>
-          </div>
-          
-          <!-- Emoji Picker -->
-          <div class="emoji-picker" *ngIf="showEmojiPicker">
-            <div class="emoji-grid">
-              <div class="emoji-item" *ngFor="let emoji of popularEmojis"
-                   (click)="selectEmoji(emoji)"
-                   [class.selected]="productForm.emoji === emoji">
-                {{ emoji }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product Name -->
-        <ion-item>
-          <ion-label position="stacked">Product Name *</ion-label>
-          <ion-input [(ngModel)]="productForm.name" placeholder="e.g., Tomatoes"></ion-input>
-        </ion-item>
-
-        <!-- Category -->
-        <ion-item>
-          <ion-label position="stacked">Category *</ion-label>
-          <ion-select [(ngModel)]="productForm.category" placeholder="Select Category">
-            <ion-select-option *ngFor="let cat of categories" [value]="cat">
-              {{ cat }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <div style="padding: 16px; background: var(--ion-color-light); margin: 16px; border-radius: 8px;">
-          <ion-text color="medium">
-            <p style="margin: 0; font-size: 12px;">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              You're creating the master product catalog. Vendors will add their own pricing, units, and quantities when they list these products.
-            </p>
-          </ion-text>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="button-group">
-          <ion-button expand="block" (click)="saveProduct()" color="primary">
-            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-            {{ editingProduct ? 'Update' : 'Add' }} Product
-          </ion-button>
-          <ion-button expand="block" fill="outline" (click)="closeProductForm()">
-            Cancel
-          </ion-button>
-        </div>
-      </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
