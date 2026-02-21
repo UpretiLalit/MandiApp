@@ -69,9 +69,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IPriceService, PriceService>();
 
-// CORS
+// CORS - Allow frontend origins
 builder.Services.AddCors(options =>
 {
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "http://localhost:8100",
+                "capacitor://localhost",
+                "ionic://localhost",
+                "http://localhost"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+    
+    // Fallback policy for development
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
@@ -134,7 +149,7 @@ app.UseSwaggerUI();
 
 // Disable HTTPS redirection when using Cloudflare Tunnel
 // app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
