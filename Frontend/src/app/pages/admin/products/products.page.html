@@ -80,16 +80,31 @@
   <!-- Master Products Grid -->
   <div class="products-grid" *ngIf="!isLoading && filteredMasterProducts.length > 0">
     <ion-card *ngFor="let product of filteredMasterProducts" class="product-card">
-      <!-- Product Images Carousel -->
-      <div class="product-images">
-        <img *ngIf="product.imageUrls && product.imageUrls.length > 0" 
-             [src]="product.imageUrls[0]" 
-             [alt]="product.name"
-             (error)="$any($event.target).style.display='none'">
-        <div class="image-count" *ngIf="product.imageUrls && product.imageUrls.length > 1">
-          <ion-icon name="images-outline"></ion-icon>
-          {{ product.imageUrls.length }}
-        </div>
+      <!-- Product Images Carousel with Swiper -->
+      <div class="product-images-container">
+        <swiper-container
+          *ngIf="product.imageUrls && product.imageUrls.length > 0; else noImageTemplate"
+          pagination="true"
+          loop="true"
+          zoom="true"
+          class="product-swiper">
+          <swiper-slide *ngFor="let imgUrl of product.imageUrls">
+            <div class="swiper-zoom-container">
+              <img 
+                [src]="imgUrl" 
+                [alt]="product.name"
+                (error)="$any($event.target).style.display='none'">
+            </div>
+          </swiper-slide>
+        </swiper-container>
+        
+        <!-- Fallback when no images -->
+        <ng-template #noImageTemplate>
+          <div class="no-image-placeholder">
+            <ion-icon name="image-outline"></ion-icon>
+            <span>No Image</span>
+          </div>
+        </ng-template>
         
         <!-- Live Status Badge -->
         <ion-badge class="live-badge" [color]="product.isLive ? 'success' : 'medium'">
@@ -124,15 +139,11 @@
           </ion-chip>
         </div>
         
-        <!-- All Images Preview -->
-        <div class="all-images" *ngIf="product.imageUrls && product.imageUrls.length > 1">
-          <div class="image-thumbnails">
-            <img *ngFor="let imgUrl of product.imageUrls.slice(0, 4)" 
-                 [src]="imgUrl" 
-                 [alt]="product.name"
-                 (error)="$any($event.target).style.display='none'">
-          </div>
-        </div>
+        <!-- Image Count Info -->
+        <ion-chip *ngIf="product.imageUrls && product.imageUrls.length > 1" outline color="primary">
+          <ion-icon name="images-outline"></ion-icon>
+          <ion-label>{{ product.imageUrls.length }} Images</ion-label>
+        </ion-chip>
         
         <!-- Admin Actions -->
         <div class="admin-actions">

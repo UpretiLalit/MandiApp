@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AlertController, ToastController, ModalController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { MasterProductService, MasterProduct } from '@core/services/master-product.service';
+import { register } from 'swiper/element/bundle';
 
 interface Product {
   id: string;
@@ -74,7 +75,10 @@ export class ProductsPage implements OnInit {
     private router: Router,
     private masterProductService: MasterProductService,
     private loadingController: LoadingController
-  ) {}
+  ) {
+    // Register Swiper custom elements
+    register();
+  }
 
   ngOnInit() {
     this.loadProducts();

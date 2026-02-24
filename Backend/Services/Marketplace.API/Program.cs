@@ -194,6 +194,23 @@ try
                 CREATE UNIQUE INDEX IF NOT EXISTS ""IX_MasterProducts_Name_Unique"" ON ""MasterProducts""(""Name"");
             ");
             
+            // Add IsLive column if it doesn't exist
+            await context.Database.ExecuteSqlRawAsync(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'MasterProducts' AND column_name = 'IsLive'
+                    ) THEN
+                        ALTER TABLE ""MasterProducts""
+                        ADD COLUMN ""IsLive"" BOOLEAN NOT NULL DEFAULT true;
+                        
+                        RAISE NOTICE 'IsLive column added to MasterProducts table';
+                    END IF;
+                END $$;
+            ");
+            Console.WriteLine("✅ IsLive column ensured in MasterProducts table");
+            
             // Check if table is empty
             var count = await context.Database.SqlQueryRaw<int>("SELECT COUNT(*) FROM \"MasterProducts\"").FirstOrDefaultAsync();
             Console.WriteLine($"Current master products count: {count}");
