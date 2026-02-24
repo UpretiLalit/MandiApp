@@ -112,62 +112,21 @@
 <ion-content>
   <div class="marketplace-container">
     
-    <!-- Master Products Catalog Section -->
-    <div class="master-products-section" *ngIf="filteredMasterProducts.length > 0">
-      <div class="section-header">
-        <h2>
-          <ion-icon name="grid-outline"></ion-icon>
-          Product Catalog ({{ filteredMasterProducts.length }})
-        </h2>
-        <ion-button fill="clear" (click)="toggleMasterProducts()">
-          <ion-icon [name]="showMasterProducts ? 'chevron-up' : 'chevron-down'"></ion-icon>
-        </ion-button>
-      </div>
-
-      <div class="master-products-grid" *ngIf="showMasterProducts">
-        <ion-card *ngFor="let product of filteredMasterProducts" class="master-product-card">
-          <div class="product-image">
-            <img *ngIf="product.imageUrls && product.imageUrls.length > 0" 
-                 [src]="product.imageUrls[0]" 
-                 [alt]="product.name"
-                 (error)="$any($event.target).src='assets/placeholder-product.png'">
-            <ion-badge class="category-badge" [color]="product.category === 'Vegetable' ? 'success' : product.category === 'Fruit' ? 'warning' : 'tertiary'">
-              {{ product.category }}
-            </ion-badge>
-          </div>
-          
-          <ion-card-content>
-            <h3>{{ product.name }}</h3>
-            <p class="hindi-name" *ngIf="product.nameHindi">{{ product.nameHindi }}</p>
-            <p class="description" *ngIf="product.description">{{ product.description }}</p>
-            <div class="product-meta">
-              <ion-chip outline>
-                <ion-icon name="scale-outline"></ion-icon>
-                <ion-label>{{ product.unit }}</ion-label>
-              </ion-chip>
-              <ion-chip outline *ngIf="product.subCategory">
-                <ion-label>{{ product.subCategory }}</ion-label>
-              </ion-chip>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </div>
-    </div>
-    
-    <!-- Empty State -->
-    <div *ngIf="filteredProducts.length == 0" class="empty-state">
-      <ion-icon name="basket-outline" class="empty-icon"></ion-icon>
-      <h2>No products found</h2>
-      <p>Try adjusting your search or category filter</p>
-      <ion-button fill="outline" (click)="selectedCategory = 'All'; applyFilters()">
-        <ion-icon name="refresh" slot="start"></ion-icon>
-        Show All Products
-      </ion-button>
+    <!-- Loading Skeleton -->
+    <div class="products-grid" *ngIf="filteredProducts.length === 0">
+      <ion-card *ngFor="let i of [1,2,3,4,5,6]" class="skeleton-card">
+        <ion-skeleton-text animated style="height: 200px; width: 100%;"></ion-skeleton-text>
+        <ion-card-content>
+          <ion-skeleton-text animated style="width: 80%; height: 20px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 60%; height: 16px; margin-top: 8px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 40%; height: 24px; margin-top: 12px;"></ion-skeleton-text>
+        </ion-card-content>
+      </ion-card>
     </div>
 
-    <!-- Product Cards with Inline Vendor Comparison -->
-    <div class="products-grid">
-      <div class="product-wrapper" *ngFor="let product of filteredProducts">
+    <!-- Product Cards with Performance Optimizations -->
+    <div *ngIf="filteredProducts.length > 0" class="products-grid">
+      <div class="product-wrapper" *ngFor="let product of filteredProducts; trackBy: trackByProductName">
         <!-- Product Card -->
         <app-product-card 
           [product]="product"
@@ -191,7 +150,7 @@
             <ion-card-content>
               <!-- Vendor List for Comparison -->
               <div class="vendor-list">
-                <div *ngFor="let vendor of product.vendors; let i = index" 
+                <div *ngFor="let vendor of product.vendors; let i = index; trackBy: trackByVendorId" 
                      class="vendor-item" 
                      [class.best-price]="i === 0"
                    [class.rank-2]="i === 1"

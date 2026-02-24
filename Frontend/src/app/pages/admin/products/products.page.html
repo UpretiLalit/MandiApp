@@ -5,6 +5,10 @@
     </ion-buttons>
     <ion-title>Master Products Catalog</ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="makeAllLive()" color="success">
+        <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+        <ion-label>Make All Live</ion-label>
+      </ion-button>
       <ion-button (click)="loadMasterProducts()">
         <ion-icon name="refresh-outline"></ion-icon>
       </ion-button>
@@ -49,6 +53,12 @@
     </ion-card>
     <ion-card class="stat-card">
       <ion-card-content>
+        <div class="stat-value">{{ getLiveCount() }}</div>
+        <div class="stat-label">Live Products</div>
+      </ion-card-content>
+    </ion-card>
+    <ion-card class="stat-card">
+      <ion-card-content>
         <div class="stat-value">{{ filteredMasterProducts.length }}</div>
         <div class="stat-label">Showing</div>
       </ion-card-content>
@@ -75,11 +85,17 @@
         <img *ngIf="product.imageUrls && product.imageUrls.length > 0" 
              [src]="product.imageUrls[0]" 
              [alt]="product.name"
-             (error)="$any($event.target).src='assets/placeholder-product.png'">
+             (error)="$any($event.target).style.display='none'">
         <div class="image-count" *ngIf="product.imageUrls && product.imageUrls.length > 1">
           <ion-icon name="images-outline"></ion-icon>
           {{ product.imageUrls.length }}
         </div>
+        
+        <!-- Live Status Badge -->
+        <ion-badge class="live-badge" [color]="product.isLive ? 'success' : 'medium'">
+          <ion-icon [name]="product.isLive ? 'radio-button-on' : 'radio-button-off'"></ion-icon>
+          {{ product.isLive ? 'LIVE' : 'OFFLINE' }}
+        </ion-badge>
       </div>
 
       <ion-card-header>
@@ -114,8 +130,25 @@
             <img *ngFor="let imgUrl of product.imageUrls.slice(0, 4)" 
                  [src]="imgUrl" 
                  [alt]="product.name"
-                 (error)="$any($event.target).src='assets/placeholder-product.png'">
+                 (error)="$any($event.target).style.display='none'">
           </div>
+        </div>
+        
+        <!-- Admin Actions -->
+        <div class="admin-actions">
+          <ion-item lines="none">
+            <ion-label>Live Status</ion-label>
+            <ion-toggle 
+              [(ngModel)]="product.isLive" 
+              (ionChange)="toggleLiveStatus(product)"
+              [color]="product.isLive ? 'success' : 'medium'">
+            </ion-toggle>
+          </ion-item>
+          
+          <ion-button expand="block" fill="outline" (click)="openPriceModal(product)">
+            <ion-icon name="cash-outline" slot="start"></ion-icon>
+            Set Price & Quantity
+          </ion-button>
         </div>
       </ion-card-content>
     </ion-card>
@@ -140,4 +173,73 @@
       Refresh
     </ion-button>
   </div>
+  
+  <!-- Price & Quantity Modal -->
+  <ion-modal [isOpen]="showPriceModal" (didDismiss)="closePriceModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Set Price & Quantity</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closePriceModal()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      
+      <ion-content class="ion-padding">
+        <div *ngIf="selectedProduct">
+          <h2>{{ selectedProduct.name }}</h2>
+          <p class="ion-text-muted">{{ selectedProduct.category }} • {{ selectedProduct.unit }}</p>
+          
+          <ion-list>
+            <ion-item>
+              <ion-label position="stacked">Current Price (₹/{{ selectedProduct.unit }})</ion-label>
+              <ion-input 
+                type="number" 
+                [(ngModel)]="priceForm.currentPrice" 
+                placeholder="Enter price">
+              </ion-input>
+            </ion-item>
+            
+            <ion-item>
+              <ion-label position="stacked">Available Quantity ({{ selectedProduct.unit }})</ion-label>
+              <ion-input 
+                type="number" 
+                [(ngModel)]="priceForm.availableQuantity" 
+                placeholder="Enter quantity">
+              </ion-input>
+            </ion-item>
+            
+            <ion-item>
+              <ion-label position="stacked">Minimum Order Quantity</ion-label>
+              <ion-input 
+                type="number" 
+                [(ngModel)]="priceForm.minOrderQty" 
+                placeholder="Enter minimum order">
+              </ion-input>
+            </ion-item>
+            
+            <ion-item>
+              <ion-label position="stacked">Grade (Optional)</ion-label>
+              <ion-select [(ngModel)]="priceForm.grade" placeholder="Select grade">
+                <ion-select-option value="A">Grade A (Premium)</ion-select-option>
+                <ion-select-option value="B">Grade B (Standard)</ion-select-option>
+                <ion-select-option value="C">Grade C (Economy)</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-list>
+          
+          <ion-button 
+            expand="block" 
+            (click)="savePrice()" 
+            [disabled]="!priceForm.currentPrice || !priceForm.availableQuantity">
+            <ion-icon name="save-outline" slot="start"></ion-icon>
+            Save to Inventory
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

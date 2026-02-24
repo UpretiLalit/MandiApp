@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Marketplace.API.Services;
 using Marketplace.API.DTOs;
 
@@ -20,6 +21,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
+    [OutputCache(Duration = 60, VaryByQueryKeys = new[] { "category" })]
     public async Task<IActionResult> GetProducts([FromQuery] string? category = null)
     {
         var products = await _productService.GetAllProductsAsync(category);

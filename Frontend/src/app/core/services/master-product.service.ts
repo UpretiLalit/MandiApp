@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 
 export interface MasterProduct {
@@ -12,8 +13,14 @@ export interface MasterProduct {
   description?: string;
   unit: string;
   imageUrls: string[];
+  isLive?: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface MasterProductResponse {
+  products: MasterProduct[];
+  count: number;
 }
 
 export interface AddToInventoryRequest {
@@ -42,12 +49,32 @@ export class MasterProductService {
       url += '?' + params.join('&');
     }
     
-    return this.http.get<MasterProduct[]>(url);
+    return this.http.get<MasterProductResponse>(url).pipe(
+      map(response => response.products || [])
+    );
+  }
+
+  getLiveMasterProducts(category?: string, search?: string): Observable<MasterProduct[]> {
+    let url = `${environment.marketplaceApiUrl}/masterproducts/live`;
+    const params: string[] = [];
+    
+    if (category) params.push(`category=${encodeURIComponent(category)}`);
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    
+    return this.http.get<MasterProductResponse>(url).pipe(
+      map(response => response.products || [])
+    );
   }
 
   getMasterProductsByCategory(category: string): Observable<MasterProduct[]> {
-    return this.http.get<MasterProduct[]>(
+    return this.http.get<MasterProductResponse>(
       `${environment.marketplaceApiUrl}/masterproducts/category/${category}`
+    ).pipe(
+      map(response => response.products || [])
     );
   }
 
@@ -68,9 +95,9 @@ export class MasterProductService {
     );
   }
 
-  toggleLiveStatus(productId: number): Observable<any> {
+  toggleLiveStatus(productId: string): Observable<any> {
     return this.http.patch(
-      `${environment.marketplaceApiUrl}/masterproducts/${productId}/toggle-live`,
+      `${environment.marketplaceApiUrl}/masterproducts/admin/${productId}/toggle-live`,
       {}
     );
   }

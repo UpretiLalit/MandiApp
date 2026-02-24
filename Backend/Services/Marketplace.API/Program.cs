@@ -19,6 +19,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add Output Caching for performance
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(builder => builder.Expire(TimeSpan.FromSeconds(60)));
+});
+
 // Database Configuration - Use Supabase PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("MarketplaceDb") ?? "Host=db.iytscokxxuxprrivmzvg.supabase.co;Port=5432;Database=postgres;User Id=postgres;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true";
 builder.Services.AddDbContext<MarketplaceDbContext>(options =>
@@ -310,6 +316,10 @@ app.UseSwaggerUI();
 
 // Disable HTTPS redirection when using Cloudflare Tunnel
 // app.UseHttpsRedirection();
+
+// Enable Output Caching
+app.UseOutputCache();
+
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();

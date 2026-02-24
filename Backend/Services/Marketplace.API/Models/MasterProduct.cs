@@ -10,6 +10,7 @@ public class MasterProduct
     public string? Description { get; set; }
     public string Unit { get; set; } = "kg";
     public List<string> ImageUrls { get; set; } = new();
+    public bool IsLive { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -24,6 +25,7 @@ public class MasterProductDto
     public string? Description { get; set; }
     public string Unit { get; set; } = "kg";
     public List<string> ImageUrls { get; set; } = new();
+    public bool IsLive { get; set; }
 }
 
 public class AddProductFromMasterRequest

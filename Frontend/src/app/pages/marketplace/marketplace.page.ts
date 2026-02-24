@@ -4,9 +4,9 @@ import { LoadingController, ToastController, AlertController } from '@ionic/angu
 import { ProductService } from '@core/services/product.service';
 import { OrderService } from '@core/services/order.service';
 import { SignalrService, PriceUpdateEvent } from '@core/services/signalr.service';
-import { MasterProductService, MasterProduct } from '@core/services/master-product.service';
 import { Product } from '@core/models/product.model';
 import { Subscription } from 'rxjs';
+import { environment } from '@environments/environment';
 
 @Component({
   selector: 'app-marketplace',
@@ -16,9 +16,6 @@ import { Subscription } from 'rxjs';
 export class MarketplacePage implements OnInit, OnDestroy {
   products: Product[] = [];
   filteredProducts: any[] = [];
-  masterProducts: MasterProduct[] = [];
-  filteredMasterProducts: MasterProduct[] = [];
-  showMasterProducts: boolean = true;
   categories: string[] = ['All', 'Vegetables', 'Fruits', 'Grains', 'Dairy', 'Spices'];
   selectedCategory: string = 'All';
   searchTerm: string = '';
@@ -60,15 +57,16 @@ export class MarketplacePage implements OnInit, OnDestroy {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController,
-    private signalrService: SignalrService,
-    private masterProductService: MasterProductService
+    private signalrService: SignalrService
   ) {}
 
   ngOnInit() {
+    // Load critical data first
     this.loadProducts();
-    this.loadMasterProducts();
     this.loadCartCount();
-    this.initializeSignalR();
+    
+    // Defer SignalR connection to not block initial load
+    setTimeout(() => this.initializeSignalR(), 2000);
   }
 
   ngOnDestroy() {
@@ -80,7 +78,11 @@ export class MarketplacePage implements OnInit, OnDestroy {
 
   async initializeSignalR() {
     try {
-      await this.signalrService.startConnection();
+      // Non-blocking connection attempt
+      this.signalrService.startConnection().catch(err => {
+        // Silently fail - don't block user experience
+        console.warn('SignalR connection failed (non-critical):', err);
+      });
       
       // Subscribe to price updates
       this.priceUpdateSubscription = this.signalrService.priceUpdate$.subscribe(
@@ -94,11 +96,15 @@ export class MarketplacePage implements OnInit, OnDestroy {
       // Subscribe to connection state
       this.connectionStateSubscription = this.signalrService.connectionState$.subscribe(
         (state) => {
-          console.log('SignalR connection state:', state);
+          // Only log in dev mode
+          if (!environment.production) {
+            console.log('SignalR:', state);
+          }
         }
       );
     } catch (error) {
-      console.error('Failed to initialize SignalR:', error);
+      // Non-critical error - don't block user
+      console.warn('SignalR init failed (non-critical):', error);
     }
   }
 
@@ -191,15 +197,9 @@ export class MarketplacePage implements OnInit, OnDestroy {
   }
 
   async loadProducts() {
-    const loading = await this.loadingController.create({
-      message: 'Loading products...'
-    });
-    await loading.present();
-
+    // No blocking loader - let content load in background
     this.productService.getProducts().subscribe({
       next: (products: any) => {
-        console.log('Raw products from API:', products);
-        
         // Check if products is already in grouped format from new API
         if (products && products.length > 0 && products[0].vendors) {
           // New API format - already grouped with vendor arrays
@@ -211,63 +211,25 @@ export class MarketplacePage implements OnInit, OnDestroy {
           this.filteredProducts = this.groupProducts(products);
           this.extractCategories();
         }
-        
-        console.log('Filtered products:', this.filteredProducts);
-        loading.dismiss();
       },
       error: (error) => {
         console.error('Error loading products:', error);
-        loading.dismiss();
-        
         // Use mock data for development
         this.products = this.getMockProducts();
         this.filteredProducts = this.groupProducts(this.products);
         this.extractCategories();
-        this.showToast('Using demo data - Backend not connected', 'warning');
+        this.showToast('⚡ Loading...', 'warning');
       }
     });
   }
 
-  async loadMasterProducts() {
-    this.masterProductService.getAllMasterProducts().subscribe({
-      next: (products) => {
-        console.log('Loaded master products:', products);
-        this.masterProducts = Array.isArray(products) ? products : [];
-        this.filteredMasterProducts = [...this.masterProducts];
-        
-        if (this.masterProducts.length > 0) {
-          this.showToast(`✅ ${this.masterProducts.length} products available in catalog`, 'success');
-        }
-      },
-      error: (error) => {
-        console.error('Error loading master products:', error);
-        this.masterProducts = [];
-        this.filteredMasterProducts = [];
-      }
-    });
+  // Performance optimization - trackBy for ngFor
+  trackByProductName(index: number, product: any): string {
+    return product.name || index;
   }
 
-  filterMasterProducts() {
-    if (!Array.isArray(this.masterProducts)) {
-      this.filteredMasterProducts = [];
-      return;
-    }
-    
-    this.filteredMasterProducts = this.masterProducts.filter(product => {
-      const matchesCategory = this.selectedCategory === 'All' || 
-        product.category === this.selectedCategory || 
-        product.category.toLowerCase() === this.selectedCategory.toLowerCase();
-      
-      const matchesSearch = !this.searchTerm || 
-        product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        (product.nameHindi && product.nameHindi.includes(this.searchTerm));
-      
-      return matchesCategory && matchesSearch;
-    });
-  }
-
-  toggleMasterProducts() {
-    this.showMasterProducts = !this.showMasterProducts;
+  trackByVendorId(index: number, vendor: any): string {
+    return vendor.vendorId || index;
   }
 
   groupProducts(products: Product[]): any[] {
@@ -671,7 +633,6 @@ export class MarketplacePage implements OnInit, OnDestroy {
   filterByCategory(category: string) {
     this.selectedCategory = category;
     this.applyFilters();
-    this.filterMasterProducts();
   }
 
   changeSortOrder(event: any) {
@@ -682,7 +643,6 @@ export class MarketplacePage implements OnInit, OnDestroy {
   onSearchChange(event: any) {
     this.searchTerm = event.detail.value || '';
     this.applyFilters();
-    this.filterMasterProducts();
   }
 
   applyFilters() {

@@ -57,6 +57,16 @@ export class ProductsPage implements OnInit {
   showEmojiPicker: boolean = false;
 
   fileInput: any;
+  
+  // Price & Quantity Management
+  showPriceModal: boolean = false;
+  selectedProduct: MasterProduct | null = null;
+  priceForm = {
+    currentPrice: 0,
+    availableQuantity: 0,
+    minOrderQty: 1,
+    grade: 'A'
+  };
 
   constructor(
     private alertController: AlertController,
@@ -139,6 +149,131 @@ export class ProductsPage implements OnInit {
         (product.nameHindi && product.nameHindi.includes(this.searchTerm));
       return matchesCategory && matchesSearch;
     });
+  }
+
+  async toggleLiveStatus(product: any) {
+    try {
+      await this.masterProductService.toggleLiveStatus(product.id).toPromise();
+      this.showToast(
+        `${product.name} is now ${product.isLive ? 'LIVE' : 'OFFLINE'}`,
+        product.isLive ? 'success' : 'warning'
+      );
+    } catch (error: any) {
+      console.error('Error toggling live status:', error);
+      product.isLive = !product.isLive; // Revert the toggle
+      this.showToast('Failed to update status: ' + (error.error?.message || error.message), 'danger');
+    }
+  }
+
+  openPriceModal(product: MasterProduct) {
+    this.selectedProduct = product;
+    this.priceForm = {
+      currentPrice: 0,
+      availableQuantity: 0,
+      minOrderQty: 1,
+      grade: 'A'
+    };
+    this.showPriceModal = true;
+  }
+
+  closePriceModal() {
+    this.showPriceModal = false;
+    this.selectedProduct = null;
+  }
+
+  async savePrice() {
+    if (!this.selectedProduct) return;
+
+    const loading = await this.loadingController.create({
+      message: 'Adding to inventory...'
+    });
+    await loading.present();
+
+    try {
+      const request = {
+        masterProductId: this.selectedProduct.id,
+        currentPrice: this.priceForm.currentPrice,
+        availableQuantity: this.priceForm.availableQuantity,
+        minOrderQty: this.priceForm.minOrderQty,
+        grade: this.priceForm.grade
+      };
+
+      await this.masterProductService.addToInventory(request).toPromise();
+      
+      this.showToast(
+        `✅ ${this.selectedProduct.name} added to inventory with price ₹${this.priceForm.currentPrice}`,
+        'success'
+      );
+      
+      this.closePriceModal();
+    } catch (error: any) {
+      console.error('Error adding to inventory:', error);
+      this.showToast(
+        'Failed to add to inventory: ' + (error.error?.message || error.message),
+        'danger'
+      );
+    } finally {
+      await loading.dismiss();
+    }
+  }
+
+  getCategoryColor(category: string): string {
+    switch(category.toLowerCase()) {
+      case 'vegetable': return 'success';
+      case 'fruit': return 'warning';
+      case 'grain': return 'tertiary';
+      default: return 'primary';
+    }
+  }
+
+  getLiveCount(): number {
+    return this.masterProducts.filter(p => p.isLive).length;
+  }
+
+  async makeAllLive() {
+    const alert = await this.alertController.create({
+      header: 'Make All Products Live?',
+      message: `This will make all ${this.masterProducts.length} products visible in the marketplace.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Make Live',
+          handler: async () => {
+            const loading = await this.loadingController.create({
+              message: 'Updating products...'
+            });
+            await loading.present();
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const product of this.masterProducts) {
+              try {
+                product.isLive = true;
+                await this.masterProductService.toggleLiveStatus(product.id).toPromise();
+                successCount++;
+              } catch (error) {
+                console.error(`Failed to make ${product.name} live:`, error);
+                errorCount++;
+              }
+            }
+
+            await loading.dismiss();
+            
+            if (errorCount === 0) {
+              this.showToast(`✅ All ${successCount} products are now LIVE!`, 'success');
+            } else {
+              this.showToast(`⚠️ ${successCount} products made live, ${errorCount} failed`, 'warning');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
   openProductForm() {
@@ -438,15 +573,5 @@ export class ProductsPage implements OnInit {
     }
     result.push(current);
     return result;
-  }
-
-  getCategoryColor(category: string): string {
-    const colors: any = {
-      'Vegetable': 'success',
-      'Fruit': 'warning',
-      'Grain': 'tertiary',
-      'Pulse': 'secondary'
-    };
-    return colors[category] || 'medium';
   }
 }

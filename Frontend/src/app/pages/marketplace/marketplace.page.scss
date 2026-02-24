@@ -358,7 +358,7 @@
   }
 }
 
-// Products Grid - Updated for ProductCard Component
+// Products Grid - Updated for ProductCard Component with Performance
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -373,6 +373,24 @@
   @media (max-width: 576px) {
     grid-template-columns: 1fr;
   }
+}
+
+// Skeleton Loading Cards
+.skeleton-card {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  animation: shimmer 1.5s infinite;
+  
+  ion-card-content {
+    padding: 16px;
+  }
+}
+
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 // Product wrapper contains card + vendor comparison in same column

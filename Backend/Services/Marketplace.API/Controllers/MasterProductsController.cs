@@ -53,7 +53,8 @@ public class MasterProductsController : ControllerBase
                     SubCategory = p.SubCategory,
                     Description = p.Description,
                     Unit = p.Unit,
-                    ImageUrls = p.ImageUrls
+                    ImageUrls = p.ImageUrls,
+                    IsLive = p.IsLive
                 })
                 .ToListAsync();
 
@@ -87,7 +88,8 @@ public class MasterProductsController : ControllerBase
                     SubCategory = p.SubCategory,
                     Description = p.Description,
                     Unit = p.Unit,
-                    ImageUrls = p.ImageUrls
+                    ImageUrls = p.ImageUrls,
+                    IsLive = p.IsLive
                 })
                 .ToListAsync();
 
@@ -97,6 +99,54 @@ public class MasterProductsController : ControllerBase
         {
             _logger.LogError(ex, "Error fetching products by category");
             return StatusCode(500, new { message = "Error fetching products", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get only LIVE master products (for marketplace)
+    /// </summary>
+    [HttpGet("live")]
+    public async Task<IActionResult> GetLiveProducts([FromQuery] string? category = null, [FromQuery] string? search = null)
+    {
+        try
+        {
+            var query = _context.MasterProducts.Where(p => p.IsLive);
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(p => p.Category.ToLower() == category.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => 
+                    p.Name.ToLower().Contains(search.ToLower()) || 
+                    (p.NameHindi != null && p.NameHindi.Contains(search)));
+            }
+
+            var products = await query
+                .OrderBy(p => p.Category)
+                .ThenBy(p => p.Name)
+                .Select(p => new MasterProductDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    NameHindi = p.NameHindi,
+                    Category = p.Category,
+                    SubCategory = p.SubCategory,
+                    Description = p.Description,
+                    Unit = p.Unit,
+                    ImageUrls = p.ImageUrls,
+                    IsLive = p.IsLive
+                })
+                .ToListAsync();
+
+            return Ok(new { products, count = products.Count });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching live products");
+            return StatusCode(500, new { message = "Error fetching live products", error = ex.Message });
         }
     }
 
@@ -119,7 +169,8 @@ public class MasterProductsController : ControllerBase
                     SubCategory = p.SubCategory,
                     Description = p.Description,
                     Unit = p.Unit,
-                    ImageUrls = p.ImageUrls
+                    ImageUrls = p.ImageUrls,
+                    IsLive = p.IsLive
                 })
                 .FirstOrDefaultAsync();
 
@@ -266,6 +317,42 @@ public class MasterProductsController : ControllerBase
         {
             _logger.LogError(ex, "Error fetching categories");
             return StatusCode(500, new { message = "Error fetching categories", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Admin toggles master product live status (no auth required for now)
+    /// </summary>
+    [HttpPatch("admin/{id}/toggle-live")]
+    public async Task<IActionResult> AdminToggleLiveStatus(Guid id)
+    {
+        try
+        {
+            var product = await _context.MasterProducts
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+            {
+                return NotFound(new { message = "Master product not found" });
+            }
+
+            product.IsLive = !product.IsLive;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("✅ Master Product {ProductId} ({Name}) live status changed to {IsLive}", 
+                product.Id, product.Name, product.IsLive);
+
+            return Ok(new { 
+                message = $"{product.Name} is now {(product.IsLive ? "LIVE" : "OFFLINE")}", 
+                isLive = product.IsLive 
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling master product live status");
+            return StatusCode(500, new { message = "Error updating product", error = ex.Message });
         }
     }
 }
