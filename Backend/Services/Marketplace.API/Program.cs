@@ -211,6 +211,12 @@ try
             ");
             Console.WriteLine("✅ IsLive column ensured in MasterProducts table");
             
+            // Ensure all existing master products are live (set IsLive=true for any that are false)
+            var updatedCount = await context.Database.ExecuteSqlRawAsync(@"
+                UPDATE ""MasterProducts"" SET ""IsLive"" = true WHERE ""IsLive"" = false;
+            ");
+            Console.WriteLine($"✅ Updated {updatedCount} master products to IsLive=true");
+            
             // Check if table is empty
             var count = await context.Database.SqlQueryRaw<int>("SELECT COUNT(*) FROM \"MasterProducts\"").FirstOrDefaultAsync();
             Console.WriteLine($"Current master products count: {count}");
