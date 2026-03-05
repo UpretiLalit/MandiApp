@@ -13,7 +13,7 @@ services:
       - key: ASPNETCORE_URLS
         value: http://+:8080
       - key: ConnectionStrings__DefaultConnection
-        value: Host=dpg-d5tlem7gi27c73fagde0-a.singapore-postgres.render.com;Port=5432;Database=mandiapp;Username=mandiapp;Password=EPSiAomLiKxGfKyaHFZ6yWsfWnAjSzPq;Ssl Mode=Require
+        value: Host=aws-1-ap-northeast-1.pooler.supabase.com;Port=5432;Database=postgres;User Id=postgres.iytscokxxuxprrivmzvg;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
       - key: JwtSettings__SecretKey
         value: YourSuperSecretKeyForJWTAuthentication12345
       - key: JwtSettings__Issuer
@@ -56,8 +56,8 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://+:8080
-      - key: ConnectionStrings__OrderingDb
-        value: Host=dpg-d5tlem7gi27c73fagde0-a.singapore-postgres.render.com;Port=5432;Database=mandiapp;Username=mandiapp;Password=EPSiAomLiKxGfKyaHFZ6yWsfWnAjSzPq;Ssl Mode=Require
+      - key: ConnectionStrings__DefaultConnection
+        value: Host=aws-1-ap-northeast-1.pooler.supabase.com;Port=5432;Database=postgres;User Id=postgres.iytscokxxuxprrivmzvg;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
       - key: JwtSettings__SecretKey
         value: YourSuperSecretKeyForJWTAuthentication12345
       - key: JwtSettings__Issuer
@@ -82,8 +82,8 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://+:8080
-      - key: ConnectionStrings__LogisticsDb
-        value: Host=dpg-d5tlem7gi27c73fagde0-a.singapore-postgres.render.com;Port=5432;Database=mandiapp;Username=mandiapp;Password=EPSiAomLiKxGfKyaHFZ6yWsfWnAjSzPq;Ssl Mode=Require
+      - key: ConnectionStrings__DefaultConnection
+        value: Host=aws-1-ap-northeast-1.pooler.supabase.com;Port=5432;Database=postgres;User Id=postgres.iytscokxxuxprrivmzvg;Password=PYvWmYoMYiO3RiCJ;Ssl Mode=Require;Trust Server Certificate=true
       - key: JwtSettings__SecretKey
         value: YourSuperSecretKeyForJWTAuthentication12345
       - key: JwtSettings__Issuer
