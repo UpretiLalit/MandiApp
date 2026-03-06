@@ -38,6 +38,8 @@ public class OrderingDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(e => e.Id);
             entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
             entity.Property(e => e.TotalPrice).HasPrecision(18, 2);
+            // VendorId is a cross-service reference — no local FK to Vendors table
+            entity.Property(e => e.VendorId).IsRequired(false);
             entity.HasOne(e => e.Order)
                   .WithMany(o => o.OrderItems)
                   .HasForeignKey(e => e.OrderId)

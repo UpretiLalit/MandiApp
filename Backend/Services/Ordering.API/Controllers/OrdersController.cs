@@ -33,7 +33,7 @@ public class OrdersController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating order");
-            return BadRequest(new { message = "Order creation failed", error = ex.Message });
+            return BadRequest(new { message = "Order creation failed", error = ex.Message, inner = ex.InnerException?.Message, detail = ex.InnerException?.InnerException?.Message });
         }
     }
 
@@ -49,7 +49,7 @@ public class OrdersController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during checkout");
-            return BadRequest(new { message = "Checkout failed", error = ex.Message });
+            return BadRequest(new { message = "Checkout failed", error = ex.Message, inner = ex.InnerException?.Message, detail = ex.InnerException?.InnerException?.Message });
         }
     }
 
