@@ -216,9 +216,20 @@ try
                 UPDATE ""MasterProducts"" SET ""IsLive"" = true WHERE ""IsLive"" = false;
             ");
             Console.WriteLine($"✅ Updated {updatedCount} master products to IsLive=true");
+
+            // Fix known wrong/duplicate image URLs in seed data
+            await context.Database.ExecuteSqlRawAsync(@"
+                UPDATE ""MasterProducts"" SET ""ImageUrls"" = ARRAY['https://images.unsplash.com/photo-1553279768-865429fa0078','https://images.unsplash.com/photo-1564750497011-ead0ce4b9448'] WHERE ""Name"" = 'Mango';
+                UPDATE ""MasterProducts"" SET ""ImageUrls"" = ARRAY['https://images.unsplash.com/photo-1541344999736-83ecca272f31','https://images.unsplash.com/photo-1510627489930-0c1b0bfb6785'] WHERE ""Name"" = 'Pomegranate';
+                UPDATE ""MasterProducts"" SET ""ImageUrls"" = ARRAY['https://images.unsplash.com/photo-1568885218958-3efbb8c43d42','https://images.unsplash.com/photo-1587049693564-c5f463c2dcdb'] WHERE ""Name"" = 'Watermelon';
+                UPDATE ""MasterProducts"" SET ""ImageUrls""[2] = 'https://images.unsplash.com/photo-1553695839-2c2a2eb578c3' WHERE ""Name"" = 'Plum';
+                UPDATE ""MasterProducts"" SET ""ImageUrls""[2] = 'https://images.unsplash.com/photo-1578326441855-1060a9f32fd8' WHERE ""Name"" = 'Radish';
+                UPDATE ""MasterProducts"" SET ""ImageUrls"" = ARRAY['https://images.unsplash.com/photo-1585515320310-259814833e62','https://images.unsplash.com/photo-1616164951882-5c2f8f903e78'] WHERE ""Name"" = 'Radish';
+            ");
+            Console.WriteLine("✅ Fixed image URLs for Mango, Pomegranate, Watermelon, Plum, Radish");
             
             // Check if table is empty
-            var count = await context.Database.SqlQueryRaw<int>("SELECT COUNT(*) FROM \"MasterProducts\"").FirstOrDefaultAsync();
+            var count = await context.Database.SqlQueryRaw<int>("SELECT CAST(COUNT(*) AS INT) AS \"Value\" FROM \"MasterProducts\"").FirstOrDefaultAsync();
             Console.WriteLine($"Current master products count: {count}");
             
             if (count == 0) {

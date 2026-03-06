@@ -36,8 +36,9 @@ export class ProductCardComponent implements OnInit {
     if (imageUrl.includes('supabase.co/storage')) {
       this.transformedImageUrl = this.getSupabaseTransformedUrl(imageUrl);
     } else if (imageUrl.includes('unsplash.com')) {
-      // Unsplash optimization
-      this.transformedImageUrl = `${imageUrl}&w=400&h=400&fit=crop&fm=webp&q=80`;
+      // Unsplash optimization — use ? for first param (URL has no existing query string)
+      const separator = imageUrl.includes('?') ? '&' : '?';
+      this.transformedImageUrl = `${imageUrl}${separator}w=400&h=400&fit=crop&fm=webp&q=80`;
     } else {
       // Use original URL for other sources
       this.transformedImageUrl = imageUrl;

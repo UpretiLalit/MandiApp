@@ -2,10 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { ProductService } from '@core/services/product.service';
+import { MasterProductService } from '@core/services/master-product.service';
 import { OrderService } from '@core/services/order.service';
 import { SignalrService, PriceUpdateEvent } from '@core/services/signalr.service';
 import { Product } from '@core/models/product.model';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '@environments/environment';
 
 @Component({
@@ -26,10 +28,11 @@ export class MarketplacePage implements OnInit, OnDestroy {
   expandedProducts: Set<string> = new Set();
   priceFlashMap: Map<string, boolean> = new Map();
   private priceHistory = new Map<string, { price: number, timestamp: Date }>();
-  productQuantities: Map<string, number> = new Map(); // Store quantities per product
-  quantityStepperVisible: Map<string, boolean> = new Map(); // Track stepper visibility per product
-  expandedVendors: Set<string> = new Set(); // Track which vendor cards are expanded
-  productsInCart: Set<string> = new Set(); // Track which products are already in cart
+  productQuantities: Map<string, number> = new Map();
+  quantityStepperVisible: Map<string, boolean> = new Map();
+  expandedVendors: Set<string> = new Set();
+  productsInCart: Set<string> = new Set();
+  private _masterProductsCache: any[] = [];
   
   // Image Viewer Properties
   isImageViewerOpen: boolean = false;
@@ -52,6 +55,7 @@ export class MarketplacePage implements OnInit, OnDestroy {
 
   constructor(
     private productService: ProductService,
+    private masterProductService: MasterProductService,
     private orderService: OrderService,
     private router: Router,
     private toastController: ToastController,
@@ -197,28 +201,40 @@ export class MarketplacePage implements OnInit, OnDestroy {
   }
 
   async loadProducts() {
-    // No blocking loader - let content load in background
-    this.productService.getProducts().subscribe({
-      next: (products: any) => {
-        // Check if products is already in grouped format from new API
-        if (products && products.length > 0 && products[0].vendors) {
-          // New API format - already grouped with vendor arrays
-          this.filteredProducts = products;
+    // Load master products directly - they have imageUrls and nameHindi
+    this.masterProductService.getLiveMasterProducts().subscribe({
+      next: (masterProducts: any[]) => {
+        if (masterProducts && masterProducts.length > 0) {
+          this.filteredProducts = masterProducts;
+          this.products = []; // keep empty so applyFilters() uses the master-product path
+          this._masterProductsCache = masterProducts; // store for re-filtering
           this.extractCategoriesFromGrouped();
         } else {
-          // Old API format - needs grouping
-          this.products = products;
-          this.filteredProducts = this.groupProducts(products);
-          this.extractCategories();
+          // Fallback to vendor products
+          this.productService.getProducts().subscribe({
+            next: (products: any) => {
+              if (products && products.length > 0 && products[0].vendors) {
+                this.filteredProducts = products;
+                this.extractCategoriesFromGrouped();
+              } else {
+                this.products = products || [];
+                this.filteredProducts = this.groupProducts(this.products);
+                this.extractCategories();
+              }
+            },
+            error: () => {
+              this.products = this.getMockProducts();
+              this.filteredProducts = this.groupProducts(this.products);
+              this.extractCategories();
+            }
+          });
         }
       },
-      error: (error) => {
-        console.error('Error loading products:', error);
-        // Use mock data for development
+      error: (error: any) => {
+        console.error('Error loading master products:', error);
         this.products = this.getMockProducts();
         this.filteredProducts = this.groupProducts(this.products);
         this.extractCategories();
-        this.showToast('⚡ Loading...', 'warning');
       }
     });
   }
@@ -645,42 +661,38 @@ export class MarketplacePage implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  // Normalize category for comparison (handles singular/plural from API)
+  private normalizeCategory(cat: string): string {
+    const map: {[k: string]: string} = {
+      'Fruit': 'Fruits', 'Vegetable': 'Vegetables', 'Grain': 'Grains',
+      'Dairy': 'Dairy', 'Spice': 'Spices', 'Herb': 'Herbs'
+    };
+    return map[cat] || cat;
+  }
+
   applyFilters() {
-    // Check if we're using grouped format (new API) or old format
-    if (this.products && this.products.length > 0) {
-      // Old format - products need grouping
-      let filtered = this.products;
+    // Master products path — use cache for clean re-filtering
+    const source: any[] = this._masterProductsCache && this._masterProductsCache.length > 0
+      ? this._masterProductsCache
+      : (this.products && this.products.length > 0 ? this.products : this.filteredProducts);
 
-      if (this.selectedCategory !== 'All') {
-        filtered = filtered.filter(p => p.category === this.selectedCategory);
-      }
+    let filtered = source;
 
-      if (this.searchTerm) {
-        filtered = filtered.filter(p =>
-          p.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-        );
-      }
-
-      // Apply sorting
-      filtered = this.sortProducts(filtered);
-
-      this.filteredProducts = this.groupProducts(filtered);
-    } else if (this.filteredProducts && this.filteredProducts.length > 0) {
-      // New format - already grouped, filter the grouped products
-      let filtered = this.filteredProducts;
-
-      if (this.selectedCategory !== 'All') {
-        filtered = filtered.filter((p: any) => p.category === this.selectedCategory);
-      }
-
-      if (this.searchTerm) {
-        filtered = filtered.filter((p: any) =>
-          p.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-        );
-      }
-
-      this.filteredProducts = filtered;
+    if (this.selectedCategory !== 'All') {
+      filtered = filtered.filter((p: any) =>
+        this.normalizeCategory(p.category) === this.selectedCategory
+      );
     }
+
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter((p: any) =>
+        p.name.toLowerCase().includes(term) ||
+        (p.nameHindi && p.nameHindi.toLowerCase().includes(term))
+      );
+    }
+
+    this.filteredProducts = filtered;
   }
 
   sortProducts(products: Product[]): Product[] {

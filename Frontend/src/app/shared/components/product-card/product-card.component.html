@@ -43,8 +43,9 @@
 
     <!-- Category Badge -->
     <ion-badge class="category-badge" 
-               [color]="product.category === 'Vegetables' ? 'success' : 
-                        product.category === 'Fruits' ? 'warning' : 'primary'">
+               [color]="(product.category === 'Vegetables' || product.category === 'Vegetable') ? 'success' : 
+                        (product.category === 'Fruits' || product.category === 'Fruit') ? 'warning' :
+                        (product.category === 'Grains' || product.category === 'Grain') ? 'tertiary' : 'primary'">
       {{product.category}}
     </ion-badge>
 
@@ -61,8 +62,10 @@
   <ion-card-content class="product-content">
     <!-- Product Title -->
     <div class="product-header">
-      <h3 class="product-name">{{product.name}}</h3>
-      <span class="product-emoji-small">{{product.emoji || '🥬'}}</span>
+      <h3 class="product-name">
+        {{product.name}}<span class="name-hindi" *ngIf="product.nameHindi"> ({{product.nameHindi}})</span>
+      </h3>
+      <span class="product-emoji-small" *ngIf="!product.imageUrls || product.imageUrls.length === 0">{{product.emoji || '🥬'}}</span>
     </div>
 
     <!-- Unit Information -->
@@ -73,15 +76,21 @@
 
     <!-- Price Section -->
     <div class="price-section">
-      <div class="price-main">
+      <div class="price-main" *ngIf="getBestPrice() > 0; else marketPrice">
         <span class="currency">₹</span>
         <span class="amount">{{getBestPrice()}}</span>
         <span class="per-unit">/{{product.unit}}</span>
       </div>
+      <ng-template #marketPrice>
+        <div class="price-main market-price">
+          <span class="market-price-text">Market Price</span>
+        </div>
+      </ng-template>
       <ion-badge class="stock-badge" 
-                 [color]="product.availableQuantity > 10 ? 'success' : 
+                 [color]="product.availableQuantity == null ? 'success' :
+                          product.availableQuantity > 10 ? 'success' : 
                           product.availableQuantity > 0 ? 'warning' : 'danger'">
-        {{product.availableQuantity > 0 ? 'In Stock' : 'Out of Stock'}}
+        {{product.availableQuantity == null ? 'Available' : product.availableQuantity > 0 ? 'In Stock' : 'Out of Stock'}}
       </ion-badge>
     </div>
 
@@ -99,10 +108,10 @@
     <ion-button 
       expand="block" 
       class="add-cart-btn"
-      [disabled]="product.availableQuantity <= 0"
+      [disabled]="product.availableQuantity != null && product.availableQuantity <= 0"
       (click)="onAddToCartClick($event)">
       <ion-icon name="cart-outline" slot="start"></ion-icon>
-      {{product.availableQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}}
+      {{product.availableQuantity != null && product.availableQuantity <= 0 ? 'Out of Stock' : 'Add to Cart'}}
     </ion-button>
   </ion-card-content>
 </ion-card>

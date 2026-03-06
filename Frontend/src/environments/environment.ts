@@ -1,9 +1,9 @@
 export const environment = {
   production: false,
-  // Using Render.com production URLs - accessible from mobile devices
+  // Local development - marketplace uses localhost, others use Render
   apiUrl: 'https://mandiapp-ordering-api.onrender.com/api',
   identityApiUrl: 'https://mandiapp-identity-api.onrender.com/api',
-  marketplaceApiUrl: 'https://mandiapp-marketplace-api.onrender.com/api',
+  marketplaceApiUrl: 'http://localhost:8080/api',
   orderingApiUrl: 'https://mandiapp-ordering-api.onrender.com/api',
   logisticsHubUrl: 'https://mandiapp-logistics-hub.onrender.com',
   trackingHubUrl: 'https://mandiapp-logistics-hub.onrender.com/hubs/tracking',
