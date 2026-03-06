@@ -48,13 +48,14 @@ public class CompletePaymentRequest
     public string PaymentStatus { get; set; } = string.Empty;
 }
 
-public record AddToCartRequest(
-    int ProductId,
-    string ProductName,
-    string VendorId,
-    string? VendorName,
-    int Quantity,
-    decimal UnitPrice,
-    string? Unit,
-    string? Grade
-);
+public class AddToCartRequest
+{
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public string VendorId { get; set; } = string.Empty;
+    public string? VendorName { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public string? Unit { get; set; }
+    public string? Grade { get; set; }
+}

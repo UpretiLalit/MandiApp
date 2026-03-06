@@ -29,14 +29,24 @@ public class CartController : ControllerBase
     }
 
     [HttpPost("add")]
-    public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
+    public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest? request)
     {
-        var buyerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (buyerId == null)
-            buyerId = "test-buyer-001"; // Dev testing fallback
+        try
+        {
+            if (request == null)
+                return BadRequest(new { error = "Request body is null or could not be deserialized" });
 
-        var cartItem = await _cartService.AddToCartAsync(buyerId, request);
-        return Ok(cartItem);
+            var buyerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (buyerId == null)
+                buyerId = "test-buyer-001"; // Dev testing fallback
+
+            var cartItem = await _cartService.AddToCartAsync(buyerId, request);
+            return Ok(cartItem);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message, stack = ex.StackTrace });
+        }
     }
 
     [HttpPut("update/{cartItemId}")]
