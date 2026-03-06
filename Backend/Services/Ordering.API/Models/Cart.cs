@@ -20,6 +20,8 @@ public class CartItem
     public string VendorId { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public string? Unit { get; set; }
+    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
     public Cart Cart { get; set; } = null!;

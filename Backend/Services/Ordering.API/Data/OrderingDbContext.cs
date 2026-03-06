@@ -54,6 +54,10 @@ public class OrderingDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
+            entity.Property(e => e.Unit).IsRequired(false);
+            entity.Property(e => e.AddedAt).HasDefaultValueSql("NOW()");
+            // VendorId is stored as a plain string reference — no FK to Vendors table
+            entity.Property(e => e.VendorId).IsRequired(false);
             entity.HasOne(e => e.Cart)
                   .WithMany(c => c.CartItems)
                   .HasForeignKey(e => e.CartId)

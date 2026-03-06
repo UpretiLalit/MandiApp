@@ -48,9 +48,11 @@ public class CartService : ICartService
                 CartId = cart.Id,
                 ProductId = request.ProductId,
                 ProductName = request.ProductName,
-                VendorId = request.VendorId,
+                VendorId = request.VendorId ?? string.Empty,
                 Quantity = request.Quantity,
-                UnitPrice = request.UnitPrice
+                UnitPrice = request.UnitPrice,
+                Unit = request.Unit ?? "kg",
+                AddedAt = DateTime.UtcNow
             };
             _context.CartItems.Add(existingItem);
         }
