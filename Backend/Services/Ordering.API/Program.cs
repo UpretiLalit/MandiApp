@@ -121,6 +121,34 @@ try
         // Use Migrate() which only creates missing tables, doesn't drop existing ones
         context.Database.Migrate();
         Console.WriteLine("✅ Migrations applied successfully");
+
+        // Fix schema drift: add columns that may be missing when DB was created
+        // from manual SQL scripts instead of EF migrations. Idempotent — safe to run every startup.
+        Console.WriteLine("🔧 Ensuring schema is up-to-date...");
+        var fixSql = new[]
+        {
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""AssignedAt"" TIMESTAMP WITH TIME ZONE",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""BuyerName"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""VendorName"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""MandiId"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""PickupAddress"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""TransporterName"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""PaymentMethod"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""PaymentId"" TEXT",
+            @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""RazorpayOrderId"" TEXT",
+            @"ALTER TABLE ""OrderItems"" DROP CONSTRAINT IF EXISTS ""FK_OrderItems_Vendors_VendorId""",
+            @"ALTER TABLE ""OrderItems"" DROP CONSTRAINT IF EXISTS ""FK_OrderItems_Vendors""",
+            @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Buyers_BuyerId""",
+            @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Buyers""",
+            @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Transporters_TransporterId""",
+            @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Transporters"""
+        };
+        foreach (var sql in fixSql)
+        {
+            try { await context.Database.ExecuteSqlRawAsync(sql); }
+            catch (Exception sqlEx) { Console.WriteLine($"⚠️ Schema fix skipped: {sqlEx.Message}"); }
+        }
+        Console.WriteLine("✅ Schema up-to-date");;
         
         // Seed test buyers if they don't exist
         if (!await context.Buyers.AnyAsync())
