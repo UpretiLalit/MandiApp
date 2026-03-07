@@ -44,8 +44,9 @@ public class OrderService : IOrderService
             {
                 ProductId = item.ProductId,
                 ProductName = item.ProductName,
-                VendorId = item.VendorId,
+                VendorId = item.VendorId ?? string.Empty,
                 Quantity = item.Quantity,
+                Unit = item.Unit ?? "kg",
                 UnitPrice = item.UnitPrice,
                 TotalPrice = item.Quantity * item.UnitPrice
             });

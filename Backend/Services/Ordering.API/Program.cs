@@ -138,6 +138,8 @@ try
             @"ALTER TABLE ""Orders"" ADD COLUMN IF NOT EXISTS ""RazorpayOrderId"" TEXT",
             @"ALTER TABLE ""OrderItems"" DROP CONSTRAINT IF EXISTS ""FK_OrderItems_Vendors_VendorId""",
             @"ALTER TABLE ""OrderItems"" DROP CONSTRAINT IF EXISTS ""FK_OrderItems_Vendors""",
+            @"ALTER TABLE ""OrderItems"" ALTER COLUMN ""Unit"" DROP NOT NULL",
+            @"ALTER TABLE ""OrderItems"" ALTER COLUMN ""VendorId"" DROP NOT NULL",
             @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Buyers_BuyerId""",
             @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Buyers""",
             @"ALTER TABLE ""Orders"" DROP CONSTRAINT IF EXISTS ""FK_Orders_Transporters_TransporterId""",
@@ -148,7 +150,7 @@ try
             try { await context.Database.ExecuteSqlRawAsync(sql); }
             catch (Exception sqlEx) { Console.WriteLine($"⚠️ Schema fix skipped: {sqlEx.Message}"); }
         }
-        Console.WriteLine("✅ Schema up-to-date");;
+        Console.WriteLine("✅ Schema up-to-date");
         
         // Seed test buyers if they don't exist
         if (!await context.Buyers.AnyAsync())
