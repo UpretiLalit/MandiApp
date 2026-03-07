@@ -14,6 +14,7 @@ import { environment } from '@environments/environment';
 export class CartPage implements OnInit {
   cart: Cart | null = null;
   vendorGroups: Map<string, CartItem[]> = new Map();
+  isLoading = false;
   
   // Phase 1: Cost Breakdown
   produceTotal: number = 0;
@@ -42,7 +43,9 @@ export class CartPage implements OnInit {
 
   ngOnInit() {
     this.loadUserAddress();
-    this.loadCart();
+    // Do NOT call loadCart() here — ionViewWillEnter handles it
+    // to avoid the double-load race condition (ngOnInit + ionViewWillEnter
+    // both fire on first visit, stacking two LoadingController overlays)
   }
 
   ionViewWillEnter() {
@@ -58,21 +61,36 @@ export class CartPage implements OnInit {
   }
 
   async loadCart() {
-    const loading = await this.loadingController.create({
-      message: 'Loading cart...'
-    });
-    await loading.present();
+    // Guard: skip if already loading to prevent stacked LoadingController overlays
+    if (this.isLoading) return;
+    this.isLoading = true;
+
+    let loading: HTMLIonLoadingElement | null = null;
+    try {
+      loading = await this.loadingController.create({
+        message: 'Loading cart...',
+        duration: 8000 // safety timeout so it never hangs forever
+      });
+      await loading.present();
+    } catch (_) {
+      // loading creation failed — continue without overlay
+    }
+
+    const dismiss = async () => {
+      try { await loading?.dismiss(); } catch (_) {}
+      this.isLoading = false;
+    };
 
     this.orderService.getCart().subscribe({
       next: (cart) => {
         this.cart = cart;
         this.groupByVendor();
         this.calculateTotal();
-        loading.dismiss();
+        dismiss();
       },
       error: (error) => {
         console.error('Error loading cart:', error);
-        loading.dismiss();
+        dismiss();
         this.showToast('Failed to load cart', 'danger');
       }
     });
@@ -158,6 +176,7 @@ export class CartPage implements OnInit {
             this.orderService.removeFromCart(item.id).subscribe({
               next: () => {
                 this.showToast('Item removed', 'success');
+                this.isLoading = false; // reset guard so reload works
                 this.loadCart();
               },
               error: (error) => {
