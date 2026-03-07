@@ -201,42 +201,132 @@ export class MarketplacePage implements OnInit, OnDestroy {
   }
 
   async loadProducts() {
-    // Load master products directly - they have imageUrls and nameHindi
-    this.masterProductService.getLiveMasterProducts().subscribe({
-      next: (masterProducts: any[]) => {
-        if (masterProducts && masterProducts.length > 0) {
-          this.filteredProducts = masterProducts;
-          this.products = []; // keep empty so applyFilters() uses the master-product path
-          this._masterProductsCache = masterProducts; // store for re-filtering
-          this.extractCategoriesFromGrouped();
-        } else {
-          // Fallback to vendor products
-          this.productService.getProducts().subscribe({
-            next: (products: any) => {
-              if (products && products.length > 0 && products[0].vendors) {
-                this.filteredProducts = products;
-                this.extractCategoriesFromGrouped();
-              } else {
-                this.products = products || [];
-                this.filteredProducts = this.groupProducts(this.products);
-                this.extractCategories();
-              }
-            },
-            error: () => {
-              this.products = this.getMockProducts();
-              this.filteredProducts = this.groupProducts(this.products);
-              this.extractCategories();
-            }
+    forkJoin({
+      masterProducts: this.masterProductService.getLiveMasterProducts().pipe(catchError(() => of([]))),
+      vendorProducts: this.productService.getProducts().pipe(catchError(() => of([])))
+    }).subscribe({
+      next: ({ masterProducts, vendorProducts }: { masterProducts: any[], vendorProducts: any[] }) => {
+        const imageMap = this.getProductImageMap();
+
+        // Step 1: Group vendor products into display cards with pricing
+        let vendorGrouped: any[] = [];
+        if (vendorProducts && vendorProducts.length > 0) {
+          const rawGrouped = vendorProducts[0]?.vendors ? vendorProducts : this.groupProducts(vendorProducts);
+          vendorGrouped = rawGrouped.map((gp: any) => {
+            const nameNorm = gp.name.toLowerCase().trim()
+              .replace(/^(fresh|premium|organic|farm)\s+/i, '').trim();
+            const fallbackImages = imageMap[nameNorm]
+              || imageMap[gp.name.toLowerCase().trim()]
+              || imageMap[nameNorm.replace(/s$/, '')] // singular
+              || imageMap[nameNorm + 's'];             // plural
+            return {
+              ...gp,
+              imageUrls: (fallbackImages || gp.imageUrls) ?? [],
+              imageUrl: fallbackImages?.[0] || gp.imageUrl,
+            };
           });
         }
+
+        // Step 2: Convert master catalog products into display cards (no vendor pricing yet)
+        const vendorNames = new Set(vendorGrouped.map((g: any) => g.name.toLowerCase().trim()));
+        const masterCards: any[] = (masterProducts || [])
+          .filter((mp: any) => !vendorNames.has(mp.name.toLowerCase().trim()))
+          .map((mp: any) => {
+            // imageUrls may arrive as space-separated string (API) or already as array (after service normalization)
+            const rawUrls: string[] = typeof mp.imageUrls === 'string'
+              ? mp.imageUrls.split(' ').map((u: string) => u.trim()).filter((u: string) => u.startsWith('http'))
+              : (Array.isArray(mp.imageUrls) ? mp.imageUrls : []);
+            const imgs = rawUrls.map((u: string) =>
+              u.includes('unsplash.com') && !u.includes('?')
+                ? `${u}?w=400&h=400&fit=crop&q=80` : u);
+            // Lookup hardcoded image if API URLs are empty
+            const nameNorm = mp.name.toLowerCase().trim().replace(/s$/, '');
+            const fallback = imageMap[mp.name.toLowerCase().trim()]
+              || imageMap[nameNorm]
+              || imageMap[nameNorm + 's'];
+            const finalImgs = imgs.length > 0 ? imgs : (fallback || []);
+            return {
+              name: mp.name,
+              nameHindi: mp.nameHindi,
+              category: mp.category,
+              unit: mp.unit || 'kg',
+              unitWeight: `1 ${mp.unit || 'kg'}`,
+              imageUrls: finalImgs,
+              imageUrl: finalImgs[0] || '',
+              emoji: mp.emoji,
+              availableQuantity: null, // no vendor listing yet
+              vendors: [],
+            };
+          });
+
+        // Step 3: Combine — vendor products first (have prices), then master catalog
+        // Deduplicate by name (case-insensitive) — vendor entry wins over master-only entry
+        const seenNames = new Set<string>(vendorGrouped.map((g: any) => g.name.toLowerCase().trim()));
+        const dedupedMaster = masterCards.filter((m: any) => {
+          const key = m.name.toLowerCase().trim();
+          if (seenNames.has(key)) return false;
+          seenNames.add(key);
+          return true;
+        });
+        const combined = [...vendorGrouped, ...dedupedMaster];
+
+        this._masterProductsCache = combined;
+        this.products = [];
+        this.filteredProducts = combined;
+        this.extractCategoriesFromGrouped();
       },
       error: (error: any) => {
-        console.error('Error loading master products:', error);
+        console.error('Error loading products:', error);
         this.products = this.getMockProducts();
         this.filteredProducts = this.groupProducts(this.products);
         this.extractCategories();
       }
     });
+  }
+
+  /** Hardcoded reliable Unsplash images for common mandi products */
+  private getProductImageMap(): { [key: string]: string[] } {
+    return {
+      'tomatoes': ['https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=400&fit=crop&q=80'],
+      'tomato': ['https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=400&fit=crop&q=80'],
+      'onions': ['https://images.unsplash.com/photo-1508747703725-719777637510?w=400&h=400&fit=crop&q=80'],
+      'onion': ['https://images.unsplash.com/photo-1508747703725-719777637510?w=400&h=400&fit=crop&q=80'],
+      'red onions': ['https://images.unsplash.com/photo-1508747703725-719777637510?w=400&h=400&fit=crop&q=80'],
+      'potatoes': ['https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&h=400&fit=crop&q=80'],
+      'potato': ['https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&h=400&fit=crop&q=80'],
+      'carrots': ['https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=400&fit=crop&q=80'],
+      'carrot': ['https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=400&fit=crop&q=80'],
+      'गाजर': ['https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=400&fit=crop&q=80'],
+      'spinach': ['https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop&q=80'],
+      'cabbage': ['https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=400&h=400&fit=crop&q=80'],
+      'cauliflower': ['https://images.unsplash.com/photo-1568584711271-6c929fb49b60?w=400&h=400&fit=crop&q=80'],
+      'brinjal': ['https://images.unsplash.com/photo-1659216320598-9b6b638c8e7c?w=400&h=400&fit=crop&q=80'],
+      'eggplant': ['https://images.unsplash.com/photo-1659216320598-9b6b638c8e7c?w=400&h=400&fit=crop&q=80'],
+      'peas': ['https://images.unsplash.com/photo-1563565341-e60e9631a1bb?w=400&h=400&fit=crop&q=80'],
+      'beans': ['https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=400&h=400&fit=crop&q=80'],
+      'bitter gourd': ['https://images.unsplash.com/photo-1617692855027-33b14f061079?w=400&h=400&fit=crop&q=80'],
+      'bottle gourd': ['https://images.unsplash.com/photo-1617692855027-33b14f061079?w=400&h=400&fit=crop&q=80'],
+      'ladyfinger': ['https://images.unsplash.com/photo-1627735068680-a26a4e9e0bd0?w=400&h=400&fit=crop&q=80'],
+      'okra': ['https://images.unsplash.com/photo-1627735068680-a26a4e9e0bd0?w=400&h=400&fit=crop&q=80'],
+      'ginger': ['https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400&h=400&fit=crop&q=80'],
+      'garlic': ['https://images.unsplash.com/photo-1501420193920-91f50c93b4be?w=400&h=400&fit=crop&q=80'],
+      'apples': ['https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop&q=80'],
+      'apple': ['https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop&q=80'],
+      'bananas': ['https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop&q=80'],
+      'banana': ['https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop&q=80'],
+      'mangoes': ['https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&h=400&fit=crop&q=80'],
+      'mango': ['https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&h=400&fit=crop&q=80'],
+      'oranges': ['https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=400&fit=crop&q=80'],
+      'orange': ['https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=400&fit=crop&q=80'],
+      'grapes': ['https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400&h=400&fit=crop&q=80'],
+      'rice': ['https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop&q=80'],
+      'wheat': ['https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=400&fit=crop&q=80'],
+      'turmeric': ['https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=400&h=400&fit=crop&q=80'],
+      'chili': ['https://images.unsplash.com/photo-1625938144755-ef4b4b3e5a2c?w=400&h=400&fit=crop&q=80'],
+      'chilli': ['https://images.unsplash.com/photo-1625938144755-ef4b4b3e5a2c?w=400&h=400&fit=crop&q=80'],
+      'milk': ['https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&h=400&fit=crop&q=80'],
+      'paneer': ['https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=400&fit=crop&q=80'],
+    };
   }
 
   // Performance optimization - trackBy for ngFor
@@ -742,6 +832,12 @@ export class MarketplacePage implements OnInit, OnDestroy {
   }
 
   async quickBuyBestPrice(product: any) {
+    // Master-only catalog products have no vendors — can't add to cart
+    if (!product.vendors || product.vendors.length === 0) {
+      this.showToast('No vendors available for this product yet', 'warning');
+      return;
+    }
+
     const bestVendor = product.vendors[0];
     
     // If stepper is not visible, show it first
@@ -769,6 +865,14 @@ export class MarketplacePage implements OnInit, OnDestroy {
   }
   
   async addToCartWithQuantity(product: any, vendor: any, quantity: number) {
+    // vendor.id is the actual DB product integer ID (set in groupProducts)
+    // product.id may be undefined for grouped display cards
+    const productId = vendor.id ?? product.id;
+    if (!productId) {
+      this.showToast('Cannot add this product to cart', 'danger');
+      return;
+    }
+
     const loading = await this.loadingController.create({
       message: 'Adding to cart...',
       duration: 1000
@@ -776,13 +880,14 @@ export class MarketplacePage implements OnInit, OnDestroy {
     await loading.present();
 
     const cartItem = {
-      ProductId: product.id,
+      ProductId: productId,
       ProductName: product.name,
       VendorId: vendor.vendorId || '',
       VendorName: vendor.vendorName || '',
       Quantity: quantity,
-      UnitPrice: vendor.price,
-      Unit: product.unit || 'kg'
+      UnitPrice: vendor.price ?? vendor.currentPrice ?? 0,
+      Unit: product.unit || 'kg',
+      Grade: vendor.grade || ''
     };
 
     this.orderService.addToCart(cartItem).subscribe({

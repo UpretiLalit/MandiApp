@@ -20,9 +20,9 @@
       (error)="onImageError()"
       loading="lazy">
 
-    <!-- Fallback Emoji Display -->
+    <!-- Fallback: initials placeholder when no image available -->
     <div class="emoji-fallback" *ngIf="imageError || !transformedImageUrl">
-      <span class="product-emoji">{{product.emoji || '🥬'}}</span>
+      <span class="product-initial">{{(product.name || '?')[0].toUpperCase()}}</span>
     </div>
 
     <!-- Image Navigation for Multiple Photos -->
@@ -83,7 +83,7 @@
       </div>
       <ng-template #marketPrice>
         <div class="price-main market-price">
-          <span class="market-price-text">Market Price</span>
+          <span class="market-price-text">No sellers yet</span>
         </div>
       </ng-template>
       <ion-badge class="stock-badge" 

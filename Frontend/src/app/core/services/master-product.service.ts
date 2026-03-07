@@ -50,7 +50,7 @@ export class MasterProductService {
     }
     
     return this.http.get<MasterProductResponse>(url).pipe(
-      map(response => response.products || [])
+      map(response => this.normalizeProducts(response.products || []))
     );
   }
 
@@ -66,8 +66,18 @@ export class MasterProductService {
     }
     
     return this.http.get<MasterProductResponse>(url).pipe(
-      map(response => response.products || [])
+      map(response => this.normalizeProducts(response.products || []))
     );
+  }
+
+  /** API stores imageUrls as a space-separated string; normalize to string[] */
+  private normalizeProducts(products: any[]): MasterProduct[] {
+    return products.map(p => ({
+      ...p,
+      imageUrls: typeof p.imageUrls === 'string'
+        ? p.imageUrls.split(' ').map((u: string) => u.trim()).filter((u: string) => u.startsWith('http'))
+        : (Array.isArray(p.imageUrls) ? p.imageUrls : [])
+    }));
   }
 
   getMasterProductsByCategory(category: string): Observable<MasterProduct[]> {
